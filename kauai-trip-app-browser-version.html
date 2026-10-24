@@ -1,0 +1,1128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<meta name="mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="Kauai Trip" />
+<meta name="theme-color" content="#faf7f1" />
+<link rel="icon" href="data:," />
+<title>Kauai Trip App — Browser Version</title>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<style>
+  :root{
+    --bg:#faf7f1; --surface:#ffffff; --surface2:#f3eee5;
+    --ink:#191612; --ink2:#4c463d; --line:#ddd5c7;
+    --active:#e0521f; --explore:#c07f00; --relax:#6c4fae;
+    --active-bg:#fdeee7; --explore-bg:#faf0d7; --relax-bg:#efeafd;
+    --shadow:0 1px 2px rgba(25,22,18,.06),0 6px 18px rgba(25,22,18,.06);
+    color-scheme:light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      --bg:#16140f; --surface:#211d16; --surface2:#2a251c;
+      --ink:#f2ecdf; --ink2:#bdb4a2; --line:#3d372b;
+      --active:#f0703c; --explore:#e0a92e; --relax:#a68ae0;
+      --active-bg:#3a2115; --explore-bg:#382b10; --relax-bg:#2c2344;
+      --shadow:0 1px 2px rgba(0,0,0,.4),0 6px 18px rgba(0,0,0,.35);
+      color-scheme:dark;
+    }
+  }
+  *{ box-sizing:border-box; border-radius:0 !important; }
+  html{ -webkit-text-size-adjust:100%; }
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    font-size:16px; line-height:1.45;
+  }
+  button{ font:inherit; color:inherit; background:none; border:none; cursor:pointer; }
+  a{ color:var(--ink); }
+  input,select,textarea{ font:inherit; color:var(--ink); }
+
+  /* ---------- header / tabs ---------- */
+  header{
+    position:sticky; top:0; z-index:600; background:var(--bg);
+    border-bottom:1px solid var(--line);
+    padding:calc(10px + env(safe-area-inset-top)) 16px 0;
+  }
+  .trip-line{ display:flex; align-items:baseline; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+  .trip-line h1{ font-size:21px; font-weight:700; letter-spacing:-.01em; margin:0; }
+  .trip-line .dates{ font-size:13px; color:var(--ink2); font-weight:600; letter-spacing:.04em; text-transform:uppercase; }
+  .phase-legend{ display:flex; gap:6px; margin:10px 0 12px; flex-wrap:wrap; }
+  .phase-chip{
+    display:inline-flex; align-items:center; gap:7px;
+    font-size:12.5px; font-weight:700; letter-spacing:.03em;
+    padding:6px 10px; border:1px solid var(--line); background:var(--surface);
+  }
+  .phase-chip .sw{ width:12px; height:12px; flex:none; }
+  .phase-chip.solid{ color:#fff; border-color:transparent; }
+  .phase-chip.solid.active{ background:var(--active); } .phase-chip.solid.explore{ background:var(--explore); } .phase-chip.solid.relax{ background:var(--relax); }
+  nav.tabs{ display:flex; gap:2px; }
+  nav.tabs button{
+    flex:1; padding:12px 4px 10px; font-size:15px; font-weight:600; color:var(--ink2);
+    border-bottom:3px solid transparent; display:flex; align-items:center; justify-content:center; gap:8px;
+  }
+  nav.tabs button[aria-selected="true"]{ color:var(--ink); border-bottom-color:var(--ink); }
+  nav.tabs svg{ width:18px; height:18px; flex:none; }
+
+  main{ max-width:860px; margin:0 auto; padding:16px 16px calc(40px + env(safe-area-inset-bottom)); }
+  .view{ display:none; } .view.on{ display:block; }
+
+  /* ---------- controls ---------- */
+  .toolbar{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
+  .search-row{ display:flex; gap:8px; }
+  .search-box{ flex:1; display:flex; align-items:center; gap:8px; background:var(--surface); border:1px solid var(--line); padding:0 12px; }
+  .search-box svg{ width:18px; height:18px; flex:none; color:var(--ink2); }
+  .search-box input{ flex:1; border:none; background:none; padding:12px 0; font-size:16px; min-width:0; }
+  .search-box input:focus{ outline:none; }
+  .btn{
+    display:inline-flex; align-items:center; justify-content:center; gap:8px;
+    background:var(--surface); border:1px solid var(--ink); color:var(--ink);
+    font-weight:600; font-size:15px; padding:11px 16px; text-decoration:none; text-align:center;
+  }
+  .btn.primary{ background:var(--ink); color:var(--bg); }
+  .btn:active{ opacity:.75; }
+  .btn.disabled{ opacity:.38; pointer-events:none; }
+  .btn svg{ width:17px; height:17px; flex:none; }
+  .chips{ display:flex; gap:6px; flex-wrap:wrap; }
+  .chip{
+    padding:8px 14px; font-size:14px; font-weight:600; border:1px solid var(--line);
+    background:var(--surface); color:var(--ink2);
+  }
+  .chip[aria-pressed="true"]{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+
+  h2.section{ font-size:13px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink2); margin:26px 0 10px; }
+  h2.section:first-child{ margin-top:4px; }
+  .empty{ border:1px dashed var(--line); padding:22px 16px; color:var(--ink2); font-size:15px; background:var(--surface); }
+
+  /* ---------- place cards ---------- */
+  .card{
+    display:flex; background:var(--surface); border:1px solid var(--line); box-shadow:var(--shadow);
+    margin-bottom:12px; text-align:left; width:100%; padding:0; cursor:pointer;
+  }
+  .card .strip{ width:12px; flex:none; }
+  .strip.active{ background:var(--active); } .strip.explore{ background:var(--explore); } .strip.relax{ background:var(--relax); }
+  .card .body{ flex:1; padding:14px 14px 12px; min-width:0; }
+  .card .top{ display:flex; align-items:flex-start; gap:8px; }
+  .card h3{ font-size:18px; font-weight:700; margin:0; line-height:1.25; flex:1; }
+  .star-btn{ flex:none; width:40px; height:40px; margin:-6px -6px 0 0; display:flex; align-items:center; justify-content:center; }
+  .star-btn svg{ width:24px; height:24px; }
+  .star-btn .star-fill{ display:none; }
+  .star-btn.on .star-fill{ display:block; } .star-btn.on .star-line{ display:none; }
+  .meta{ font-size:13.5px; color:var(--ink2); font-weight:600; margin-top:2px; }
+  .card .fact{ font-size:14.5px; margin-top:7px; display:flex; gap:8px; align-items:flex-start; }
+  .card .fact svg{ width:15px; height:15px; flex:none; margin-top:3px; color:var(--ink2); }
+  .badges{ display:flex; gap:6px; flex-wrap:wrap; margin-top:10px; }
+  .badge{ font-size:12px; font-weight:700; letter-spacing:.05em; border:1.5px solid var(--ink); padding:4px 8px; }
+  .badge.soft{ border-color:var(--line); color:var(--ink2); font-weight:600; letter-spacing:.02em; }
+  .book-flag{
+    margin-top:10px; border:1.5px solid var(--ink); padding:7px 10px;
+    font-size:13px; font-weight:700; letter-spacing:.04em;
+  }
+  .sched-line{ margin-top:10px; font-size:14px; font-weight:700; display:flex; align-items:center; gap:8px; }
+  .sched-line svg{ width:16px; height:16px; }
+  .card .actions{ display:flex; gap:8px; margin-top:12px; }
+  .card .actions .btn{ flex:1; padding:10px 8px; font-size:14.5px; }
+  .phase-tag{ font-size:12px; font-weight:700; letter-spacing:.05em; padding:5px 9px; color:#fff; flex:none; }
+  .phase-tag.active{ background:var(--active); } .phase-tag.explore{ background:var(--explore); } .phase-tag.relax{ background:var(--relax); }
+
+  /* ---------- calendar ---------- */
+  .phase-band{ margin-bottom:22px; }
+  .phase-band-head{ display:flex; gap:0; border:1px solid var(--line); background:var(--surface); margin-bottom:10px; }
+  .phase-band-head .strip{ width:12px; flex:none; }
+  .phase-band-head .inner{ padding:12px 14px; }
+  .phase-band-head h3{ margin:0; font-size:19px; font-weight:700; }
+  .phase-band-head p{ margin:3px 0 0; font-size:14px; color:var(--ink2); }
+  .day{ background:var(--surface); border:1px solid var(--line); margin-bottom:8px; display:flex; }
+  .day .strip{ width:12px; flex:none; }
+  .day .inner{ flex:1; padding:10px 12px; min-width:0; }
+  .day .dlabel{ font-weight:700; font-size:15.5px; display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+  .day .dlabel .today-tag{ font-size:11.5px; font-weight:700; letter-spacing:.06em; border:1.5px solid var(--ink); padding:2px 7px; }
+  .day .none{ color:var(--ink2); font-size:14px; margin-top:4px; }
+  .day-entry{ display:flex; align-items:center; gap:8px; margin-top:8px; border-top:1px solid var(--line); padding-top:8px; }
+  .day-entry .nm{ flex:1; font-weight:600; font-size:15px; min-width:0; cursor:pointer; }
+  .nudge{ display:flex; gap:4px; flex:none; }
+  .nudge button{
+    width:38px; height:38px; border:1px solid var(--line); background:var(--surface2);
+    display:flex; align-items:center; justify-content:center; font-size:17px; font-weight:700;
+  }
+  .nudge button:disabled{ opacity:.3; }
+  .nudge svg{ width:16px; height:16px; }
+
+  /* ---------- map ---------- */
+  #map-wrap{ position:relative; height:calc(100dvh - 215px); min-height:420px; border:1px solid var(--line); background:var(--surface2); }
+  #map{ position:absolute; inset:0; }
+  .map-locate{
+    position:absolute; top:12px; right:12px; z-index:500;
+    background:var(--surface); border:1px solid var(--ink); padding:10px 14px; font-weight:600; font-size:14.5px;
+    display:flex; gap:8px; align-items:center; box-shadow:var(--shadow);
+  }
+  .map-locate svg{ width:16px; height:16px; }
+  .pin{
+    width:22px; height:22px; border:2.5px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.45);
+    display:flex; align-items:center; justify-content:center;
+  }
+  .pin svg{ width:12px; height:12px; }
+  .pin.active{ background:var(--active); } .pin.explore{ background:var(--explore); } .pin.relax{ background:var(--relax); }
+  #map-card{
+    position:absolute; left:10px; right:10px; bottom:10px; z-index:500; display:none;
+    background:var(--surface); border:1px solid var(--line); box-shadow:0 8px 28px rgba(0,0,0,.25);
+  }
+  #map-card.on{ display:flex; }
+  #map-card .strip{ width:12px; flex:none; }
+  #map-card .inner{ flex:1; padding:12px 14px; min-width:0; }
+  #map-card h3{ margin:0; font-size:17px; padding-right:34px; }
+  #map-card .close-x{ position:absolute; top:6px; right:6px; width:36px; height:36px; display:flex; align-items:center; justify-content:center; }
+  #map-card .close-x svg{ width:18px; height:18px; }
+  #map-card .actions{ display:flex; gap:8px; margin-top:10px; }
+  #map-card .actions .btn{ flex:1; padding:9px 6px; font-size:14px; }
+
+  /* ---------- sheets / forms ---------- */
+  .sheet-back{
+    position:fixed; inset:0; background:rgba(18,15,10,.55); z-index:900; display:none;
+  }
+  .sheet-back.on{ display:block; }
+  .sheet{
+    position:fixed; z-index:950; background:var(--bg); display:none; flex-direction:column;
+    inset:auto 0 0 0; top:4dvh; border-top:2px solid var(--ink);
+  }
+  .sheet.on{ display:flex; }
+  @media (min-width:760px){
+    .sheet{ inset:0; top:0; left:auto; width:560px; border-top:none; border-left:2px solid var(--ink); }
+  }
+  .sheet-head{
+    display:flex; gap:0; background:var(--surface); border-bottom:1px solid var(--line); flex:none;
+  }
+  .sheet-head .strip{ width:12px; flex:none; }
+  .sheet-head .inner{ flex:1; padding:14px 16px; min-width:0; }
+  .sheet-head h2{ margin:0; font-size:22px; font-weight:700; line-height:1.2; padding-right:40px; }
+  .sheet-close{ position:absolute; top:10px; right:10px; width:42px; height:42px; display:flex; align-items:center; justify-content:center; }
+  .sheet-close svg{ width:22px; height:22px; }
+  .sheet-body{ overflow-y:auto; padding:16px; -webkit-overflow-scrolling:touch; }
+  .sheet-body h4{ font-size:12.5px; font-weight:700; letter-spacing:.09em; text-transform:uppercase; color:var(--ink2); margin:22px 0 6px; }
+  .sheet-body h4:first-child{ margin-top:0; }
+  .sheet-body p{ margin:0 0 8px; font-size:15.5px; white-space:pre-line; }
+  .sheet-body .big-fact{ font-size:16.5px; font-weight:600; }
+  .link-row{ display:flex; flex-direction:column; gap:8px; }
+  .link-row a{
+    display:flex; align-items:center; justify-content:space-between; gap:10px;
+    border:1px solid var(--ink); padding:11px 13px; font-weight:600; font-size:15px; text-decoration:none; background:var(--surface);
+  }
+  .link-row a svg{ width:16px; height:16px; flex:none; }
+  .detail-actions{ display:flex; gap:8px; margin:4px 0 6px; }
+  .detail-actions .btn{ flex:1; }
+  .date-row{ display:flex; gap:8px; align-items:stretch; flex-wrap:wrap; }
+  .date-row input[type="date"]{
+    flex:1; min-width:170px; border:1px solid var(--line); background:var(--surface); padding:11px 12px; font-size:16px;
+  }
+  .danger-zone{ display:flex; gap:8px; margin-top:26px; }
+  .danger-zone .btn{ flex:1; }
+  .btn.danger{ border-color:var(--ink); }
+
+  form.place-form label{ display:block; font-size:13px; font-weight:700; letter-spacing:.05em; text-transform:uppercase; color:var(--ink2); margin:16px 0 6px; }
+  form.place-form label:first-child{ margin-top:0; }
+  form.place-form input, form.place-form select, form.place-form textarea{
+    width:100%; border:1px solid var(--line); background:var(--surface); padding:11px 12px; font-size:16px;
+  }
+  form.place-form textarea{ min-height:74px; resize:vertical; }
+  form.place-form .hint{ font-size:13.5px; color:var(--ink2); margin-top:6px; }
+  form.place-form .hint.good{ color:var(--ink); font-weight:600; }
+  .form-actions{ display:flex; gap:8px; margin-top:22px; }
+  .form-actions .btn{ flex:1; }
+
+  .dialog-back{ position:fixed; inset:0; background:rgba(18,15,10,.55); z-index:990; display:none; align-items:center; justify-content:center; padding:20px; }
+  .dialog-back.on{ display:flex; }
+  .dialog{ background:var(--surface); border:2px solid var(--ink); max-width:420px; width:100%; padding:20px; }
+  .dialog h3{ margin:0 0 8px; font-size:19px; }
+  .dialog p{ margin:0 0 18px; color:var(--ink2); font-size:15px; }
+  .dialog .row{ display:flex; gap:8px; } .dialog .row .btn{ flex:1; }
+
+  .toast{
+    position:fixed; left:50%; transform:translateX(-50%); bottom:calc(18px + env(safe-area-inset-bottom));
+    background:var(--ink); color:var(--bg); padding:11px 18px; font-weight:600; font-size:14.5px; z-index:999;
+    display:none; max-width:calc(100vw - 32px); text-align:center;
+  }
+  .toast.on{ display:block; }
+  .foot-note{ margin-top:30px; font-size:13.5px; color:var(--ink2); border-top:1px solid var(--line); padding-top:14px; }
+  .leaflet-container{ font:inherit; }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="trip-line">
+    <h1>Kauai Trip</h1>
+    <span class="dates">Nov 6 – 24, 2026</span>
+  </div>
+  <div class="phase-legend" aria-label="Trip phases">
+    <span class="phase-chip"><span class="sw" style="background:var(--active)"></span>Active · Nov 6–11</span>
+    <span class="phase-chip"><span class="sw" style="background:var(--explore)"></span>Explore · Nov 12–17</span>
+    <span class="phase-chip"><span class="sw" style="background:var(--relax)"></span>Relax · Nov 18–24</span>
+  </div>
+  <nav class="tabs" role="tablist" aria-label="App sections">
+    <button role="tab" id="tab-places" aria-selected="true" data-view="places">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Places
+    </button>
+    <button role="tab" id="tab-calendar" aria-selected="false" data-view="calendar">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Calendar
+    </button>
+    <button role="tab" id="tab-map" aria-selected="false" data-view="map">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>Map
+    </button>
+  </nav>
+</header>
+
+<main>
+  <!-- PLACES -->
+  <section class="view on" id="view-places">
+    <div class="toolbar">
+      <div class="search-row">
+        <div class="search-box">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
+          <input id="search" type="search" placeholder="Search places on Kauai" autocomplete="off" />
+        </div>
+        <button class="btn primary" id="add-btn" type="button">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M12 5v14M5 12h14"/></svg>Add new
+        </button>
+      </div>
+      <div class="chips" id="cat-chips" role="group" aria-label="Filter by category"></div>
+    </div>
+    <div id="fav-wrap"></div>
+    <div id="all-wrap"></div>
+    <p class="foot-note">Prices and hours are snapshots from each place's own listing — re-confirm at booking. Your stars, edits, added places and scheduled dates are saved on this device, in this browser.</p>
+  </section>
+
+  <!-- CALENDAR -->
+  <section class="view" id="view-calendar">
+    <div id="cal-wrap"></div>
+    <p class="foot-note">Use the arrow buttons on a scheduled place to move it a day earlier or later. Tap its name to open the full card.</p>
+  </section>
+
+  <!-- MAP -->
+  <section class="view" id="view-map">
+    <div id="map-wrap">
+      <div id="map"></div>
+      <button class="map-locate" id="locate-btn" type="button">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3.2"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/><circle cx="12" cy="12" r="8.5"/></svg>
+        My location
+      </button>
+      <div id="map-card"></div>
+    </div>
+    <p class="foot-note">Tap a square pin to see the place without leaving the map. Pins are colored by the week the place fits best.</p>
+  </section>
+</main>
+
+<!-- DETAIL SHEET -->
+<div class="sheet-back" id="sheet-back"></div>
+<div class="sheet" id="detail-sheet" role="dialog" aria-modal="true"></div>
+<div class="sheet" id="form-sheet" role="dialog" aria-modal="true"></div>
+
+<!-- CONFIRM DIALOG -->
+<div class="dialog-back" id="confirm-back">
+  <div class="dialog">
+    <h3 id="confirm-title">Delete this place?</h3>
+    <p id="confirm-text"></p>
+    <div class="row">
+      <button class="btn" id="confirm-no" type="button">Keep it</button>
+      <button class="btn primary" id="confirm-yes" type="button">Delete</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script>
+"use strict";
+/* ================= icons ================= */
+var I = {
+  starLine:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" class="star-line"><path d="M12 3.6l2.5 5.2 5.7.7-4.2 4 1.1 5.6L12 16.4l-5.1 2.7L8 13.5l-4.2-4 5.7-.7z"/></svg>',
+  starFill:'<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.2" class="star-fill"><path d="M12 3.6l2.5 5.2 5.7.7-4.2 4 1.1 5.6L12 16.4l-5.1 2.7L8 13.5l-4.2-4 5.7-.7z"/></svg>',
+  phone:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 4h4l1.5 4.5L8 10a12 12 0 0 0 6 6l1.5-2.5L20 15v4a1.6 1.6 0 0 1-1.7 1.6C10 20 4 14 3.4 5.7A1.6 1.6 0 0 1 5 4z"/></svg>',
+  nav:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 3L10.5 13.5M21 3l-6.8 18-3.7-7.5L3 9.8z"/></svg>',
+  clock:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3.2 2"/></svg>',
+  tag:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3.5 12V4.5H12l8.5 8.5-7.5 7.5z"/><circle cx="8" cy="9" r="1.6"/></svg>',
+  cal:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>',
+  pin:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>',
+  x:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 5l14 14M19 5L5 19"/></svg>',
+  ext:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 4h6v6M20 4L11 13M9 5H5a1 1 0 0 0-1 1v13a1 1 0 0 0 1 1h13a1 1 0 0 0 1-1v-4"/></svg>',
+  left:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M14.5 5L7.5 12l7 7"/></svg>',
+  right:'<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4"><path d="M9.5 5l7 7-7 7"/></svg>',
+  pinWhite:'<svg viewBox="0 0 24 24" fill="#fff"><path d="M12 22s-7-5.6-7-11a7 7 0 0 1 14 0c0 5.4-7 11-7 11z"/></svg>'
+};
+var PHASES = {
+  active:{label:"Active week", dates:"Nov 6–11"},
+  explore:{label:"Explore week", dates:"Nov 12–17"},
+  relax:{label:"Relax week", dates:"Nov 18–24"}
+};
+var CATS = ["Restaurant","Activity","Business","Service"];
+
+/* ================= seed places ================= */
+var SEED = [
+{ id:"captain-j", name:"Captain J — Deep Sea Fishing Kauai", cat:"Activity", area:"Port Allen (Eleele)", address:"4353 Waialo Rd, Eleele, HI 96705 — Port Allen Harbor", phone:"(808) 651-4502", lat:21.9028, lng:-159.5925, phase:"active", bookEarly:false,
+  cost:"Private charter: 4 hr $950 · 6 hr $1,200 · 8 hr $1,600. Plus the $20 fishing license (below).",
+  hours:"Charters by reservation, departing Port Allen Harbor. Reservations line: Mon–Fri 6:30 AM–7 PM, Sat–Sun 6:30 AM–5 PM.",
+  about:"Private deep-sea sportfishing out of Port Allen Harbor on Kauai's southwest side, targeting ahi (yellowfin tuna), mahi-mahi, ono (wahoo) and marlin. Captain J (Jude Schwarze) also runs Na Pali Coast super-raft tours under Captain J's Kauai Offshore Adventures.",
+  menu:"No food included — bring your own snacks and lunch. Provided on board: all tackle and gear, ice, and bottled water / soft drinks (confirm the drink list when you book).",
+  dietary:"No food included — bring your own. There are no GF or vegan options to arrange because nothing is served; pack food that works for you.",
+  expect:"CHECK-IN: Port Allen Harbor, Eleele (4353 Waialo Rd). Check-in is about 30 minutes before departure — roughly 5:30 AM for summer departures, 6:30 AM in winter; confirm your exact time when booking.\nLICENSE: Hawaii requires non-residents to hold a Recreational Ocean Fishing License — $20 per person, bought online the morning of your trip. Captain J's own advice: do NOT buy it in advance. Buy it once you're onboard, because the license is non-transferable — if weather cancels the trip, a license bought early is wasted money.\nCATCH POLICY: The crew fillets roughly 3–4 days' worth of fish for you to take and cook. Larger fish are typically sold whole by the boat. Confirm the current policy before you pay, so there are no surprises at the dock.\nGRATUITY: 20% for the crew is the norm on Kauai charters.\nBRING: polarized sunglasses, a hat that stays on (tethered), SPF 45 sunscreen, non-marking deck shoes, a light snack, motion-sickness remedy if you're prone (take it the night before / morning of), and a small cooler for your fillets afterward.\nWEATHER: Trips can be cancelled or moved for ocean conditions — another reason the license waits until you're onboard.",
+  links:[["Book / official website — Deep Sea Fishing Kauai","https://deepseafishingkauai.com/"],["Na Pali Coast tours — Captain J's Offshore Adventures","https://napalihawaii.com/contact-us/"],["Hawaii fishing license — buy online (DLNR)","https://fishing.hawaii.gov/"]] },
+
+{ id:"jack-harter", name:"Jack Harter Helicopters", cat:"Activity", area:"Lihue", address:"4231 Ahukini Rd, Lihue, HI 96766", phone:"(808) 245-3774", lat:21.9847, lng:-159.3463, phase:"explore", bookEarly:false,
+  cost:"Doors-off tour (Hughes 500): $399 per person, 60–65 minutes in the air. Doors-on AStar tours are suspended for upgrades through November 2026 — the doors-off flight is the one running during your trip.",
+  hours:"Flights daily by reservation. Check in at the Ahukini Rd office (between Walmart and the Lihue Airport intersection) ahead of your flight time — confirm the check-in time when booking.",
+  about:"The originators of helicopter touring on Kauai (flying since 1962) and the company that introduced doors-off tours in 2005. The full-circle route covers Manawaiopuna Falls, Waimea Canyon, the Na Pali Coast, Hanalei Bay and Mt. Waialeale, with the pilot turning the aircraft so every seat gets the view.",
+  menu:"No food or drink served — it's a one-hour flight. Phones and cameras must have a secure strap; loose items like hats can't fly doors-off.",
+  dietary:"Not a food experience — nothing served on board.",
+  expect:"Doors-off means open air: wind, cooler temps at altitude, and the occasional mist. Dress warm in layers and tie back long hair. Seating is assigned by weight balance, and Jack Harter only flies with a full helicopter — if seats go unsold they may move you to a different flight time, which is one more reason to book it earlier in the trip rather than on the last days.",
+  links:[["Doors-off tour — details & booking","https://helicopters-kauai.com/hughes-doors-off-tour/"],["Doors-on tour (suspended thru Nov 2026)","https://helicopters-kauai.com/astar-doors-on-tour/"]] },
+
+{ id:"alii-kayaks", name:"Ali'i Kayaks", cat:"Activity", area:"Wailua River, Kapa'a", address:"180 Wailua Rd, Kapa'a, HI 96746", phone:"(808) 639-2544", lat:22.0480, lng:-159.3390, phase:"active", bookEarly:false,
+  cost:"Guided Secret Falls tour: $125 per person. Self-guided rentals from $80. Re-confirm at booking.",
+  hours:"Open daily for tours and rentals — call to confirm the day's tour times.",
+  about:"Full-service kayak outfitter on the Wailua River, Hawaii's only navigable river. The signature trip is an easy-going paddle upriver, then a moderate rainforest hike — wading streams and muddy trails — to Secret Falls (Uluwehi Falls), where you can swim. Self-guided rentals are available if you'd rather go at your own pace.",
+  menu:"No food included on tours or rentals — bring your own snacks and water.",
+  dietary:"No food is provided, so there are no GF or vegan arrangements to make — pack your own snacks.",
+  expect:"Expect to get wet and muddy: wear shoes that can go in the water and clothes you don't mind dirtying. The paddle is calm ('Class Zero' river) and beginner-friendly; the hike portion is the workout. Arrive at the Wailua Rd shop for check-in and gear before launching.",
+  links:[["What to know before your tour — Ali'i Kayaks","https://aliikayaks.com/blog/what-to-know-before-your-wailua-river-tour/"],["Beginner's guide to kayaking the Wailua","https://aliikayaks.com/blog/beginners-guide-to-kayaking-wailua-river/"]] },
+
+{ id:"common-ground", name:"Common Ground", cat:"Restaurant", area:"Kilauea", address:"4900 Kuawa Rd, Kilauea, HI 96754", phone:"(808) 828-6368", lat:22.1969, lng:-159.4200, phase:"relax", bookEarly:false, badges:["gf","vegan"],
+  cost:"Farm & Food Experience (tour + four-course dinner): $145 adults, $75 kids 6–12, under 6 free. Lei Workshop & Dinner and the standalone four-course dinner are also offered — see their site for current prices. Hawaii residents get a kama'aina discount.",
+  hours:"Experiences run Tuesday–Saturday, starting 5 PM (dinner seatings Tue–Sat from 6 PM). Campus is open weekdays 9 AM–7 PM for the bar, shop and the walk to Stone Dam. Bookings close 4 hours before each experience because the food is harvested to order.",
+  about:"A regenerative farm and food campus on 60+ acres in Kilauea, on the old Kilauea Sugar / Guava Kai plantation land. The flagship evening is a guided walk through the food forest followed by a four-course farm-to-table dinner sourced entirely from the farm and other Hawaii growers. There's also a craft cocktail & dinner experience and a lei-making workshop & dinner.",
+  menu:"The menu is set by the harvest and changes daily, so there's no fixed menu ahead of time. A typical spread: farm-style salad (radish, beets, papaya, guava-lilikoi vinaigrette), roasted beet bisque with basil oil, creative vegetable dishes — kale, purple sweet potato, taro, breadfruit — locally ranched meats, and a seasonal sorbet, with mamaki and ginger blossom tea. See their Farm Tours and Dinner pages for sample menus.",
+  dietary:"GLUTEN-FREE: yes — all of their food is gluten free, and they use no bovine dairy. VEGAN: yes, with advance notice on your reservation. Dietary needs must be declared at booking — because the dinner is prix fixe and harvested to order, they cannot accommodate requests that aren't on the reservation.",
+  expect:"Book ahead — experiences open three months out and sell out in high season. Drive very slowly on Kuawa Road for neighbors and wildlife. If you have dietary questions, call (808) 828-6368 x2 before booking. Even without a booking, you can stop by on weekdays, check in at the welcome center, and walk the campus.",
+  links:[["Farm Tour & Dinner — book here","https://commongroundkauai.com/farm-tours/"],["Four-course dinner — menu & booking","https://commongroundkauai.com/dinner/"],["Lei Workshop & Dinner","https://commongroundkauai.com/lei-food/"],["Plan your visit","https://commongroundkauai.com/visit/"]] },
+
+{ id:"kauai-museum", name:"Kaua'i Museum", cat:"Activity", area:"Lihue", address:"4428 Rice St, Lihue, HI 96766", phone:"(808) 245-6931", lat:21.9745, lng:-159.3688, phase:"active", bookEarly:false,
+  cost:"Admission: general $15 · seniors 65+ $12 · students 8–17 $10 · keiki 7 and under free · Kaua'i kama'aina $10. Saturdays are free for Kaua'i and Ni'ihau residents.",
+  hours:"Monday–Friday 9 AM–4 PM · Saturday 9 AM–2 PM · Sunday closed. Regular docent tours Mon, Wed & Fri at 10 AM. Lauhala weaving happens Wednesdays 1–3 PM.",
+  about:"Kauai's island museum in the historic Albert Spencer Wilcox Building in downtown Lihue — exhibits on the geology of the islands, early Native Hawaiian life, Captain Cook's arrival at Waimea, the monarchy era, and the multicultural plantation years, with strong collections from both Kauai and Ni'ihau (including Ni'ihau shell work). A good rainy-day or first-days stop to get oriented in the island's story.",
+  menu:"No food served. There's a gift shop (gift-shop-only visits are free).",
+  dietary:"Not a food venue.",
+  expect:"Plan about 1–2 hours. Admission is good value paired with the Wednesday lauhala session (1–3 PM) if you want to see traditional weaving up close. Docent tours at 10 AM on Mon/Wed/Fri add a lot of context for the same ticket.",
+  links:[["Official website — hours & admission","https://www.kauaimuseum.org/home"]] },
+
+{ id:"haena", name:"Hā'ena State Park (Ke'e Beach & Kalalau Trail)", cat:"Activity", area:"North Shore — end of the road", address:"End of Kuhio Hwy (Hwy 560), Hā'ena, HI", phone:"", lat:22.2206, lng:-159.5800, phase:"explore", bookEarly:false,
+  cost:"Reservation required for all non-residents — no walk-ups. Parking + Entry: $20 per car per time slot + $5 entry per person (morning slot 6:30 AM–12:30 PM, afternoon 12:30–5:30 PM). OR Shuttle + Entry: $45 per adult (16+), $25 ages 4–15, under 4 free on a lap. Entry-only (dropped off / biking in): $5 per person.",
+  hours:"Park hours roughly 7 AM–6:45 PM daily. Reservations open exactly 30 days ahead at 12:00 AM Hawaii time on GoHaena.com and parking sells out within minutes. Check the Go Hā'ena FAQ for current rules before you rely on any of this.",
+  about:"The end of the road on the North Shore: Ke'e Beach (reef-protected, the swimmable beach here) and the trailhead of the Kalalau Trail along the Na Pali Coast. The day-hike is 2 miles each way (4 round trip, 3–4 hours, ~600 ft of climbing, rocky and often muddy) to Hanakāpī'ai Beach; adding the falls makes it 8 miles round trip. Hanakāpī'ai Beach is for the view only — do NOT swim there; the currents have killed people, and November surf makes it worse. Swim at Ke'e instead.",
+  menu:"No food sold in the park. Bring all water and food with you — and pack it out.",
+  dietary:"No food available on site — bring your own. Note there is no cell reception at the park, so sort food and pickup plans before you go.",
+  expect:"GETTING IN: Everyone named on the reservation must arrive together in one vehicle; bring the ID that matches the reservation name. Shuttle riders must arrive on the shuttle — the final return shuttle leaves the park around 5:40 PM. Missed the midnight booking drop? Unreserved slots re-release around 12:15 AM HST, and cancellations often pop up between 7–8 AM HST — check over coffee for a few days running.\nTHE DRIVE: From Poipu it's about 49 miles and 1.5 hours each way in normal traffic — up to 2 hours with the one-lane bridges past Hanalei. This is a full-day commitment.\nAT KE'E: Restrooms and showers on site. No parking is allowed along the highway outside the gate (tickets start around $200, towing possible).",
+  links:[["Reserve & FAQ — Go Hā'ena (official booking)","https://gohaena.com/info-faqs/"]] },
+
+{ id:"zodiac-tourz", name:"Kauai Zodiac Tourz (Z Tourz)", cat:"Activity", area:"Anini Beach (tours) · Poipu (office)", address:"Tours meet at Anini Beach, North Shore. Office: 3417 Poipu Rd #105, Koloa, HI 96756", phone:"(808) 742-7422", lat:22.2266, lng:-159.4635, phase:"active", bookEarly:true,
+  cost:"Ultimate Guided Shore Snorkel at Anini (no boat): $105–$122 per person, ages 5+. Private shore snorkel (up to 8): $799. Zodiac boat snorkel and seasonal whale/dolphin tours also run — see the tours page for current prices.",
+  hours:"Open daily 7 AM–5:30 PM. The shore snorkel runs about 1.5 hours with 45–60 minutes in the water.",
+  about:"Guided snorkeling 'beyond the beach': a shore-entry snorkel at Anini Beach — no boat — over an extensive reef with tropical fish, honu (green sea turtles) and the occasional monk seal, led by guides who teach fundamentals first, which makes it a strong pick for first-timers. They also run Zodiac boat snorkel trips and winter whale/dolphin tours.",
+  menu:"Snacks included on the shore snorkel, plus all snorkel gear, flotation (snorkel vests and boards) and towels. Full-face snorkel masks are not permitted, for safety.",
+  dietary:"Only light snacks are served — not a meal. No published GF/vegan snack guarantee; if it matters, ask when you book.",
+  expect:"Arrive 15 minutes early to check in. All passengers must be 4+ and comfortable in open ocean water; entry and exit points can be challenging and conditions vary daily. You'll get a confirmation email with waivers and exact meeting directions. No transportation is provided — you get yourself to Anini.",
+  links:[["Official website","https://kauaiztours.com/"],["Tours & booking","https://kauaiztours.com/tours/"]] },
+
+{ id:"spearfishing", name:"Hawaiian Reef Spearfishing", cat:"Activity", area:"Anini Beach, North Shore", address:"Meet at Anini Beach — 4241 Anini Rd, Kilauea, HI 96754 (exact spot texted to you)", phone:"", lat:22.2272, lng:-159.4652, phase:"explore", bookEarly:false,
+  cost:"Beginner lesson: $120–$145 per person (booked through Viator / Peek listings). Plus the $20 Hawaii fishing license (24-hour, non-resident) — see below. Max 6 travelers per session.",
+  hours:"Sessions by booking, typically starting around 9–10 AM and running about 3 hours. Final meeting instructions are texted to you 24 hours in advance.",
+  about:"A beginner spearfishing lesson the Hawaiian way: a 45-minute on-shore master class covering gear safety and how to identify native vs. invasive reef fish and dive responsibly, then a two-hour guided in-water session with a traditional three-prong spear, and a wrap-up with photos and Q&A. If you land a fish, your guide bags it for you to take home — but the focus is instruction and sustainable practice, not guaranteed dinner.",
+  menu:"No food included — bring your own water and snacks. Snorkeling equipment and the three-prong spear are provided, EXCEPT fins (see What to expect).",
+  dietary:"No food is served — nothing to arrange; bring your own snacks.",
+  expect:"FINS ARE REQUIRED AND NOT PROVIDED — bring your own fins; the rest of the snorkel gear is supplied.\nLICENSE: Hawaii requires non-residents to have a recreational ocean fishing license — $20 for 24 hours, bought on the state DLNR site (fishing.hawaii.gov). One reviewer tip: if you plan to spearfish again during the trip, the week-long license is better value.\nMEETING: Somewhere at Anini Beach — the exact instructions are texted 24 hours before your session. No transport to the meeting point is included.\nFITNESS: You should be a strong swimmer in good physical shape — not recommended with back problems, heart conditions, or during pregnancy.\nCANCELLATION: Full refund if you cancel 24+ hours ahead; weather cancellations get a new date or a full refund.",
+  links:[["Book the lesson — listing on Peek","https://www.peek.com/kauai/r0jjp/kauai-reef-spearfishing-beginner-spearfishing-adventure/a0ww7wd7"],["Hawaii fishing license — buy online (DLNR)","https://fishing.hawaii.gov/"]] },
+
+{ id:"fathom-five", name:"Fathom Five Divers", cat:"Activity", area:"Koloa / Koloa Landing", address:"3450 Poipu Rd, Koloa, HI 96756", phone:"(808) 742-6991", lat:21.9029, lng:-159.4664, phase:"explore", bookEarly:false,
+  cost:"Night dive from $175. For comparison on the same menu: Koloa Landing 2-tank shore dive from $170 · 2-tank boat dive from $239 · premium 3-tank boat dive from $345 · introductory shore dive from $162. Re-confirm at booking.",
+  hours:"Shop open daily 7 AM–6 PM. Dive check-in times vary by site and season — confirmed when you book.",
+  about:"PADI 5-Star dive center in Koloa with a hard cap of six divers per boat. South Shore boat dives hit 20+ sites within about 15 minutes of the harbor; the shore diving at Koloa Landing is the island's most popular — easy entry, turtles sleeping on the reef, dragon morays, and everything from monk seals to whales has been seen there. The night dive is the standout for experienced divers.",
+  menu:"No meals served — it's a dive operation. Gear rental and underwater camera rental available.",
+  dietary:"Not a food venue.",
+  expect:"Small groups fill up — book the night dive ahead rather than walking in. If you're new, the introductory shore dive includes a one-hour academic lesson with an instructor who stays with you the whole dive. Ask about current south-swell conditions at Koloa Landing (caution over ~4 ft) when you call.",
+  links:[["Official website","https://www.fathomfive.com/"],["Dives & classes","https://www.fathomfive.com/dives-classes/?srsltid=AfmBOoo_qYzUk5z_DVYIl-pb3RuxhNxQHobS0RD1yv6UlTr-sRrWdfHm"],["Dive sites guide","https://www.fathomfive.com/dive-sites/"]] },
+
+{ id:"smiths-luau", name:"Smith's Fern Grotto & Garden Luau", cat:"Restaurant", area:"Wailua", address:"3-5971 Kuhio Hwy, Kapa'a, HI 96746", phone:"(808) 821-6895", lat:22.0472, lng:-159.3442, phase:"relax", bookEarly:false, badges:["gf","vegan"],
+  cost:"Garden Luau around $150 per adult (premium-priced; confirm current tiers when booking). Note: from Feb 2026 the state charges Wailua River State Park fees on arrival — $5 per person entry + $10 per vehicle parking, credit card only, separate from Smith's prices. Hawaii residents with state ID are exempt.",
+  hours:"Gardens and office open daily 8:30 AM–4 PM. The luau runs on select evenings — the evening starts with a tram tour of the gardens and the imu (underground oven) ceremony before dinner and the show. Fern Grotto river cruises run during the day from the same marina.",
+  about:"Four generations of the Smith family on the Wailua River since 1946. The Garden Luau is set in 30 acres of tropical gardens in the Wailua River Valley — named 'best luau on the island' by the Kauai Revealed guidebook — with a buffet dinner and a torch-lit amphitheater show covering Hawaiian hula, Tahitian drum dance and the Samoan fire knife dance. The same family runs the Fern Grotto river cruise and the Tropical Paradise gardens.",
+  menu:"Buffet built around the imu: kalua pig, teriyaki beef, poi, cucumber namasu, bean salad, Chinese-style rice, and desserts like haupia cake and rice pudding. The show follows dinner in the open-air amphitheater.",
+  dietary:"It's a big buffet, which helps: there are naturally gluten-free dishes (kalua pig, poi, salads) and vegetarian/vegan-leaning sides. Nothing is formally labeled GF/vegan on the buffet — tell them about dietary needs when you reserve so the kitchen can flag what works.",
+  expect:"Arrive in time for the garden tram and the imu ceremony — that's part of the experience, not a pre-show extra. Evenings in the river valley can be cool and buggy; bring a light layer. If you're pairing it with the Fern Grotto cruise, do the cruise in the afternoon and the luau the same evening from the same base.",
+  links:[["Official website — luau, gardens & cruises","http://www.smithskauai.com/"],["Fern Grotto tours","https://www.smithskauai.com/fern-grotto/"]] },
+
+{ id:"princeville-gardens", name:"Princeville Botanical Gardens", cat:"Activity", area:"Princeville", address:"3840 Ahonui Pl, Princeville, HI 96722", phone:"(808) 634-5505", lat:22.1974, lng:-159.4537, phase:"explore", bookEarly:false, badges:["gf"],
+  cost:"Guided garden & chocolate tour: about $105–$126 per person, gratuity included. Re-confirm at booking.",
+  hours:"Tours only — no general admission. Tours run Monday, Tuesday, Thursday and Friday, roughly 9 AM–12:30 PM (about 3 hours). Pre-reservation is required.",
+  about:"A private 9-acre family-built garden in a jungle valley above Hanalei — 600+ species across terraces, creek beds and valley floor: tropical, canoe, medicinal and rare/endangered plants. The guided tour is famous for its tastings along the way — exotic fruits picked on the walk, raw honey from the garden's hives, and a seated chocolate tasting at the end.",
+  menu:"Tastings are part of the tour: seasonal fruit samples, raw honey, and single-origin chocolates from around the world, with the bean-to-bar story from cacao grown on site.",
+  dietary:"The tastings are naturally gluten-free (fruit, honey, chocolate). Not fully vegan — the honey tasting is a centerpiece. Tell them about allergies when you reserve.",
+  expect:"Meet at 3840 Ahonui Place at the start time; parking is inside the gates. It's a real walk — three hours with some strenuous stretches — so wear proper walking shoes and bring water. Walking sticks, umbrellas and DEET-free bug spray are provided. Free cancellation up to 24 hours ahead.",
+  links:[["Official website — tours & booking","https://kauaibotanicalgardens.com/"]] },
+
+{ id:"rum-safari", name:"Rum Safari — Kauai Safaris at Kilohana", cat:"Activity", area:"Lihue (Kilohana Plantation)", address:"Kilohana Plantation, 3-2087 Kaumualii Hwy, Lihue, HI 96766", phone:"", lat:21.9714, lng:-159.3929, phase:"relax", bookEarly:false,
+  cost:"Rum Safari: from $80 per person, 2 hours, ages 21+.",
+  hours:"IMPORTANT — CLOSED through November 15 for cleanup and repairs after Hurricane Lowell. Tentative reopening November 16, and the date may move. Bookings are closed for dates through Nov 15; you can reserve dates after that on their site, but re-check their homepage for the reopening status before you count on it.",
+  about:"A two-hour open-air safari-truck tour of the 105-acre Kilohana Plantation: orchards and farm fields, a boardwalk stroll through tropical forest to a jungle bungalow for a Koloa Rum tasting and their signature Mai Tai, a stop to meet and feed the farm animals (including the herd of wild pigs), and a final farm-to-glass cocktail mixed with fruit and herbs picked on the plantation.",
+  menu:"Included tastings: Koloa Rum pours, the signature Mai Tai, and a farm-to-glass cocktail made with plantation fruit and herbs.",
+  dietary:"This is a rum tasting — drinks, not a meal. Cocktails are built on rum, citrus and plantation fruit; there's no published GF/vegan menu. Rum itself is distilled (generally gluten-free), but ask the guides about mixers if gluten is a hard line for you.",
+  expect:"21+ only, and bring ID. Because of the closure, this belongs in the Relax week (Nov 18–24) if it happens at all — check the Kauai Safaris homepage for the current reopening date before scheduling it, and keep a backup plan for the evening.",
+  links:[["Official website — reopening status & booking","https://www.kauaisafaris.com/"],["Kilohana train tour (same property)","https://www.kauaisafaris.com/kauai-train-tour/"]] },
+
+{ id:"backcountry", name:"Kauai Backcountry Adventures — Mountain Tubing", cat:"Activity", area:"Lihue", address:"3-4131 Kuhio Hwy, Lihue, HI 96766", phone:"(808) 245-2506", lat:21.9953, lng:-159.3548, phase:"explore", bookEarly:true,
+  cost:"Mountain Tubing Adventure: $169 per person. Re-confirm at booking — this tour sells out.",
+  hours:"Tour departures through the day (historically 8 AM, 9 AM, 10 AM, 12 PM, 1 PM and 2 PM starts — your confirmation lists your exact time). The whole adventure runs about 3 hours.",
+  about:"Kauai's only mountain tubing tour: float 2.5 miles of historic plantation irrigation canals, flumes and five hand-dug tunnels (lit by your headlamp) through the lush interior of the old Lihue Plantation, on land the company has exclusive access to. It ends at a picnic spot with lunch and a dip in a natural swimming hole.",
+  menu:"Lunch is included after the float, plus water. Provided gear: tube, helmet, headlamp and gloves.",
+  dietary:"Lunch is included, but the caterer does NOT accommodate special diets — no GF or vegan version is available. Eat accordingly before you go, or bring your own food for the picnic.",
+  expect:"Requirements: at least 5 years old, at least 43 inches tall, max 300 lbs. Not recommended with back, hip or knee problems. Wear a swimsuit or clothes that can get wet, water-friendly lace-up shoes (no flip-flops), sunscreen, and bring a towel and dry change of clothes. Tours run rain or shine unless conditions prohibit. Cancellation: 24 hours' notice (72 hours for groups of 6+). It books up fast — this is one of the two things on the island to lock in before you land.",
+  links:[["Mountain tubing — details & booking","https://kauaibackcountry.com/mountain-tubing-adventure/"]] },
+
+{ id:"kenji-burger", name:"Kenji Burger", cat:"Restaurant", area:"Kapa'a", address:"4-788 Kuhio Hwy, Kapa'a, HI 96746", phone:"(808) 320-3558", lat:22.0607, lng:-159.3213, phase:"active", bookEarly:false, badges:["gf"],
+  cost:"Moderate — most burgers, bowls and bentos run roughly $11–$16. (Also in Lihue and Koloa if you're on the other side of the island.)",
+  hours:"Kapa'a: open 11 AM–8:30 PM, Friday–Saturday until 9 PM; closed Tuesdays. Hours can shift — worth a quick call if you're making a special trip.",
+  about:"Japanese-Hawaiian fusion burger joint built on 100% Kauai grass-fed beef. Beyond the burgers there's a full fusion menu — sushi burritos, poke bowls, bentos — and a laid-back patio where the local chickens provide the entertainment. Featured on Diners, Drive-Ins and Dives.",
+  menu:"Order: the Kenji Burger (teriyaki, ponzu aioli, caramelized onions, cheddar, tomato, arugula), the Hapa Burger, the truffle burger, or the misoyaki fish sandwich. Plus sushi burritos (spicy tuna, shrimp tempura), poke bowls, chicken katsu, furikake fries, deep-fried gyoza, and milkshakes (the lychee shake gets raved about).",
+  dietary:"GLUTEN-FREE: workable, with a caveat — ask for the patty un-marinated and skip the bun/sauces, since the teriyaki marinade and several sauces contain soy sauce (wheat). Tell them it's for gluten reasons, not preference. VEGAN: no dedicated vegan entrees on the menu — the veggie burger bento exists, but confirm how it's prepared if vegan is a hard requirement.",
+  expect:"Casual counter service with patio seating; parking is tight — it's a short walk from the Safeway lot. The sushi burrito is big enough to share, but you won't want to.",
+  links:[["Official website & menu","http://www.kenjiburger.com/"]] },
+
+{ id:"little-fish", name:"Little Fish Coffee", cat:"Restaurant", area:"Poipu", address:"2294 Poipu Rd, Koloa, HI 96756", phone:"(808) 742-2113", lat:21.8783, lng:-159.4578, phase:"relax", bookEarly:false, badges:["gf","vegan"],
+  cost:"Inexpensive — coffee drinks, acai bowls and bagel sandwiches at coffee-shop prices.",
+  hours:"Daily 7 AM–1 PM. The line forms early — arrive near opening or order online ahead.",
+  about:"Open-air coffee shack on Poipu Road with a turquoise deck, picnic tables and fearless roaming chickens. Famous for its acai bowls and creative coffee drinks; the Poipu original now has sister spots in Hanapepe and Koke'e. Ideal slow-morning breakfast near the beach.",
+  menu:"Order: the Mac Nut Latte or the Midnight Marauder (honey cinnamon cold foam), a matcha latte, the Little Fish Bowl or Pakala Bowl (acai with peanut butter, almonds, chocolate chips), and a bagel sandwich — the Turkey Bagelwich with pesto schmear, or the breakfast bagel. Smoothies, pastries and salads round it out.",
+  dietary:"GLUTEN-FREE: options exist — acai bowls and smoothies are naturally GF (ask them to hold the granola if it's not certified GF). VEGAN: yes — acai bowls, smoothies and plant-milk lattes cover breakfast well.",
+  expect:"It's fully outdoors and popular — expect a line at peak morning hours; online ordering skips it. The chickens will genuinely try to steal your food; the shop keeps spray bottles on the tables for exactly this.",
+  links:[["Official website — menu & online ordering","http://little-fish-coffee.square.site/"]] },
+
+{ id:"aulii-luau", name:"Auli'i Luau", cat:"Restaurant", area:"Poipu — Sheraton Kauai", address:"2440 Hoonani Rd, Koloa, HI 96756 (Sheraton Kauai Resort, oceanfront lawn)", phone:"(808) 634-1499", lat:21.8763, lng:-159.4603, phase:"relax", bookEarly:true, badges:["gf","vegan"],
+  cost:"Around $210 per adult for standard seating; Premier seating (first four rows, VIP check-in, specialty lei, tableside appetizers, priority buffet) costs more. Children under 3 free. Confirm current pricing when booking — luau seats sell out.",
+  hours:"Luau nights are typically Mondays and Thursdays (some Wednesdays), on the oceanfront lawn at the Sheraton. Check-in 5:30 PM in spring/summer, 5:00 PM October–February — so 5:00 PM during your trip.",
+  about:"Kauai's only beachfront luau, on the sand at Poipu Beach in front of the Sheraton. The evening: shell or flower lei on arrival, cultural demonstrations and pre-show activities (poi pounding, net throwing, hula implements, headband weaving), the imu ceremony, a buffet dinner, then Urahutia Productions' show — from the first Polynesian voyagers to the Pele and Lohiau story — ending with fire-knife dancers as the sun goes down over the water.",
+  menu:"Buffet highlights: poke, lomi lomi salmon, crispy Hawaii potato chips, pipi kaula, individual lau lau, huli huli chicken, kalua pork, purple sweet potatoes, chow mein — plus an open bar (mai tais) included in both seating tiers.",
+  dietary:"GF / dairy-free / vegan: yes — the kitchen accommodates gluten-free, dairy-free and vegan guests, but it must be arranged with advance notice when you reserve. Don't just show up and ask; call (808) 634-1499 when you book.",
+  expect:"Book early — it's the only oceanfront luau on the island and November dates go. Premier seating is assigned by reservation date within the first four rows, so booking sooner literally moves you closer. Arrive for the 5 PM check-in to catch the pre-show activities, not just dinner.",
+  links:[["Official website — booking & seating","https://www.auliiluau.com/"]] },
+
+{ id:"coconut-hula", name:"Coconut Marketplace — Free Hula Show", cat:"Activity", area:"Kapa'a", address:"4-484 Kuhio Hwy, Kapa'a, HI 96746", phone:"(808) 822-3641", lat:22.0538, lng:-159.3293, phase:"relax", bookEarly:false,
+  cost:"Free. The hula show costs nothing — it's the marketplace's gift to the Coconut Coast.",
+  hours:"Hula Show with fire knife dancer: Wednesday & Friday, 5:00–5:30 PM on the Center Stage. There's also a Thursday live-music & hula show, 12:00–1:00 PM. Marketplace shops: Mon–Sat 9 AM–8 PM, Sun 10 AM–6 PM. Shows are weather permitting.",
+  about:"An open-air marketplace on Kapa'a's Coconut Coast whose Center Stage hosts one of the best free shows on Kauai: Kumu Hula Leilani Rivera Low and Hālau Hula 'O Leilani perform traditional Hawaiian music and hula, with a fire knife dancer, in a journey across Polynesia. An easy, zero-planning cultural stop — pair it with dinner in Kapa'a.",
+  menu:"No food served at the show itself; the marketplace has eateries and shops around the stage.",
+  dietary:"Not applicable to the show — check individual marketplace eateries for their own GF/vegan options.",
+  expect:"Just show up a little before 5 PM on a Wednesday or Friday and grab a spot. In rain, the show may move to the Marketplace Pavilion or be cancelled — no reservation to lose either way.",
+  links:[["Official website — events calendar","http://www.coconutmarketplace.com/"]] },
+
+{ id:"lydgate", name:"Lydgate Beach Park", cat:"Activity", area:"Wailua", address:"Leho Dr, Wailua, HI 96746 (just south of the Wailua River mouth)", phone:"", lat:22.0403, lng:-159.3348, phase:"relax", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. Lifeguarded.",
+  about:"The beginner-snorkeler's beach: two rock-walled, lagoon-like ponds (the Morgan's Ponds) break the surf, creating calm, protected water that's ideal for kids, first-timers and anyone who wants an easy snorkel with actual fish in it. Big grassy park, picnic pavilions, playgrounds and showers — a proper beach-day base on the east side.",
+  menu:"No food sold — bring a picnic. Kapa'a eateries are five minutes away.",
+  dietary:"No food on site — bring your own.",
+  expect:"The ponds are the draw: enter there rather than the open ocean side. Conditions outside the walls are a different story — stay inside the lagoons for the calm experience. Pairs naturally with Smith's, the Fern Grotto cruise, or a Kapa'a dinner on an east-side day.",
+  links:[] },
+
+{ id:"anini", name:"Anini Beach", cat:"Activity", area:"North Shore", address:"Anini Rd, Kilauea, HI 96754", phone:"", lat:22.2274, lng:-159.4655, phase:"relax", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard.",
+  about:"One of the longest reefs in Hawaii shelters this long, quiet North Shore beach — the reef keeps the water calm when other north beaches are rough, which is why both the guided shore snorkel and the spearfishing lessons base here. Shallow, sandy, shaded in stretches by ironwood trees; a locals' favorite for a slow beach day.",
+  menu:"No food sold at the beach. The Anini area has an occasional food stand near the park — don't count on it; bring food from Kilauea or Princeville.",
+  dietary:"No food on site — bring your own.",
+  expect:"No lifeguard — the reef-protected lagoon is gentle, but know your limits and watch the channel areas where currents run out. Winter (November) surf can change conditions; if the water looks churned up, make it a sit-and-look day. Restrooms and showers at the beach park.",
+  links:[] },
+
+{ id:"salt-pond", name:"Salt Pond Beach Park", cat:"Activity", area:"Hanapepe", address:"Salt Pond Rd, Hanapepe, HI 96716", phone:"", lat:21.8993, lng:-159.6047, phase:"relax", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. Lifeguarded.",
+  about:"A west-side local beach next to the traditional Hawaiian salt ponds — shallow, reef-protected natural pools make it another good gentle swim, and the sunsets are the best on the island from here. Next door, Hanapepe town is worth the stroll for its galleries and Friday art night. A different flavor of beach day from Poipu: quieter, more local.",
+  menu:"No food at the beach itself. Hanapepe town (2 minutes) has cafes and the famous Taro Ko chips factory nearby.",
+  dietary:"No food on site — Hanapepe town eateries are the option; check with them directly.",
+  expect:"The protected pools on the left side are the family swim spot. Look at the salt ponds (still harvested the traditional way — admire, don't touch or walk in them). Combine with Waimea / the west side, or stop on the way back from Port Allen.",
+  links:[] },
+
+{ id:"baby-beach", name:"Baby Beach (Poipu)", cat:"Activity", area:"Poipu", address:"Hoona Rd, Poipu, HI 96756", phone:"", lat:21.8798, lng:-159.4379, phase:"relax", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard.",
+  about:"A small, crescent cove on Hoona Road in Poipu where a shallow reef creates a calm, knee-deep lagoon — the gentlest water on the south shore and the classic first-ocean spot for little kids, hence the name. For two adults it's a quiet, easy float-and-read beach a short walk from the busier Poipu Beach Park.",
+  menu:"No food sold — Poipu's restaurants and the Beach House lawn are a short walk/drive.",
+  dietary:"No food on site.",
+  expect:"Street parking only on Hoona Rd, and it's a residential street — park considerately and keep noise down. The lagoon is shallow; at low tide it's very shallow. No facilities and no lifeguard — bring what you need from Poipu Beach Park if facilities matter.",
+  links:[] },
+
+{ id:"north-shore-shuttle", name:"Kauai North Shore Shuttle (Hā'ena Shuttle)", cat:"Service", area:"Hanalei / Princeville → Hā'ena", address:"Waipā Park & Ride, Hanalei, HI (free parking) — also picks up in Princeville", phone:"(888) 409-2702", lat:22.1989, lng:-159.4717, phase:"explore", bookEarly:false, badges:[],
+  cost:"Shuttle + Hā'ena park entry: $45 per adult (16+), $25 ages 4–15, under 4 free on a lap. Booked through Go Hā'ena — this is the alternative when Hā'ena parking sells out.",
+  hours:"Shuttles run roughly every 20–30 minutes through the day; the first leaves Hanalei around 6:30 AM and the final return pickup from Hā'ena State Park is about 5:40 PM. Confirm the current schedule when you book.",
+  about:"The shuttle service that runs visitors from Hanalei (Waipā Park & Ride, free parking) and Princeville stops to Hā'ena State Park — the practical way into Ke'e Beach and the Kalalau Trail when the park's 100 parking stalls are gone, which is most days. Your shuttle ticket includes park entry, and shuttle riders must arrive on the shuttle.",
+  menu:"No food — it's transport. Bring everything you need for the park; there's nothing to buy at Hā'ena.",
+  dietary:"No food served — bring your own for the park day.",
+  expect:"Return rides from the park are first-come, first-served from any stop — don't cut the last shuttle close; the final return is around 5:40 PM. There is no cell reception at Hā'ena, so agree on your return plan before you lose signal. Questions line: (888) 409-2702, 7 AM–7 PM Hawaii time.",
+  links:[["Reserve shuttle + entry — Go Hā'ena FAQ","https://gohaena.com/info-faqs/"]] },
+
+{ id:"puka-dog", name:"Puka Dog", cat:"Restaurant", area:"Poipu", address:"Poipu Shopping Village, 2360 Kiahuna Plantation Dr, Poipu, HI 96756", phone:"", lat:21.8792, lng:-159.4547, phase:"relax", bookEarly:false, badges:["vegan"],
+  cost:"Inexpensive — a dog and a fresh lemonade is one of the cheapest lunches in Poipu.",
+  hours:"Open daily for lunch into the afternoon/evening — check the current hours online before you go.",
+  about:"A Kauai original: a hot dog served in a toasted, bun-with-a-hole ('puka' means hole) filled with garlic lemon sauce and your choice of tropical relish. A required stop according to every Kauai mistakes list — don't skip the local food scene for chains.",
+  menu:"Order: Polish sausage or veggie dog, mango or pineapple relish, garlic lemon sauce (mild to hot), and a fresh-squeezed lemonade.",
+  dietary:"VEGAN: yes — there's a veggie dog. GLUTEN-FREE: no GF bun exists — order the dog naked (no bun) to keep it gluten-free.",
+  expect:"Counter service, casual, quick. Lines at lunch. Poipu Shopping Village parking is easy — pair it with a Poipu beach afternoon.",
+  links:[] },
+
+{ id:"dukes", name:"Duke's Kauai", cat:"Restaurant", area:"Kalapaki Beach, Lihue", address:"Kauai Marriott Resort, 3610 Rice St, Lihue, HI 96766", phone:"", lat:21.9597, lng:-159.3510, phase:"active", bookEarly:false, badges:["gf","vegan"],
+  cost:"Mid-to-upper range — beachfront resort dining; dinner entrees are the splurge, lunch and the Barefoot Bar are gentler.",
+  hours:"Open daily for lunch and dinner — reservations recommended for dinner. Confirm current hours when booking.",
+  about:"Beachfront dining on Kalapaki Bay at the Kauai Marriott, named for Duke Kahanamoku. Fresh island fish, prime rib, a big salad bar downstairs at the Barefoot Bar, and the famous Hula Pie for dessert. A natural first-night or last-night dinner — it's minutes from the airport.",
+  menu:"Order: the fresh fish of the day (macadamia-nut crust is the classic prep), prime rib on the nights it's carved, and Hula Pie — macadamia ice cream pie — to share.",
+  dietary:"GLUTEN-FREE: yes, options are marked/handled on the menu. VEGAN: yes, there are vegan options — ask your server for the current ones.",
+  expect:"Ask for a table near the railing for the bay view. Valet/resort parking at the Marriott. It gets busy — book dinner ahead.",
+  links:[] },
+
+{ id:"beach-house", name:"The Beach House Restaurant", cat:"Restaurant", area:"Poipu", address:"5022 Lawai Rd, Poipu, HI 96756", phone:"", lat:21.8743, lng:-159.4359, phase:"relax", bookEarly:false, badges:["gf","vegan"],
+  cost:"Fine dining — the special-occasion dinner of the trip. Sunset seatings go first.",
+  hours:"Dinner nightly; the prime seating is timed to sunset (around 5:45 PM in November). Reserve well ahead and ask for a sunset table.",
+  about:"Poipu's signature oceanfront fine-dining room, on the water at Lawai Road — surfers and sunset in front of you, some of the best-regarded cooking on the island's south shore. This is the dress-up dinner.",
+  menu:"Order: the fresh catch preparations and whatever the seasonal tasting specials are; the menu changes with what's landed and grown. Save room — the desserts are a strength.",
+  dietary:"GLUTEN-FREE: yes, options available. VEGAN: yes, vegan options available — mention it when you reserve so the kitchen is ready.",
+  expect:"Book the sunset seating or don't bother with the premium — the view is half the point. Smart-casual dress. Arrive a few minutes early to watch the light change from the lawn.",
+  links:[] },
+
+{ id:"tahiti-nui", name:"Tahiti Nui", cat:"Restaurant", area:"Hanalei", address:"5-5122 Kuhio Hwy, Hanalei, HI 96714", phone:"", lat:22.2029, lng:-159.4985, phase:"explore", bookEarly:false, badges:["gf"],
+  cost:"Moderate — family-run Hanalei pricing; the mai tai is the famous splurge.",
+  hours:"Open for lunch and dinner — known for luau nights and live music on select evenings. Check the current schedule when you're planning a Hanalei day.",
+  about:"A Hanalei institution — family-run since the 1960s, part restaurant, part beloved local bar. Famous for its mai tai (a family recipe) and for the small, warm luau nights. If you saw 'The Descendants,' you saw this room.",
+  menu:"Order: the mai tai first. Then fresh fish, the Tahitian-style plates on luau nights, and whatever the kitchen is running as the special.",
+  dietary:"GLUTEN-FREE: yes, workable — ask your server which plates can be done GF. VEGAN: limited — a few vegetable/rice options, but no dedicated vegan entrees; ask before you count on it.",
+  expect:"Very casual, very local. Parking in Hanalei is the battle — go early. Live music nights fill the room; luau nights need a reservation.",
+  links:[] },
+
+{ id:"hamura-saimin", name:"Hamura Saimin", cat:"Restaurant", area:"Lihue", address:"2956 Kress St, Lihue, HI 96766", phone:"", lat:21.9706, lng:-159.3638, phase:"active", bookEarly:false, badges:[],
+  cost:"Cheap — a bowl of saimin and a slice of pie is a budget lunch.",
+  hours:"Open most days from late morning — hours vary; it's a small family operation, so check before making a special trip. CASH ONLY.",
+  about:"A Lihue legend: a humble counter stand serving saimin — Hawaii's own noodle soup — the same way for generations. James Beard America's Classic. No frills whatsoever, and that's the point.",
+  menu:"Order: the special saimin (loaded), a couple of chicken skewers, and the liliko'i chiffon pie for dessert. The pie alone is worth the stop.",
+  dietary:"No GF/vegan options found on the menu — saimin is wheat noodles in a meat-based broth. Worth asking when you order, but plan on this being the exception meal.",
+  expect:"CASH ONLY — hit an ATM first. Counter seating, order at the counter, fast turnover. It can sell out of pie; go earlier in the day if the pie matters.",
+  links:[] },
+
+{ id:"kilauea-bakery", name:"Kilauea Bakery", cat:"Restaurant", area:"Kilauea", address:"2484 Keneke St, Kilauea, HI 96754", phone:"", lat:22.2107, lng:-159.4090, phase:"explore", bookEarly:false, badges:["gf","vegan"],
+  cost:"Bakery prices — pastries and coffee for a North Shore morning, pizza nights for dinner.",
+  hours:"Open daily from early morning for the bakery case; pizza on select evenings — confirm the current rhythm before a dinner trip.",
+  about:"The bakery at the Kong Lung Center in Kilauea town: breads, sticky buns and pastries in the morning, and well-loved pizza (including a smoked-fish pizza people drive for). An easy fuel stop on any North Shore day — Common Ground and the lighthouse are minutes away.",
+  menu:"Order: a sticky bun or the day's danish with coffee in the morning; on pizza nights, the smoked ahi pizza is the signature.",
+  dietary:"GLUTEN-FREE: yes — they bake GF options. VEGAN: yes, vegan options available (the case rotates — ask what's vegan that day).",
+  expect:"Casual courtyard seating. Mornings are the sure thing; pizza nights are the bonus. Pairs with a Kilauea day: bakery breakfast, then the lighthouse or Anini.",
+  links:[] },
+
+{ id:"jojos-shave-ice", name:"JoJo's Shave Ice", cat:"Restaurant", area:"Waimea", address:"9734 Kaumualii Hwy, Waimea, HI 96796", phone:"", lat:21.9565, lng:-159.6690, phase:"explore", bookEarly:false, badges:["gf","vegan"],
+  cost:"Inexpensive — a few dollars for a mountain of shave ice.",
+  hours:"Open daily, daytime hours — the natural stop after Waimea Canyon. Confirm current hours on the day.",
+  about:"One of Kauai's original shave ice stands, in Waimea town on the way back from the canyon. Enormous flavor list, homemade syrups, and the classic move of macadamia-nut ice cream at the bottom of the cup.",
+  menu:"Order: rainbow or liliko'i/guava combos over mac nut ice cream, with a snow cap if you're going all in.",
+  dietary:"GLUTEN-FREE: yes — shave ice and syrups are naturally GF. VEGAN: yes, if you skip the ice cream and condensed-milk snow cap; the fruit syrups and ice themselves are vegan.",
+  expect:"Counter window, eat it outside, eat it fast — it melts. Expect a line on canyon-return afternoons; it moves.",
+  links:[] },
+
+{ id:"kauai-coffee", name:"Kauai Coffee Company", cat:"Business", area:"Kalaheo", address:"870 Halewili Rd, Kalaheo, HI 96741", phone:"", lat:21.8997, lng:-159.5680, phase:"active", bookEarly:false, badges:[],
+  cost:"The walking tour and tastings are free. Coffee and gifts in the shop are the spend.",
+  hours:"Visitor center open daily — confirm current hours before the drive; mornings are best for tastings.",
+  about:"The largest coffee estate in the United States — 3,100 acres of coffee on Kauai's south side. The visitor center offers a free self-guided walking tour through the groves and free tastings of the estate's roasts, from the Blue Mountain-style Peaberry to flavored blends.",
+  menu:"Taste: work through the free tasting flight, then buy beans of the one you liked — Peaberry is the connoisseur pick; the estate roasts make easy gifts.",
+  dietary:"Coffee tastings only — black coffee is naturally gluten-free and vegan; flavored samples may vary, ask at the counter.",
+  expect:"An easy 30–60 minute stop that pairs with the west-side run (Salt Pond, Hanapepe, Port Allen are all close). November is harvest season on the estate, which can mean extra activity to watch.",
+  links:[] }
+];
+
+/* Extra well-known Kauai spots used only by the Add-new type-to-populate directory. */
+var DIRECTORY_EXTRA = [
+ { name:"Puka Dog", cat:"Restaurant", area:"Poipu", address:"Poipu Shopping Village, 2360 Kiahuna Plantation Dr, Poipu, HI 96756", lat:21.8792, lng:-159.4547, about:"Hawaiian-style hot dogs in a toasted bun with tropical relishes and lemon-garlic sauce.", dietary:"Vegan veggie dog available. No gluten-free bun — order it naked (no bun)." },
+ { name:"Duke's Kauai", cat:"Restaurant", area:"Kalapaki Beach, Lihue", address:"Kauai Marriott, 3610 Rice St, Lihue, HI 96766", lat:21.9597, lng:-159.3510, about:"Beachfront dining at Kalapaki Bay — fresh fish, prime rib, and the famous Hula Pie.", dietary:"Gluten-free options and vegan options on the menu." },
+ { name:"The Beach House Restaurant", cat:"Restaurant", area:"Poipu", address:"5022 Lawai Rd, Poipu, HI 96756", lat:21.8743, lng:-159.4359, about:"Sunset-facing fine dining on the water in Poipu — the special-occasion dinner spot.", dietary:"Gluten-free options and vegan options on the menu." },
+ { name:"Tahiti Nui", cat:"Restaurant", area:"Hanalei", address:"5-5122 Kuhio Hwy, Hanalei, HI 96714", lat:22.2029, lng:-159.4985, about:"Old-Hanalei family restaurant and bar — mai tais, live music, luau nights.", dietary:"Gluten-free options; vegan choices are limited — ask your server." },
+ { name:"Hamura Saimin", cat:"Restaurant", area:"Lihue", address:"2956 Kress St, Lihue, HI 96766", lat:21.9706, lng:-159.3638, about:"Beloved old-school saimin stand — cash only. Get the liliko'i chiffon pie.", dietary:"No GF/vegan options found on the menu — worth asking when you order." },
+ { name:"Kilauea Bakery", cat:"Restaurant", area:"Kilauea", address:"2484 Keneke St, Kilauea, HI 96754", lat:22.2107, lng:-159.4090, about:"Bakery and pizzeria in Kilauea town — breads, pastries, pizza nights.", dietary:"Gluten-free options and vegan options available." },
+ { name:"JoJo's Shave Ice", cat:"Restaurant", area:"Waimea", address:"9734 Kaumualii Hwy, Waimea, HI 96796", lat:21.9565, lng:-159.6690, about:"Classic Kauai shave ice — huge flavor list, mac nut ice cream on the bottom.", dietary:"Shave ice is naturally gluten-free and vegan if you skip the ice cream and condensed-milk toppings." },
+ { name:"Kauai Coffee Company", cat:"Business", area:"Kalaheo", address:"870 Halewili Rd, Kalaheo, HI 96741", lat:21.8997, lng:-159.5680, about:"The largest coffee farm in the US — free self-guided walking tour and tastings at the visitor center.", dietary:"Coffee tastings only." }
+];
+
+/* ================= storage (on-device, this browser only) ================= */
+var LS_KEY = "kauaiTripBrowser.v1";
+var store = { ok:true,
+  get:function(){ try{ var v = localStorage.getItem(LS_KEY); return v ? JSON.parse(v) : null; }catch(e){ this.ok=false; return this._mem || null; } },
+  set:function(v){ this._mem = v; try{ localStorage.setItem(LS_KEY, JSON.stringify(v)); }catch(e){ this.ok=false; } }
+};
+var state = store.get() || {};
+if(!state.favs) state.favs = {};
+if(!state.sched) state.sched = {};       /* id -> "2026-11-13" */
+if(!state.deleted) state.deleted = {};    /* seed id -> true */
+if(!state.edits) state.edits = {};        /* seed id -> full edited place */
+if(!state.custom) state.custom = [];      /* user-added places */
+function save(){ store.set(state); }
+
+function allPlaces(){
+  var out = [];
+  SEED.forEach(function(p){
+    if(state.deleted[p.id]) return;
+    out.push(state.edits[p.id] || p);
+  });
+  state.custom.forEach(function(p){ out.push(p); });
+  return out;
+}
+function getPlace(id){
+  var all = allPlaces();
+  for(var i=0;i<all.length;i++) if(all[i].id===id) return all[i];
+  return null;
+}
+function isSeed(id){ for(var i=0;i<SEED.length;i++) if(SEED[i].id===id) return true; return false; }
+function putPlace(p){
+  if(isSeed(p.id)){ state.edits[p.id] = p; }
+  else{
+    var found=false;
+    state.custom = state.custom.map(function(x){ if(x.id===p.id){ found=true; return p; } return x; });
+    if(!found) state.custom.push(p);
+  }
+  save();
+}
+function removePlace(id){
+  if(isSeed(id)){ state.deleted[id]=true; delete state.edits[id]; }
+  else state.custom = state.custom.filter(function(x){ return x.id!==id; });
+  delete state.favs[id]; delete state.sched[id];
+  save();
+}
+
+/* ================= helpers ================= */
+function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]; }); }
+function telHref(phone){ var d = String(phone||"").replace(/\D/g,""); return d ? "tel:+1"+d.slice(-10) : ""; }
+function dirHref(p){
+  var q = p.name + " " + (p.address || p.area || "") + " Kauai Hawaii";
+  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q);
+}
+var DAYS = [];
+(function(){
+  var names=["Sun","Mon","Tue","Wed","Thu","Fri","Sat"], months=["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  for(var d=6; d<=24; d++){
+    var dt = new Date(2026,10,d);
+    var iso = "2026-11-" + (d<10?"0":"") + d;
+    DAYS.push({ iso:iso, label:names[dt.getDay()]+" "+months[10]+" "+d, short:"Nov "+d,
+      phase: d<=11 ? "active" : (d<=17 ? "explore" : "relax") });
+  }
+})();
+function dayLabel(iso){
+  for(var i=0;i<DAYS.length;i++) if(DAYS[i].iso===iso) return DAYS[i].label;
+  return iso;
+}
+function dietaryBadges(p){
+  var list = p.badges;
+  if(!list){
+    list = [];
+    var t = (p.dietary||"").toLowerCase();
+    var servesFood = p.cat==="Restaurant" || /(buffet|dinner is|lunch is|menu)/.test(t);
+    var noFood = /no food|not a food|nothing (is )?served|no meals served/.test(t);
+    if(servesFood && !noFood){
+      if(/all of (their|our) food is gluten free|gluten-free: yes|gluten-free: workable|gluten-free: options|naturally gluten-free|gluten-free options|accommodates gluten-free/.test(t)) list.push("gf");
+      if(/vegan: yes|vegan options|accommodate vegan|vegan guests|vegan-leaning/.test(t)) list.push("vegan");
+    }
+  }
+  var out = "";
+  if(list.indexOf("gf")>=0) out += '<span class="badge">Gluten-free</span>';
+  if(list.indexOf("vegan")>=0) out += '<span class="badge">Vegan</span>';
+  return out;
+}
+function firstSentence(s){
+  if(!s) return "";
+  var cut = s.split(". ")[0];
+  if(cut.length < s.length) return cut + ".";
+  return /[.!?]$/.test(cut) ? cut : cut + ".";
+}
+var toastTimer=null;
+function toast(msg){
+  var t=document.getElementById("toast"); t.textContent=msg; t.classList.add("on");
+  clearTimeout(toastTimer); toastTimer=setTimeout(function(){ t.classList.remove("on"); },2400);
+}
+
+/* ================= card rendering ================= */
+var curCat="All", curSearch="";
+function cardHTML(p){
+  var fav = !!state.favs[p.id];
+  var sched = state.sched[p.id];
+  var callBtn = p.phone
+    ? '<a class="btn" href="'+telHref(p.phone)+'" data-stop="1">'+I.phone+'Call</a>'
+    : '<span class="btn disabled" title="No phone number saved">'+I.phone+'Call — add number in Edit</span>';
+  return '<article class="card" data-open="'+p.id+'" tabindex="0" role="button" aria-label="'+esc(p.name)+'">'
+    + '<div class="strip '+p.phase+'"></div><div class="body">'
+    + '<div class="top"><h3>'+esc(p.name)+'</h3>'
+    + '<button class="star-btn'+(fav?" on":"")+'" data-star="'+p.id+'" aria-pressed="'+fav+'" aria-label="Star '+esc(p.name)+'">'+I.starLine+I.starFill+'</button></div>'
+    + '<div class="meta">'+esc(p.cat)+' · '+esc(p.area)+'</div>'
+    + (p.cost ? '<div class="fact">'+I.tag+'<span>'+esc(firstSentence(p.cost))+'</span></div>' : '')
+    + (p.hours ? '<div class="fact">'+I.clock+'<span>'+esc(firstSentence(p.hours))+'</span></div>' : '')
+    + (dietaryBadges(p) ? '<div class="badges">'+dietaryBadges(p)+'</div>'
+       : (/no gf\/vegan options found/i.test(p.dietary||"") ? '<div class="badges"><span class="badge soft">No GF/vegan options found on the menu — worth asking when you order</span></div>' : ''))
+    + (p.bookEarly ? '<div class="book-flag">BOOK EARLY — ideally before you land</div>' : '')
+    + (sched ? '<div class="sched-line">'+I.cal+'<span>Scheduled: '+esc(dayLabel(sched))+'</span></div>' : '')
+    + '<div style="margin-top:10px"><span class="phase-tag '+p.phase+'">'+PHASES[p.phase].label.toUpperCase()+' · '+PHASES[p.phase].dates+'</span></div>'
+    + '<div class="actions">'+callBtn
+    + '<a class="btn" href="'+dirHref(p)+'" target="_blank" rel="noopener" data-stop="1">'+I.nav+'Directions</a></div>'
+    + '</div></article>';
+}
+function placeMatches(p){
+  if(curCat!=="All" && p.cat!==curCat) return false;
+  if(!curSearch) return true;
+  var hay = (p.name+" "+p.cat+" "+p.area+" "+(p.about||"")).toLowerCase();
+  return hay.indexOf(curSearch.toLowerCase())>=0;
+}
+function renderPlaces(){
+  var chips = document.getElementById("cat-chips");
+  chips.innerHTML = ["All"].concat(CATS).map(function(c){
+    return '<button class="chip" data-cat="'+c+'" aria-pressed="'+(curCat===c)+'">'+c+'</button>';
+  }).join("");
+  var all = allPlaces().filter(placeMatches);
+  var favs = all.filter(function(p){ return state.favs[p.id]; });
+  var rest = all.filter(function(p){ return !state.favs[p.id]; });
+  var byName = function(a,b){ return a.name.localeCompare(b.name); };
+  favs.sort(byName); rest.sort(byName);
+  document.getElementById("fav-wrap").innerHTML =
+    '<h2 class="section">Your favorites</h2>' +
+    (favs.length ? favs.map(cardHTML).join("") : '<div class="empty">Nothing starred yet. Tap the star on any place and it will live here at the top, saved on this device.</div>');
+  document.getElementById("all-wrap").innerHTML =
+    '<h2 class="section">All places</h2>' +
+    (rest.length ? rest.map(cardHTML).join("") : '<div class="empty">No places match. Try a different search or category.</div>');
+}
+
+/* ================= calendar ================= */
+function renderCalendar(){
+  var wrap = document.getElementById("cal-wrap");
+  var todayIso = new Date().toLocaleDateString("en-CA",{timeZone:"Pacific/Honolulu"});
+  var html="";
+  ["active","explore","relax"].forEach(function(ph){
+    html += '<div class="phase-band"><div class="phase-band-head"><div class="strip '+ph+'"></div><div class="inner">'
+      + '<h3>'+PHASES[ph].label+' — '+PHASES[ph].dates+'</h3>'
+      + '<p>'+(ph==="active" ? "First week: stay busy — tours, water, the working days of the trip."
+              : ph==="explore" ? "Second week: exploring — North Shore, big scenery, the far drives."
+              : "Third week: resting and relaxing — beaches, luaus, slow mornings.")+'</p></div></div>';
+    DAYS.filter(function(d){ return d.phase===ph; }).forEach(function(d){
+      var here = allPlaces().filter(function(p){ return state.sched[p.id]===d.iso; });
+      html += '<div class="day"><div class="strip '+ph+'"></div><div class="inner">'
+        + '<div class="dlabel"><span>'+d.label+'</span>'+(todayIso===d.iso?'<span class="today-tag">TODAY</span>':"")+'</div>';
+      if(!here.length) html += '<div class="none">Nothing scheduled</div>';
+      here.sort(function(a,b){ return a.name.localeCompare(b.name); }).forEach(function(p){
+        var idx = DAYS.indexOf(d);
+        html += '<div class="day-entry"><span class="nm" data-open="'+p.id+'">'+esc(p.name)+'</span>'
+          + '<span class="nudge"><button data-nudge="'+p.id+'|-1" '+(idx<=0?"disabled":"")+' aria-label="Move a day earlier">'+I.left+'</button>'
+          + '<button data-nudge="'+p.id+'|1" '+(idx>=DAYS.length-1?"disabled":"")+' aria-label="Move a day later">'+I.right+'</button></span></div>';
+      });
+      html += '</div></div>';
+    });
+    html += '</div>';
+  });
+  wrap.innerHTML = html;
+}
+
+/* ================= detail sheet ================= */
+var sheetBack = document.getElementById("sheet-back");
+function openSheet(id){ document.getElementById(id).classList.add("on"); sheetBack.classList.add("on"); document.body.style.overflow="hidden"; }
+function closeSheets(){
+  document.querySelectorAll(".sheet").forEach(function(s){ s.classList.remove("on"); });
+  sheetBack.classList.remove("on"); document.body.style.overflow="";
+}
+sheetBack.addEventListener("click", closeSheets);
+
+function section(title, body){ return body ? '<h4>'+title+'</h4><p>'+esc(body)+'</p>' : ''; }
+function detailHTML(p){
+  var fav = !!state.favs[p.id];
+  var sched = state.sched[p.id] || "";
+  var callBtn = p.phone
+    ? '<a class="btn primary" href="'+telHref(p.phone)+'">'+I.phone+'Call</a>'
+    : '<span class="btn disabled">'+I.phone+'Call — add number in Edit</span>';
+  var links = (p.links||[]).map(function(l){
+    return '<a href="'+esc(l[1])+'" target="_blank" rel="noopener"><span>'+esc(l[0])+'</span>'+I.ext+'</a>';
+  }).join("");
+  return '<div class="sheet-head"><div class="strip '+p.phase+'"></div><div class="inner">'
+    + '<h2>'+esc(p.name)+'</h2><div class="meta">'+esc(p.cat)+' · '+esc(p.area)+'</div>'
+    + '<div style="margin-top:8px"><span class="phase-tag '+p.phase+'">'+PHASES[p.phase].label.toUpperCase()+' · '+PHASES[p.phase].dates+'</span></div>'
+    + '</div></div>'
+    + '<button class="sheet-close" data-close="1" aria-label="Close">'+I.x+'</button>'
+    + '<div class="sheet-body">'
+    + (p.bookEarly ? '<div class="book-flag" style="margin:0 0 14px">BOOK EARLY — ideally before you land</div>' : '')
+    + '<div class="detail-actions">'+callBtn
+    + '<a class="btn" href="'+dirHref(p)+'" target="_blank" rel="noopener">'+I.nav+'Directions</a>'
+    + '<button class="btn" data-star="'+p.id+'">'+(fav?"Starred":"Star it")+'</button></div>'
+    + (p.address ? '<p class="big-fact">'+esc(p.address)+'</p>' : '')
+    + (p.phone ? '<p class="big-fact">'+esc(p.phone)+'</p>' : '<p>No phone number saved — Call is off until you add one in Edit.</p>')
+    + section("What it is", p.about)
+    + section("Hours", p.hours)
+    + section("Cost", p.cost)
+    + section(p.cat==="Restaurant" ? "Menu & what to order" : "What's included", p.menu)
+    + section("Dietary options", p.dietary)
+    + section("What to expect", p.expect)
+    + (links ? '<h4>On their website</h4><div class="link-row">'+links+'</div>' : '')
+    + '<h4>Schedule it</h4><div class="date-row">'
+    + '<input type="date" id="sched-date" min="2026-11-06" max="2026-11-24" value="'+esc(sched)+'" />'
+    + '<button class="btn primary" data-setsched="'+p.id+'">Set date</button>'
+    + (sched ? '<button class="btn" data-clearsched="'+p.id+'">Clear</button>' : '')
+    + '</div>'
+    + (sched ? '<p style="margin-top:8px">Scheduled: <strong>'+esc(dayLabel(sched))+'</strong> — shown on the dashboard card and in the Calendar tab.</p>' : '<p style="margin-top:8px">Not scheduled yet. Pick any day Nov 6–24.</p>')
+    + '<div class="danger-zone"><button class="btn" data-edit="'+p.id+'">Edit place</button>'
+    + '<button class="btn danger" data-del="'+p.id+'">Delete place</button></div>'
+    + '</div>';
+}
+function openDetail(id){
+  var p = getPlace(id); if(!p) return;
+  var sh = document.getElementById("detail-sheet");
+  sh.innerHTML = detailHTML(p);
+  openSheet("detail-sheet");
+}
+
+/* ================= add / edit form ================= */
+var DIRECTORY = SEED.concat(DIRECTORY_EXTRA);
+function formHTML(p){
+  p = p || { name:"", cat:"Restaurant", area:"", address:"", phone:"", cost:"", hours:"", about:"", menu:"", dietary:"", expect:"", phase:"active", bookEarly:false, website:"", lat:"", lng:"" };
+  var web = (p.links && p.links[0]) ? p.links[0][1] : (p.website||"");
+  function sel(id, val, opts){ return '<select id="f-'+id+'">'+opts.map(function(o){ return '<option value="'+o[0]+'"'+(o[0]===val?" selected":"")+'>'+o[1]+'</option>'; }).join("")+'</select>'; }
+  return '<div class="sheet-head"><div class="strip '+(p.phase||"active")+'"></div><div class="inner">'
+    + '<h2>'+(p.id?"Edit place":"Add a new place")+'</h2><div class="meta">Start typing a name — known Kauai places fill themselves in.</div></div></div>'
+    + '<button class="sheet-close" data-close="1" aria-label="Close">'+I.x+'</button>'
+    + '<div class="sheet-body"><form class="place-form" id="place-form">'
+    + '<label for="f-name">Name</label><input id="f-name" list="kauai-directory" autocomplete="off" value="'+esc(p.name)+'" required />'
+    + '<datalist id="kauai-directory">'+DIRECTORY.map(function(d){ return '<option value="'+esc(d.name)+'">'; }).join("")+'</datalist>'
+    + '<div class="hint" id="dir-hint"></div>'
+    + '<label for="f-cat">Category</label>'+sel("cat", p.cat, CATS.map(function(c){ return [c,c]; }))
+    + '<label for="f-area">Area of the island</label><input id="f-area" value="'+esc(p.area)+'" placeholder="e.g. Poipu, Hanalei, Lihue" />'
+    + '<label for="f-address">Street address</label><input id="f-address" value="'+esc(p.address)+'" />'
+    + '<div class="hint"><button class="btn" type="button" id="lookup-btn" style="padding:8px 12px;font-size:14px">Look up address &amp; map pin online</button> <span id="lookup-msg"></span></div>'
+    + '<label for="f-phone">Phone</label><input id="f-phone" type="tel" value="'+esc(p.phone)+'" placeholder="(808) 555-0100" />'
+    + '<label for="f-cost">Cost</label><textarea id="f-cost">'+esc(p.cost)+'</textarea>'
+    + '<label for="f-hours">Hours</label><textarea id="f-hours">'+esc(p.hours)+'</textarea>'
+    + '<label for="f-about">What it is</label><textarea id="f-about">'+esc(p.about)+'</textarea>'
+    + '<label for="f-menu">Menu / what\'s included</label><textarea id="f-menu">'+esc(p.menu)+'</textarea>'
+    + '<label for="f-dietary">Dietary options (gluten-free / vegan)</label><textarea id="f-dietary" placeholder="Say plainly what exists — or that none was found.">'+esc(p.dietary)+'</textarea>'
+    + '<label for="f-expect">What to expect</label><textarea id="f-expect">'+esc(p.expect)+'</textarea>'
+    + '<label for="f-website">Website</label><input id="f-website" type="url" value="'+esc(web)+'" placeholder="https://" />'
+    + '<label for="f-phase">Best-fit week</label>'+sel("phase", p.phase||"active", [["active","Active week — Nov 6–11"],["explore","Explore week — Nov 12–17"],["relax","Relax week — Nov 18–24"]])
+    + '<label for="f-bookearly">Book-early flag</label>'+sel("bookearly", p.bookEarly?"yes":"no", [["no","No"],["yes","Yes — show BOOK EARLY"]])
+    + '<input type="hidden" id="f-lat" value="'+(p.lat||"")+'" /><input type="hidden" id="f-lng" value="'+(p.lng||"")+'" />'
+    + '<div class="form-actions"><button class="btn" type="button" data-close="1">Cancel</button>'
+    + '<button class="btn primary" type="submit">'+(p.id?"Save changes":"Add place")+'</button></div>'
+    + '</form></div>';
+}
+var editingId = null;
+function openForm(p){
+  editingId = p ? p.id : null;
+  var sh = document.getElementById("form-sheet");
+  sh.innerHTML = formHTML(p);
+  openSheet("form-sheet");
+  wireForm();
+}
+function normName(s){ return String(s||"").toLowerCase().replace(/[^a-z0-9 ]/g," ").replace(/\s+/g," ").trim(); }
+function wireForm(){
+  var nameIn = document.getElementById("f-name");
+  var hint = document.getElementById("dir-hint");
+  nameIn.addEventListener("input", function(){
+    var q = normName(nameIn.value); if(q.length<3){ hint.textContent=""; hint.className="hint"; return; }
+    var hit = null;
+    DIRECTORY.forEach(function(d){
+      var dn = normName(d.name);
+      if(!hit && (dn===q || dn.indexOf(q)===0 || (q.length>=5 && dn.indexOf(q)>=0))) hit = d;
+    });
+    if(!hit){ hint.textContent="Not in the built-in Kauai directory — fill in what you know, or use the online lookup below."; hint.className="hint"; return; }
+    var set = function(id,v){ if(v){ var el=document.getElementById(id); if(el && !el.value) el.value=v; } };
+    var setF = function(id,v){ if(v){ var el=document.getElementById(id); if(el) el.value=v; } };
+    setF("f-cat", hit.cat); set("f-area", hit.area); set("f-address", hit.address); set("f-phone", hit.phone);
+    set("f-cost", hit.cost); set("f-hours", hit.hours); set("f-about", hit.about); set("f-menu", hit.menu);
+    set("f-dietary", hit.dietary); set("f-expect", hit.expect);
+    if(hit.lat){ document.getElementById("f-lat").value = hit.lat; document.getElementById("f-lng").value = hit.lng; }
+    if(hit.phase){ document.getElementById("f-phase").value = hit.phase; }
+    if(hit.links && hit.links.length){ set("f-website", hit.links[0][1]); }
+    hint.textContent = "Matched in the Kauai directory — details filled in. Review and save.";
+    hint.className = "hint good";
+  });
+  document.getElementById("lookup-btn").addEventListener("click", function(){
+    var msg = document.getElementById("lookup-msg");
+    var q = nameIn.value.trim();
+    if(!q){ msg.textContent="Type a name first."; return; }
+    msg.textContent = "Searching OpenStreetMap…";
+    var url = "https://nominatim.openstreetmap.org/search?format=json&limit=1&addressdetails=1&q=" + encodeURIComponent(q + ", Kauai, Hawaii");
+    fetch(url, { headers:{ "Accept":"application/json" } })
+      .then(function(r){ return r.json(); })
+      .then(function(rows){
+        if(!rows || !rows.length){ msg.textContent="No match found online — address can be typed in by hand."; return; }
+        var r0 = rows[0];
+        document.getElementById("f-address").value = r0.display_name.replace(/, United States$/, "");
+        document.getElementById("f-lat").value = r0.lat; document.getElementById("f-lng").value = r0.lon;
+        msg.textContent = "Found it — address and map pin filled in.";
+      })
+      .catch(function(){ msg.textContent="Lookup failed (offline?) — type the address in by hand."; });
+  });
+  document.getElementById("place-form").addEventListener("submit", function(ev){
+    ev.preventDefault();
+    var g = function(id){ return document.getElementById(id).value.trim(); };
+    var old = editingId ? getPlace(editingId) : null;
+    var web = g("f-website");
+    var p = {
+      id: editingId || ("custom-" + Date.now().toString(36)),
+      name: g("f-name"), cat: g("f-cat"), area: g("f-area"), address: g("f-address"), phone: g("f-phone"),
+      cost: g("f-cost"), hours: g("f-hours"), about: g("f-about"), menu: g("f-menu"),
+      dietary: g("f-dietary"), expect: g("f-expect"),
+      phase: g("f-phase"), bookEarly: g("f-bookearly")==="yes",
+      lat: parseFloat(g("f-lat")) || (old ? old.lat : null), lng: parseFloat(g("f-lng")) || (old ? old.lng : null),
+      links: (function(){
+        if(!web) return old ? (old.links||[]) : [];
+        if(old && old.links && old.links.length && old.links[0][1]===web) return old.links;
+        if(old && old.links && old.links.length>1) return [["Official website", web]].concat(old.links.slice(1));
+        return [["Official website", web]];
+      })()
+    };
+    if(!p.name) return;
+    putPlace(p);
+    closeSheets(); invalidateMap(); renderAll();
+    toast(editingId ? "Saved — stored on this device." : "Added — stored on this device.");
+  });
+}
+
+/* ================= confirm dialog ================= */
+var confirmCb = null;
+function askConfirm(title, text, cb){
+  document.getElementById("confirm-title").textContent = title;
+  document.getElementById("confirm-text").textContent = text;
+  document.getElementById("confirm-back").classList.add("on");
+  confirmCb = cb;
+}
+document.getElementById("confirm-no").addEventListener("click", function(){
+  document.getElementById("confirm-back").classList.remove("on"); confirmCb=null;
+});
+document.getElementById("confirm-yes").addEventListener("click", function(){
+  document.getElementById("confirm-back").classList.remove("on");
+  if(confirmCb) confirmCb(); confirmCb=null;
+});
+
+/* ================= map ================= */
+var map=null, markers={}, userMarker=null, mapReady=false;
+function invalidateMap(){ if(map){ setTimeout(function(){ map.invalidateSize(); },60); } }
+function pinIcon(p){
+  return L.divIcon({ className:"", html:'<div class="pin '+p.phase+'">'+I.pinWhite+'</div>', iconSize:[22,22], iconAnchor:[11,11] });
+}
+function initMap(){
+  if(mapReady || typeof L==="undefined") return;
+  map = L.map("map", { zoomControl:true }).setView([22.05,-159.50], 10);
+  L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    maxZoom:18, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+  mapReady = true;
+  refreshMarkers();
+}
+function refreshMarkers(){
+  if(!mapReady) return;
+  Object.keys(markers).forEach(function(k){ map.removeLayer(markers[k]); });
+  markers = {};
+  allPlaces().forEach(function(p){
+    if(typeof p.lat!=="number" || typeof p.lng!=="number") return;
+    var m = L.marker([p.lat,p.lng], { icon:pinIcon(p) }).addTo(map);
+    m.on("click", function(){ showMapCard(p.id); });
+    markers[p.id]=m;
+  });
+}
+function showMapCard(id){
+  var p = getPlace(id); if(!p) return;
+  var c = document.getElementById("map-card");
+  var callBtn = p.phone
+    ? '<a class="btn primary" href="'+telHref(p.phone)+'">'+I.phone+'Call</a>'
+    : '<span class="btn disabled">'+I.phone+'No number saved</span>';
+  c.innerHTML = '<div class="strip '+p.phase+'"></div><div class="inner">'
+    + '<button class="close-x" id="map-card-x" aria-label="Close">'+I.x+'</button>'
+    + '<h3>'+esc(p.name)+'</h3><div class="meta">'+esc(p.cat)+' · '+esc(p.area)+'</div>'
+    + (p.cost ? '<div class="fact" style="display:flex;gap:8px;margin-top:7px;font-size:14.5px">'+I.tag.replace("<svg",'<svg style="width:15px;height:15px;flex:none;margin-top:3px"')+'<span>'+esc(firstSentence(p.cost))+'</span></div>' : '')
+    + (state.sched[p.id] ? '<div class="sched-line">'+I.cal+'<span>'+esc(dayLabel(state.sched[p.id]))+'</span></div>' : '')
+    + '<div class="actions">'+callBtn
+    + '<a class="btn" href="'+dirHref(p)+'" target="_blank" rel="noopener">'+I.nav+'Directions</a>'
+    + '<button class="btn" id="map-card-open">Details</button></div></div>';
+  c.classList.add("on");
+  document.getElementById("map-card-x").addEventListener("click", function(){ c.classList.remove("on"); });
+  document.getElementById("map-card-open").addEventListener("click", function(){ openDetail(p.id); });
+}
+document.getElementById("locate-btn").addEventListener("click", function(){
+  if(!navigator.geolocation){ toast("Location is not available in this browser."); return; }
+  toast("Finding you…");
+  navigator.geolocation.getCurrentPosition(function(pos){
+    var ll = [pos.coords.latitude, pos.coords.longitude];
+    if(mapReady){
+      if(userMarker) map.removeLayer(userMarker);
+      userMarker = L.circleMarker(ll, { radius:9, color:"#fff", weight:3, fillColor:"#1a6fd4", fillOpacity:1 }).addTo(map);
+      userMarker.bindTooltip("You are here");
+      map.setView(ll, 12);
+    }
+    toast("That's you — the blue dot.");
+  }, function(){ toast("Couldn't get your location. Check location permission for this site."); },
+  { enableHighAccuracy:true, timeout:10000 });
+});
+
+/* ================= tabs & global events ================= */
+function showView(v){
+  document.querySelectorAll("nav.tabs button").forEach(function(b){ b.setAttribute("aria-selected", b.dataset.view===v ? "true":"false"); });
+  document.querySelectorAll(".view").forEach(function(s){ s.classList.toggle("on", s.id==="view-"+v); });
+  if(v==="map"){ initMap(); invalidateMap(); refreshMarkers(); }
+  window.scrollTo(0,0);
+}
+document.querySelectorAll("nav.tabs button").forEach(function(b){
+  b.addEventListener("click", function(){ showView(b.dataset.view); });
+});
+document.getElementById("search").addEventListener("input", function(e){ curSearch = e.target.value; renderPlaces(); });
+document.getElementById("add-btn").addEventListener("click", function(){ openForm(null); });
+
+document.addEventListener("click", function(e){
+  var star = e.target.closest("[data-star]");
+  if(star){
+    e.stopPropagation();
+    var id = star.getAttribute("data-star");
+    state.favs[id] = !state.favs[id]; if(!state.favs[id]) delete state.favs[id];
+    save(); renderAll();
+    if(document.getElementById("detail-sheet").classList.contains("on")) openDetail(id);
+    toast(state.favs[id] ? "Starred — it stays at the top, saved on this device." : "Star removed.");
+    return;
+  }
+  if(e.target.closest("[data-stop]")) return;
+  var chip = e.target.closest("[data-cat]");
+  if(chip){ curCat = chip.getAttribute("data-cat"); renderPlaces(); return; }
+  var nud = e.target.closest("[data-nudge]");
+  if(nud){
+    var parts = nud.getAttribute("data-nudge").split("|"), pid = parts[0], delta = parseInt(parts[1],10);
+    var cur = state.sched[pid]; if(!cur) return;
+    var idx = -1; DAYS.forEach(function(d,i){ if(d.iso===cur) idx=i; });
+    var ni = idx + delta;
+    if(ni>=0 && ni<DAYS.length){ state.sched[pid] = DAYS[ni].iso; save(); renderAll(); }
+    return;
+  }
+  var setS = e.target.closest("[data-setsched]");
+  if(setS){
+    var dv = document.getElementById("sched-date").value;
+    if(dv){ state.sched[setS.getAttribute("data-setsched")] = dv; save(); renderAll(); openDetail(setS.getAttribute("data-setsched")); toast("Scheduled for "+dayLabel(dv)+"."); }
+    else toast("Pick a date first.");
+    return;
+  }
+  var clrS = e.target.closest("[data-clearsched]");
+  if(clrS){ delete state.sched[clrS.getAttribute("data-clearsched")]; save(); renderAll(); openDetail(clrS.getAttribute("data-clearsched")); return; }
+  var ed = e.target.closest("[data-edit]");
+  if(ed){ var p = getPlace(ed.getAttribute("data-edit")); closeSheets(); setTimeout(function(){ openForm(p); },30); return; }
+  var del = e.target.closest("[data-del]");
+  if(del){
+    var dp = getPlace(del.getAttribute("data-del"));
+    askConfirm("Delete this place?", '"' + (dp?dp.name:"") + '" will be removed from this device. You can re-add it later, but its star and scheduled date go with it.', function(){
+      removePlace(del.getAttribute("data-del")); closeSheets(); renderAll(); toast("Deleted.");
+    });
+    return;
+  }
+  if(e.target.closest("[data-close]")){ closeSheets(); return; }
+  var opener = e.target.closest("[data-open]");
+  if(opener) openDetail(opener.getAttribute("data-open"));
+});
+document.addEventListener("keydown", function(e){
+  if(e.key==="Escape"){ closeSheets(); document.getElementById("confirm-back").classList.remove("on"); }
+  if(e.key==="Enter" && e.target.matches && e.target.matches(".card")) openDetail(e.target.getAttribute("data-open"));
+});
+
+function renderAll(){ renderPlaces(); renderCalendar(); if(mapReady) refreshMarkers(); }
+renderAll();
+if(!store.ok) toast("Note: this browser blocked local saving — changes will last for this visit only.");
+</script>
+</body>
+</html></script>
+</body>
+</html>
