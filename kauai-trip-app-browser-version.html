@@ -456,6 +456,41 @@
   /* ---------- weekly meeting rows ---------- */
   .day-entry.meeting{ border-top:1px dashed var(--line); }
   .meet-tag{ flex:none; font-size:11px; font-weight:700; letter-spacing:.05em; border:1px solid var(--line); padding:2px 7px; color:var(--ink2); border-radius:6px; white-space:nowrap; }
+
+  /* ---------- tab bar fit + active-state fix ---------- */
+  nav.tabs button{ min-width:0; font-size:10.5px; letter-spacing:.02em; gap:3px; padding:11px 1px 9px; }
+  nav.tabs svg{ width:15px; height:15px; }
+  nav.tabs button[aria-selected="true"]{ background:transparent; color:var(--ink); font-weight:700; border-bottom:3px solid; border-image:linear-gradient(90deg,#57c7b8,#8fb8ec,#e0a8d8) 1; }
+
+  /* ---------- map search-add + under-map list ---------- */
+  .map-results{ display:none; margin-top:8px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--surface); }
+  .map-results.on{ display:block; }
+  .mr-row{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:11px 12px; background:transparent; border:0; border-top:1px solid var(--line); font:inherit; color:var(--ink); cursor:pointer; }
+  .mr-row:first-child{ border-top:0; }
+  .mr-main{ display:flex; flex-direction:column; min-width:0; }
+  .mr-name{ font-weight:600; font-size:15px; }
+  .mr-sub{ font-size:12.5px; color:var(--ink2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .mr-note{ padding:11px 12px; font-size:13.5px; color:var(--ink2); }
+  .map-list-head{ display:flex; align-items:baseline; gap:8px; margin:18px 2px 2px; }
+  .map-list-head h3{ margin:0; font-size:17px; }
+  .map-list-head span{ font-size:12.5px; color:var(--ink2); }
+  .map-list-hint{ margin:0 2px 8px; font-size:13px; color:var(--ink2); }
+  #map-list{ display:flex; flex-direction:column; gap:7px; }
+  .ml-row{ display:flex; align-items:center; gap:10px; width:100%; text-align:left; padding:10px 12px; border:1px solid var(--line); border-radius:12px; background:var(--surface); font:inherit; color:var(--ink); cursor:pointer; }
+  .ml-main{ display:flex; flex-direction:column; min-width:0; flex:1; }
+  .ml-name{ font-weight:600; font-size:15px; }
+  .ml-sub{ font-size:12.5px; color:var(--ink2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+  .ml-day{ flex:none; font-size:12px; font-weight:600; color:var(--ink2); }
+
+  /* Patch 13: trail lines + labels on the map */
+  .trail-label{ background:rgba(10,22,27,.85); color:#f3e9d2; border:1px solid rgba(227,155,45,.55); border-radius:8px; box-shadow:none; font-family:Jost,sans-serif; font-size:11px; font-weight:600; padding:2px 7px; }
+  .trail-label:before{ display:none; }
+  .trail-pop .tp-mi{ font-weight:700; margin:2px 0; }
+  .sunset-pin{ width:26px; height:26px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:14px; color:#fff7e8; background:radial-gradient(circle at 50% 42%, #ffb347, #e2601a 78%); border:2px solid rgba(255,255,255,.85); box-shadow:0 2px 8px rgba(226,96,26,.55); }
+  .sunset-pin.closed{ background:radial-gradient(circle at 50% 42%, #9a9a9a, #555 78%); box-shadow:0 2px 8px rgba(0,0,0,.4); }
+  .sunset-pop .sp-line{ font-weight:700; margin:2px 0; }
+  .sunset-pop .sp-closed{ color:#b3261e; font-weight:700; }
+  .ml-head{ padding:10px 2px 4px; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); }
 </style>
 </head>
 <body>
@@ -568,8 +603,9 @@
     <div class="map-tools">
       <div class="search-box map-search">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.8-3.8"/></svg>
-        <input id="map-search" type="search" placeholder="Search the map — rentals, markets, beaches, eats" autocomplete="off" />
+        <input id="map-search" type="search" placeholder="Search your map — or any place, then Enter to add it" autocomplete="off" />
       </div>
+      <div class="map-results" id="map-results"></div>
       <div class="map-chips" id="map-chips"></div>
       <div class="map-days" id="map-days"></div>
       <p class="map-status" id="map-status"></p>
@@ -582,7 +618,10 @@
       </button>
       <div id="map-card"></div>
     </div>
-    <p class="foot-note">Tap a square pin to see the place without leaving the map. Pins are colored by the week the place fits best.</p>
+    <div class="map-list-head"><h3>Everywhere on your map</h3><span id="map-list-count"></span></div>
+    <p class="map-list-hint">Tap a name and the map jumps straight to it.</p>
+    <div id="map-list"></div>
+    <p class="foot-note">Tap a square pin to see the place without leaving the map. Pins are colored by the week the place fits best. The search at the top also finds places that are not saved yet — press Enter and the pin is added to your map for good.</p>
   </section>
 
   <!-- SUGGESTED -->
@@ -719,7 +758,7 @@ var SEED = [
 { id:"costco", name:"Costco Lihue", cat:"Business", area:"Lihue", address:"4300 Nuhou St, Lihue, HI 96766", phone:"", lat:21.9762, lng:-159.3683, phase:"active", bookEarly:false,
   cost:"Membership warehouse pricing — the bulk stock-up.",
   hours:"Typical hours: Mon–Fri 10 AM–8:30 PM, Sat 9:30 AM–7 PM, Sun 10 AM–6 PM — check before the Day 1 run.",
-  about:"The Day 1 landing run: bulk breakfast supplies, coffee, water and the week's staples, five minutes from the airport. Foodland and Big Save fill the fresh gaps after.",
+  about:"The Day 1 landing run: bulk breakfast supplies, coffee, water and the week's staples, five minutes from the airport. Times Supermarket (in Kukui Grove) and Big Save fill the fresh gaps after.",
   expect:"Friday afternoon arrival crowds are real — in, list in hand, out. This is the anchor of the Nov 6 plan.",
   links:[] },
 
@@ -1113,6 +1152,129 @@ var SEED = [
   menu:"Taste: work through the free tasting flight, then buy beans of the one you liked — Peaberry is the connoisseur pick; the estate roasts make easy gifts.",
   dietary:"Coffee tastings only — black coffee is naturally gluten-free and vegan; flavored samples may vary, ask at the counter.",
   expect:"An easy 30–60 minute stop that pairs with the west-side run (Salt Pond, Hanapepe, Port Allen are all close). November is harvest season on the estate, which can mean extra activity to watch.",
+  links:[] },
+
+{ id:"kukui-grove", name:"Kukui Grove Center", cat:"Business", area:"Lihue", address:"3-2600 Kaumualii Hwy, Lihue, HI 96766", phone:"(808) 245-7784", lat:21.9697, lng:-159.3792, phase:"active", bookEarly:false,
+  cost:"Free to wander — this is the island's everyday mall stop, not a splurge.",
+  hours:"Mon–Thu and Sat 9:30 AM–7 PM, Fri 9:30 AM–8 PM, Sun 10 AM–6 PM (listed hours).",
+  about:"Kauai's largest shopping center — an open-air mall in Lihue with 50+ stores: Macy's, Ross, Longs Drugs (CVS) and a Times Supermarket inside, Target right across the lot, and a covered food court. The Day 7 Plan B afternoon stop, and the practical fresh-grocery answer near the airport.",
+  expect:"Monday farmers market and Friday-night live music at Center Stage when they run. Easy parking, everything in one stop.",
+  links:[["Kukui Grove Center — store directory","https://www.kukuigrovecenter.com/directory/"]] },
+
+{ id:"kukui-grove-cinema", name:"Kukui Grove Cinema", cat:"Activity", area:"Lihue", address:"4368 Kukui Grove St, Lihue, HI 96766", phone:"(808) 245-3552", phase:"active", bookEarly:false,
+  cost:"When it operated: about $6 matinee / $9 regular, cash only. It is closed — see below.",
+  hours:"CLOSED — no showtimes.",
+  about:"STATUS CHECKED OCT 2026: this was Lihue's four-screen cinema (it was never a Regal, whatever the plan text says), and it closed in 2020. Current listings still show it permanently closed and its old website is offline. A classic-film festival was advertised at the building for Feb 2026, so one-off events may still happen there — but there are no regular movies to plan around. Call (808) 245-3552 or (808) 245-5055 if you want to double-check before writing it off.",
+  expect:"Do not count on a movie here — and as of Oct 2026 the island has no other operating cinema either: the historic Waimea Theatre is also closed (storm damage, no reopening date; its card is in Places). A movie night on this trip most likely means streaming at Becky's. If a cinema reopens, Justin's rule stands: G or PG only, nothing PG-13 or R.",
+  links:[["CinemaClock listing — reports permanently closed","http://www.cinemaclock.com/movie-theaters/kukui-grove-cinema-4"]] },
+
+{ id:"waimea-theatre", name:"Waimea Theatre", cat:"Activity", area:"Waimea", address:"9691 Kaumualii Hwy, Waimea, HI 96796", phone:"(808) 338-0282", lat:21.9567, lng:-159.6705, phase:"active", bookEarly:false,
+  cost:"When it is open: $8 adults, $7 students / seniors / military, $6 kids 5–10 (listed prices). Currently CLOSED — see below.",
+  hours:"CLOSED indefinitely (Oct 2026) — no showings. The recorded line at (808) 338-0282 may still play older information; it is also the number that would announce a reopening.",
+  about:"The historic 1938 Art Deco theatre in Waimea town — saved by the community, restored, and county-owned. STATUS CHECKED OCT 2026: after Hurricane Lowell, an Oct 1 county inspection found roof, drainage and water damage, and county officials say repairs must be made before it can safely reopen — 'there is no reopening date yet' (Westside Ledger, Oct 19, 2026, quoting the County of Kaua'i; a restoration study report is due by the end of 2026). The county replaced its movie screen earlier in 2026, so the intent is to bring it back — but do not plan a movie here for this trip unless you hear it has reopened.",
+  expect:"If it reopens by your trip: one screen, one movie at a time, rattan loge seats, snack bar, about 30 minutes west of Kalaheo — and Justin's rule: G or PG only.",
+  links:[["Waimea Theatre — official site","http://www.waimeatheater.com"]] },
+
+{ id:"foodland-princeville", name:"Foodland Princeville", cat:"Business", area:"Princeville", address:"5-4280 Kuhio Hwy, Princeville, HI 96722", phone:"(808) 826-9880", lat:22.2138, lng:-159.4748, phase:"explore", bookEarly:false,
+  cost:"Hawaii's own grocery chain — bring a Maika'i card (free at the register) for the member prices. Known for good poke and fresh-fish deals.",
+  hours:"Daily 6 AM–9 PM.",
+  about:"The last Foodland left on Kauai — checked Oct 2026. The Lihue Foodland closed years ago (a Safeway stands in its place now) and the Kapa'a store at Waipouli has closed too, so when the plans say 'Foodland for fresh,' this Princeville store is the one that exists. Near the airport, Times Supermarket (inside Kukui Grove) or the Lihue Safeway cover the fresh run instead.",
+  expect:"Worth folding into a north-shore day — Hanalei is five minutes past it. Poke from the counter makes an easy cook-at-home night at Becky's.",
+  links:[["Foodland Princeville — store page","http://www.foodland.com/stores/foodland-princeville"]] },
+
+{ id:"clayworks", name:"Clayworks at Kilohana", cat:"Activity", area:"Lihue", address:"3-2087 Kaumualii Hwy, Lihue, HI 96766 (Kilohana Plantation)", phone:"(808) 246-2529", lat:21.9718, lng:-159.3913, phase:"active", bookEarly:false,
+  cost:"Workshop pricing is set at the studio — the Raku session is the trip-friendly pick (below).",
+  hours:"Listed hours: Mon–Fri 10 AM–4:30 PM, Sat 10:30 AM–12 PM — call ahead, workshops run on their schedule.",
+  about:"A working pottery studio at Kilohana Plantation in Lihue — the Clayworks named in the Nov 9 and Nov 18 plans. The Raku workshop is the one that fits a trip: choose a bisque piece, glaze it, watch the firing, and the cured piece is ready to take home in a day or two. Wheel-thrown pieces take one to two weeks, but they can ship finished work home.",
+  expect:"Small studio, hands-on, you leave with something you made. Pair it with the plantation grounds and the rum safari next door.",
+  links:[["Clayworks at Kilohana — visitor reviews and photos","https://www.tripadvisor.ie/Attraction_Review-g60623-d13436964-Reviews-Clayworks_at_Kilohana-Lihue_Kauai_Hawaii.html"]] },
+
+{ id:"painting-paradise", name:"Painting Paradise", cat:"Activity", area:"Lihue", address:"1824 Haleukana St, front unit, Lihue, HI 96766 (Puhi Industrial Center)", phone:"(808) 631-9173", lat:21.9572, lng:-159.3934, phase:"relax", bookEarly:true,
+  cost:"Most classes $50; life drawing $20–30; longer workshops $75; private lessons $75/hour (listed prices).",
+  hours:"Class-based, not walk-in hours — text or email to reserve a seat; seating is limited and you pay at the class.",
+  about:"Marionette Taboniar's art studio — she moved it to Lihue's Puhi Industrial Center (older listings still say Waimea). Her posted Nov 2026 classes include Thu Nov 19, Bird of Paradise in Watercolors, 11 AM–1 PM, $50 — the session in the Nov 19 Plan B — plus life drawing Nov 12, Fantasy Flowers Nov 13, a Paint & Sip Nov 14, Makana Sunset acrylics Nov 15, and Rainbow Bamboo watercolor Nov 22.",
+  expect:"Beginner-friendly, step-by-step, all supplies included. Text (808) 631-9173 to hold a seat before the day — her classes fill.",
+  links:[["Painting Paradise — class schedule","https://kauaiartclasses.blogspot.com/"],["Art by Marionette — her site","https://www.kauai-fine-art.com"]] },
+
+{ id:"hanalei-dolphin", name:"Hanalei Dolphin", cat:"Restaurant", area:"Hanalei", address:"5-5016 Kuhio Hwy, Hanalei, HI 96714 (Hanalei Dolphin Center)", phone:"(808) 826-6113", lat:22.2043, lng:-159.4917, phase:"explore", bookEarly:false,
+  cost:"$$$ for the restaurant — fresh-catch pricing. The fish market next door is the budget version of the same fish.",
+  hours:"Lunch 11:30 AM–3 PM, dinner 5–9 PM, daily. Fish market 10 AM–6 PM daily.",
+  about:"A Hanalei institution since the early 1970s — riverside dining room plus a sushi lounge, serving the day's local catch. The dinner named in the Nov 14 plan. NO reservations — first come, first served, and a wait at dinner is normal.",
+  menu:"The day's fresh fish (ahi, mahi, ono as it comes in), sushi and rolls in the lounge, seafood pastas and steaks in the dining room. The attached fish market sells the same catch to cook at home.",
+  dietary:"Fresh fish can be grilled plain; ask about gluten-free prep when you order — no published allergen menu was found.",
+  expect:"Get there early for dinner or put your name in and wander the Dolphin Center shops. Casual, loud in a good way, very Hanalei.",
+  links:[["Hanalei Dolphin — official site","http://www.hanaleidolphin.com/"]] },
+
+{ id:"fish-express", name:"The Fish Express", cat:"Restaurant", area:"Lihue", address:"3-3343 Kuhio Hwy #7, Lihue, HI 96766", phone:"(808) 245-9918", lat:21.9840, lng:-159.3671, phase:"active", bookEarly:false,
+  cost:"Takeout-counter prices — poke by the pound or in bowls; one of the best-value fresh-fish stops on the island.",
+  hours:"Daily 10 AM–4 PM (some listings show an earlier Sunday close — go before 2:30 PM on Sundays to be safe).",
+  about:"A takeout-only poke counter a few minutes from the airport — the planned first bite of the trip (Nov 6 Plan A: 'Fish Express or Konohiki'). Six-plus ahi poke varieties made through the day, a build-your-own topping bar, plus cooked plates like macadamia-crusted mahi and ahi katsu.",
+  menu:"Shoyu, limu, spicy and other ahi pokes; poke bowls; macadamia-crusted mahi plate; ahi katsu. Order at the counter, take it to go.",
+  dietary:"Poke is raw fish over rice — naturally dairy-free; shoyu poke contains soy and gluten, so ask for a gluten-free preparation if needed.",
+  expect:"No seating to speak of — it is a grab-and-go stop. Lines move fast; poke sells out on busy afternoons, so earlier is better.",
+  links:[["The Fish Express — menu and ordering","https://thefishexpress.shop/"]] },
+
+{ id:"sleeping-giant", name:"Sleeping Giant (Nounou) — East Trail", cat:"Activity", area:"Kapa'a", address:"Haleilio Rd, Kapaa, HI 96746 (Nounou East trailhead)", phone:"", lat:22.0614, lng:-159.3467, phase:"explore", bookEarly:false,
+  cost:"Free — small roadside trailhead lot.",
+  hours:"Daylight hours. Start early: the climb is exposed and the trail turns slick after rain.",
+  about:"The east-side trail up Nounou Mountain — the Sleeping Giant. About 1.75 miles one way with roughly 1,000 feet of climb to the picnic shelter on the giant's chest, with views over Kapa'a and the coast. The Nov 17 plan note says it plainly: this is NOT the rain swap — the trail turns to mud when it is wet.",
+  expect:"Steady uphill, roots and mud in the shady stretches, full sun higher up. Water, shoes that can get muddy, and a clear morning are the recipe.",
+  links:[["Sleeping Giant (Nounou) East Trail — kauai.com","http://www.kauai.com/nounou-east"]] }
+,
+/* ---- Patch 15: Justin's picks from the video things-to-do list (added 2026-10-28) ---- */
+{ id:"wailua-falls", name:"Wailua Falls", cat:"Activity", area:"Wailua", address:"End of Maalo Rd, Wailua River State Park, Lihue, HI", phone:"", lat:22.0344, lng:-159.3786, phase:"explore", bookEarly:false,
+  cost:"Free — small parking lot at the lookout, and it fills up; go early.",
+  hours:"Daylight hours. Morning is best — rainbows in the spray and a better shot at parking.",
+  about:"The 173-foot double waterfall from the Fantasy Island opening credits, viewed from a lookout right at the end of Maalo Road — no hike needed for the view. From the budget-Kauai videos you saved; one of your yes picks.",
+  expect:"Lookout only for this trip: the paths down to the pool are steep, muddy and dangerous, the currents near the falls are swift, and swimming is not allowed. View, photograph, done.",
+  links:[] },
+{ id:"kilauea-lighthouse", name:"Kilauea Lighthouse & Kilauea Point Refuge", cat:"Activity", area:"Kilauea", address:"3500 Kilauea Rd, Kilauea, HI 96754 (Kilauea Point National Wildlife Refuge)", phone:"", lat:22.2298, lng:-159.4023, phase:"explore", bookEarly:true,
+  cost:"Refuge entry fee per person — check the current amount when you book.",
+  hours:"CHECK FIRST: in recent years the refuge has used limited days and timed-entry reservations (booked online). Confirm days, hours and reservation rules before driving up.",
+  about:"The 1913 lighthouse on a dramatic ocean point inside a national wildlife refuge — red-footed boobies, nene, frigatebirds, and whale/dolphin water below in season. From the videos you saved; one of your yes picks.",
+  expect:"A viewpoint-and-birds stop, not a beach. Short paved paths; bring the binoculars if you have them. Pairs naturally with the other Kilauea picks (Hanalei Spirits, the noni farm, Kilauea Bakery and the fish market).",
+  links:[] },
+{ id:"lydgate-farms", name:"Lydgate Farms — Chocolate Tasting", cat:"Business", area:"Kapa'a", address:"5730 Olohena Rd, Kapaa, HI 96746", phone:"", lat:22.0773, lng:-159.3568, phase:"explore", bookEarly:false,
+  cost:"The videos flagged a FREE chocolate tasting here; the full farm tour is the paid version. Confirm what is offered on the day.",
+  hours:"Check current tasting/tour times before you go.",
+  about:"A working cacao farm in the Wailua hills — Kauai-grown chocolate, tasted where the pods grow. From the Budget Kauai video you saved (the free tasting was its headline); one of your yes picks.",
+  expect:"Up Olohena Road in homestead country — a pretty drive in itself. Tasting-first, tour only if it sounds worth it when you are there.",
+  links:[] },
+{ id:"hanalei-spirits", name:"Hanalei Spirits Distillery", cat:"Business", area:"Kilauea", address:"4241 Kahili Makai St, Kilauea, HI 96754", phone:"", lat:22.2075, lng:-159.3894, phase:"explore", bookEarly:false,
+  cost:"Tastings at the distillery — confirm current tasting setup and price when you go.",
+  hours:"Check current hours before you go.",
+  about:"A small Kilauea distillery making spirits from island-grown ingredients — taro, sugarcane and local botanicals. From the Budget Kauai video you saved; one of your yes picks.",
+  expect:"A tasting-room stop on the Kilauea cluster day (lighthouse, noni farm, bakery, fish market all nearby). Tiny operation — hours can be irregular.",
+  links:[] },
+{ id:"real-noni-farm", name:"Real Noni Farm Tour (Hawaiian Organic Noni)", cat:"Business", area:"Kilauea", address:"Larsen's Beach Rd, Kilauea, HI 96754", phone:"", lat:22.1981, lng:-159.3419, phase:"explore", bookEarly:true,
+  cost:"The videos flagged this as a free farm tour — confirm and reserve ahead, since tours run on the farm's schedule.",
+  hours:"By the farm's tour schedule — check and book before the day.",
+  about:"An organic noni farm above Larsen's Beach: how noni is grown and made into juice and leather, told by the family that farms it. From the Budget Kauai video you saved; one of your yes picks.",
+  expect:"A farm visit, so outdoor walking on uneven ground — water shoes you can rinse, or shoes that can get farm-dirty. Rural road in; go in daylight.",
+  links:[] },
+{ id:"hanapepe-art-night", name:"Hanapepe Friday Art Night", cat:"Activity", area:"Hanapepe", address:"Hanapepe Rd (old town main street), Hanapepe, HI 96716", phone:"", lat:21.9095, lng:-159.5878, phase:"explore", bookEarly:false,
+  cost:"Free to wander — galleries and shops open late; food and art cost what you choose.",
+  hours:"Friday evenings, roughly 5–9 PM. Your trip Fridays are Nov 13 and Nov 20.",
+  about:"Old-town Hanapepe's weekly art walk: galleries open late, artists out, food trucks and music on the main street of the town that inspired Lilo & Stitch's hometown. From the Budget Kauai video you saved; one of your yes picks — and it is an evening event, so it is a drive-to exception to the home-before-dark lean.",
+  expect:"Park once and stroll the short main street. Pairs with a west-side day (Salt Pond if it reopens, Glass Beach sunset) — art night starts right around sunset.",
+  links:[] },
+{ id:"tip-top-cafe", name:"Tip Top Cafe", cat:"Restaurant", area:"Lihue", address:"3173 Akahi St, Lihue, HI 96766 (Tip Top Motel)", phone:"", lat:21.9792, lng:-159.3673, phase:"active", bookEarly:false,
+  cost:"Old-school diner prices — one of the best-value sit-down breakfasts on the island.",
+  hours:"Breakfast-and-lunch diner hours; go early, it fills with locals.",
+  about:"A Lihue institution inside the Tip Top Motel, famous for pancakes and oxtail soup — the kind of place locals actually eat. From the Awkward Tourist budget video you saved; one of your yes picks.",
+  expect:"Handy on the airport/Lihue run days. No reservations, counter-and-booth diner — expect a short wait at peak breakfast.",
+  links:[] },
+{ id:"ishihara-market", name:"Ishihara Market — Poke", cat:"Restaurant", area:"Waimea", address:"9852 Kaumualii Hwy, Waimea, HI 96796", phone:"", lat:21.9549, lng:-159.6682, phase:"active", bookEarly:false,
+  cost:"Poke by the pound at market prices — a local favorite, not a tourist markup.",
+  hours:"Market hours; the poke counter is best earlier in the day before favorites sell out.",
+  about:"A Waimea grocery store with a poke counter locals swear by — the west side's poke stop. From the video list you saved; one of your yes picks.",
+  expect:"Order poke at the back counter and take it to go — a natural pairing with a Waimea Canyon day or a Kekaha sunset run.",
+  links:[] },
+{ id:"right-slice", name:"The Right Slice", cat:"Restaurant", area:"Kalaheo", address:"2-2459 Kaumualii Hwy, Kalaheo, HI 96741", phone:"", lat:21.9259, lng:-159.5269, phase:"relax", bookEarly:false,
+  cost:"Pie by the slice or whole pies — an easy treat run from the house.",
+  hours:"Check current hours; popular flavors sell out, so earlier is better.",
+  about:"A pie shop right in Kalaheo — minutes from Becky's house. Fruit and cream pies, slices to go or whole pies for the house. From the video list you saved; one of your yes picks, and the closest one to home base.",
+  expect:"The low-effort dessert move: grab slices after a south-shore day, or a whole pie for the house. Confirm the day's flavors when you get there.",
   links:[] }
 ];
 
@@ -1515,16 +1677,20 @@ function initMap(){
   }).addTo(map);
   mapReady = true;
   refreshMarkers();
+  drawTrails();
+  drawSunsets();
 }
 function refreshMarkers(){
   if(!mapReady) return;
   Object.keys(markers).forEach(function(k){ map.removeLayer(markers[k]); });
   markers = {};
   var shown = 0;
+  var shownList = [];
   allPlaces().forEach(function(p){
     if(typeof p.lat!=="number" || typeof p.lng!=="number") return;
     if(!mapPlaceVisible(p)) return;
     shown++;
+    shownList.push(p);
     var isHL = !!mapDay && state.sched[p.id]===mapDay;
     var m = L.marker([p.lat,p.lng], { icon: isHL ? pinIconHL(p) : pinIcon(p, !!mapDay) }).addTo(map);
     if(/beach|landing/i.test(p.name)) m.bindTooltip(p.name, { permanent:true, direction:"top", offset:[0,-13], className:"beach-label" });
@@ -1543,6 +1709,7 @@ function refreshMarkers(){
       st.textContent = "All " + shown + " places. Pick a day above to highlight what's planned that day.";
     }
   }
+  renderMapList(shownList);
 }
 function showMapCard(id){
   var p = getPlace(id); if(!p) return;
@@ -1754,6 +1921,24 @@ var SUGGESTED = [
   a:"Fly home", an:"Slow morning, tidy the house (key back in its spot, plants and trash per Becky's sheet), one last look at the water. Head to LIH in good time for AS788, 4:45 PM to SFO — landing 11:57 PM, with your parents meeting you.",
   b:"Same day, slower edges", bn:"Travel day is weather-proof. If the morning is clear, one last short beach stop on the way to Lihue; if not, a long coffee and an early, calm run to the airport." }
 ];
+/* Patch 12: place names inside Suggested plans become tappable (open the place page) */
+var PLACE_ALIASES = { "Regal theater":"kukui-grove-cinema", "Kukui Grove":"kukui-grove", "Kauai Coffee":"kauai-coffee", "Costco":"costco", "Foodland":"foodland-princeville", "Clayworks":"clayworks", "Fish Express":"fish-express", "Sleeping Giant":"sleeping-giant", "Kingdom Hall Wai'aka":"kingdom-hall", "The Beach House":"beach-house", "Rum Safari":"rum-safari", "Waimea Theater":"waimea-theatre" };
+function linkifyPlaces(text){
+  if(!text) return "";
+  var terms = [];
+  allPlaces().forEach(function(p){ if(p.name) terms.push([p.name, p.id]); });
+  Object.keys(PLACE_ALIASES).forEach(function(k){ terms.push([k, PLACE_ALIASES[k]]); });
+  terms.sort(function(a,b){ return b[0].length - a[0].length; });
+  var idFor = {};
+  terms.forEach(function(t){ if(!idFor[t[0]]) idFor[t[0]] = t[1]; });
+  var pat = terms.map(function(t){ return t[0].replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|");
+  if(!pat) return esc(text);
+  var parts = String(text).split(new RegExp("("+pat+")", "g"));
+  return parts.map(function(part, i){
+    if(i % 2 === 1 && idFor[part]) return '<span class="nm" data-open="'+idFor[part]+'">'+esc(part)+'</span>';
+    return esc(part);
+  }).join("");
+}
 function renderSuggested(){
   var wrap = document.getElementById("sugg-wrap");
   if(!wrap) return;
@@ -1765,9 +1950,9 @@ function renderSuggested(){
     }
     html += '<article class="sugg-day"><div class="strip '+s.ph+'"></div><div class="body">'
       + '<h3>'+esc(s.d)+'</h3>'
-      + '<div class="plan a"><div class="tag">Plan A</div><div class="txt"><strong>'+esc(s.a)+'</strong><span>'+esc(s.an)+'</span></div></div>'
-      + '<div class="plan b"><div class="tag">Plan B</div><div class="txt"><strong>'+esc(s.b)+'</strong><span>'+esc(s.bn)+'</span></div></div>'
-      + (s.also ? '<p class="sugg-also">'+esc(s.also)+'</p>' : '')
+      + '<div class="plan a"><div class="tag">Plan A</div><div class="txt"><strong>'+linkifyPlaces(s.a)+'</strong><span>'+linkifyPlaces(s.an)+'</span></div></div>'
+      + '<div class="plan b"><div class="tag">Plan B</div><div class="txt"><strong>'+linkifyPlaces(s.b)+'</strong><span>'+linkifyPlaces(s.bn)+'</span></div></div>'
+      + (s.also ? '<p class="sugg-also">'+linkifyPlaces(s.also)+'</p>' : '')
       + suggNear(s)
       + '</div></article>';
   });
@@ -1953,6 +2138,118 @@ var wxCalBtn=document.getElementById("wx-cal-btn");
 if(wxCalBtn) wxCalBtn.addEventListener("click", function(){ showView("calendar"); });
 wxLoad();
 /* ================= map tools + nearby eats & markets ================= */
+/* ================= Patch 13: hiking trails drawn on the map (OpenStreetMap geometry) ================= */
+var TRAILS = [
+{ id:"kalalau", name:"Kalalau Trail — Ke'e Beach to Hanakapiai Beach", short:"Kalalau Trail", oneWay:1.9, note:"The open stretch — the trail is closed beyond Hanakapiai (checked Oct 2026). Hanakapiai Stream crossing at the beach end: do not cross in high water. Ha'ena park entry is by reservation or shuttle.", lines:[[[22.22042,-159.58271],[22.22015,-159.58272],[22.22005,-159.58283],[22.22003,-159.58304],[22.21995,-159.58326],[22.2198,-159.58331],[22.21959,-159.58359],[22.21949,-159.58382],[22.21924,-159.58399],[22.21913,-159.58412],[22.2192,-159.58424],[22.21923,-159.58447],[22.21923,-159.58462],[22.21915,-159.58478],[22.21884,-159.58491],[22.21866,-159.5849],[22.21867,-159.58503],[22.21884,-159.58519],[22.21892,-159.5854],[22.219,-159.58551],[22.21881,-159.58574],[22.21869,-159.58569],[22.21851,-159.58585],[22.21826,-159.58597],[22.21786,-159.58592],[22.21735,-159.586],[22.2175,-159.58646],[22.21776,-159.58684],[22.21771,-159.58702],[22.21761,-159.58714],[22.21732,-159.58723],[22.21705,-159.58739],[22.21686,-159.58754],[22.2166,-159.58751],[22.21632,-159.58748],[22.21615,-159.5875],[22.21607,-159.58753],[22.21604,-159.58772],[22.21604,-159.58792],[22.21605,-159.58803],[22.21586,-159.588],[22.2157,-159.58794],[22.2155,-159.58786],[22.21536,-159.5877],[22.21515,-159.58757],[22.21505,-159.58746],[22.215,-159.5876],[22.21513,-159.58772],[22.21523,-159.58788],[22.21522,-159.58808],[22.21526,-159.58828],[22.21536,-159.58843],[22.21537,-159.58862],[22.21518,-159.58875],[22.21499,-159.58882],[22.21486,-159.58892],[22.21479,-159.58912],[22.21462,-159.58916],[22.21451,-159.58941],[22.21438,-159.58956],[22.21416,-159.58978],[22.21402,-159.58989],[22.21394,-159.59006],[22.21381,-159.5902],[22.21371,-159.59057],[22.21335,-159.59095],[22.21327,-159.59138],[22.21317,-159.59167],[22.21311,-159.59193],[22.21292,-159.59226],[22.21292,-159.59246],[22.21276,-159.59273],[22.21253,-159.59302],[22.21238,-159.59311],[22.21219,-159.59314],[22.21202,-159.59305],[22.212,-159.59274],[22.21182,-159.59275],[22.2117,-159.5929],[22.21159,-159.5932],[22.21164,-159.59341],[22.21188,-159.59373],[22.21173,-159.59387],[22.21154,-159.5939],[22.21134,-159.59387],[22.21124,-159.59375],[22.21129,-159.59396],[22.21131,-159.59415],[22.21136,-159.59429],[22.2115,-159.59441],[22.21157,-159.59451],[22.21164,-159.59461],[22.21155,-159.59467],[22.21139,-159.59457],[22.21114,-159.59432],[22.21105,-159.59437],[22.21107,-159.59468],[22.21107,-159.59487],[22.21112,-159.59516],[22.21126,-159.5955],[22.21123,-159.59582],[22.21099,-159.59607],[22.21074,-159.59628],[22.21047,-159.59634],[22.21017,-159.59636],[22.20987,-159.59644],[22.20969,-159.59674],[22.20959,-159.59691],[22.20946,-159.59698],[22.20933,-159.59704],[22.2091,-159.59698],[22.2089,-159.59707],[22.20867,-159.59712],[22.2085,-159.59708],[22.20866,-159.59723],[22.20887,-159.59736],[22.20866,-159.59744],[22.20851,-159.59733],[22.20841,-159.59748],[22.20836,-159.59759],[22.20798,-159.59756]]] },
+{ id:"hanakapiai-falls", name:"Hanakapiai Falls Trail", short:"Hanakapiai Falls", oneWay:1.7, note:"From Hanakapiai Beach up the valley to the 300-ft falls — an add-on to the Kalalau hike, not a standalone start. Crosses the stream several times; muddy and slippery after rain.", lines:[[[22.20798,-159.59756],[22.20773,-159.59739],[22.20757,-159.59732],[22.20748,-159.59726],[22.20724,-159.59725],[22.20696,-159.59733],[22.20661,-159.59744],[22.20629,-159.59739],[22.20611,-159.59733],[22.206,-159.59724],[22.20579,-159.59716],[22.20571,-159.59709],[22.20526,-159.59695],[22.20518,-159.59687],[22.20493,-159.59672],[22.20479,-159.59663],[22.20469,-159.59655],[22.2045,-159.59644],[22.20436,-159.59639],[22.20422,-159.59637],[22.20408,-159.5964],[22.204,-159.5964],[22.2038,-159.59631],[22.20355,-159.59626],[22.20342,-159.5962],[22.20333,-159.59614],[22.20295,-159.59577],[22.20274,-159.59562],[22.20261,-159.59555],[22.2023,-159.59545],[22.20206,-159.59529],[22.20192,-159.59524],[22.2018,-159.59516],[22.20162,-159.59513],[22.20142,-159.59505],[22.20135,-159.59505],[22.20106,-159.59511],[22.20085,-159.59511],[22.20061,-159.59502],[22.20036,-159.59496],[22.2003,-159.59493],[22.20016,-159.59489],[22.20003,-159.59482],[22.19989,-159.5947],[22.19975,-159.59466],[22.19964,-159.59466],[22.19934,-159.59454],[22.19916,-159.59453],[22.19896,-159.59446],[22.19885,-159.59445],[22.19857,-159.59445],[22.19839,-159.59457],[22.1981,-159.59465],[22.19791,-159.59462],[22.19753,-159.59454],[22.19743,-159.59444],[22.19742,-159.59435],[22.19723,-159.59433],[22.19702,-159.59415],[22.19692,-159.59383],[22.19678,-159.5938],[22.1967,-159.59398],[22.19626,-159.59406],[22.19598,-159.5939],[22.19567,-159.59394],[22.19553,-159.5939],[22.19537,-159.59385],[22.19525,-159.59382],[22.19511,-159.59382],[22.19495,-159.59393],[22.19473,-159.59385],[22.19458,-159.59385],[22.19444,-159.59381],[22.19426,-159.59381],[22.19402,-159.59372],[22.19371,-159.59374],[22.19353,-159.59377],[22.19336,-159.59384],[22.19326,-159.5939],[22.193,-159.5939],[22.1928,-159.59405],[22.19241,-159.59418],[22.19216,-159.5943],[22.19194,-159.59425],[22.19162,-159.59429],[22.19142,-159.59434],[22.19131,-159.59446],[22.19118,-159.59445],[22.19087,-159.59428],[22.19078,-159.59405],[22.19048,-159.59393],[22.19029,-159.59387],[22.19003,-159.59375],[22.18993,-159.5938],[22.18984,-159.59386],[22.18972,-159.59388],[22.18959,-159.59394],[22.18944,-159.59405],[22.1893,-159.59403],[22.18918,-159.5941],[22.18909,-159.5941],[22.1891,-159.5942],[22.189,-159.59423],[22.18883,-159.59422],[22.18861,-159.59408],[22.18836,-159.59415],[22.18827,-159.59409],[22.18819,-159.59408],[22.18812,-159.59408],[22.18801,-159.59416],[22.18771,-159.59441],[22.18756,-159.5946],[22.18745,-159.59474],[22.18703,-159.59482],[22.18676,-159.59483],[22.18658,-159.59481],[22.18641,-159.59484],[22.18631,-159.59471],[22.18618,-159.59481]]] },
+{ id:"sleeping-giant-east", name:"Sleeping Giant (Nounou) East Trail", short:"Sleeping Giant East", oneWay:1.4, note:"Up to the picnic shelter on the giant's chest. Turns to mud after rain — the plan note stands: this is not the wet-day swap.", lines:[[[22.06142,-159.34656],[22.06166,-159.34633],[22.06177,-159.34631],[22.06183,-159.34642],[22.06191,-159.34651],[22.06198,-159.34645],[22.06206,-159.34653],[22.06195,-159.34673],[22.06204,-159.34678],[22.06212,-159.34669],[22.06234,-159.34647],[22.06246,-159.34641],[22.06253,-159.34645],[22.06245,-159.34662],[22.06252,-159.34672],[22.06263,-159.34673],[22.0627,-159.34682],[22.06261,-159.34692],[22.06255,-159.34702],[22.06249,-159.34716],[22.06259,-159.34721],[22.06273,-159.34716],[22.06285,-159.34709],[22.06312,-159.34708],[22.06318,-159.34715],[22.06302,-159.34726],[22.06291,-159.34736],[22.06278,-159.34751],[22.06273,-159.34758],[22.06278,-159.34769],[22.06305,-159.34755],[22.0632,-159.34744],[22.06315,-159.34758],[22.06309,-159.34772],[22.06303,-159.34801],[22.06282,-159.34816],[22.06295,-159.34819],[22.06286,-159.34833],[22.06276,-159.3484],[22.0628,-159.34847],[22.06302,-159.34834],[22.06318,-159.34822],[22.06334,-159.34807],[22.06345,-159.34784],[22.06352,-159.34767],[22.06359,-159.34762],[22.06367,-159.34764],[22.06381,-159.34769],[22.06399,-159.34765],[22.06422,-159.34753],[22.06433,-159.34747],[22.06436,-159.34757],[22.0643,-159.34764],[22.06432,-159.34772],[22.06442,-159.34766],[22.06454,-159.34757],[22.06444,-159.34776],[22.06439,-159.34782],[22.06432,-159.34787],[22.06428,-159.34796],[22.06443,-159.34803],[22.06457,-159.34791],[22.06463,-159.34802],[22.0646,-159.34811],[22.06449,-159.34823],[22.06441,-159.34837],[22.06436,-159.34847],[22.06436,-159.34859],[22.06441,-159.34875],[22.06444,-159.34889],[22.06445,-159.34898],[22.06442,-159.34889],[22.06435,-159.34882],[22.06424,-159.34872],[22.06416,-159.34864],[22.06408,-159.34864],[22.06397,-159.34868],[22.06386,-159.34875],[22.06374,-159.34882],[22.06362,-159.34889],[22.06357,-159.34898],[22.06353,-159.34908],[22.06345,-159.34915],[22.06335,-159.34922],[22.06347,-159.34927],[22.0636,-159.34927],[22.06371,-159.34925],[22.06379,-159.34928],[22.06372,-159.34939],[22.06377,-159.3495],[22.06371,-159.34957],[22.06356,-159.34961],[22.0635,-159.3497],[22.06358,-159.34978],[22.06354,-159.34993],[22.06356,-159.35007],[22.0636,-159.3503],[22.06362,-159.35061],[22.06362,-159.35093],[22.06362,-159.35117],[22.06361,-159.35129],[22.06357,-159.35139],[22.0636,-159.3515],[22.06369,-159.3516],[22.06376,-159.35166],[22.06383,-159.3517],[22.06398,-159.35171],[22.06413,-159.35183],[22.06422,-159.35186],[22.06431,-159.35198],[22.06426,-159.35204],[22.06417,-159.35207],[22.06411,-159.35221],[22.06405,-159.35227],[22.06394,-159.35222],[22.06387,-159.35226],[22.06377,-159.35229],[22.06384,-159.35236],[22.06383,-159.35255],[22.06379,-159.35272],[22.06379,-159.35288],[22.06383,-159.35302],[22.06394,-159.35316],[22.064,-159.35329],[22.06395,-159.35335],[22.06386,-159.3532],[22.06367,-159.35306],[22.06378,-159.35333],[22.06375,-159.35346],[22.06374,-159.35361],[22.06371,-159.35373],[22.06371,-159.35385],[22.06374,-159.35404],[22.06368,-159.35417],[22.06359,-159.35427],[22.06353,-159.35435],[22.06344,-159.35442],[22.06351,-159.35449],[22.06351,-159.35458],[22.06338,-159.35467],[22.0633,-159.35475],[22.06316,-159.35474],[22.06305,-159.35457],[22.06299,-159.35449],[22.06283,-159.35442]]] },
+{ id:"mahaulepu", name:"Maha'ulepu Heritage Trail", short:"Maha'ulepu Heritage", oneWay:3.0, note:"Coastal walk from Shipwreck Beach along the cliffs, past the Makauwahi Cave area and Gillin's Beach to Maha'ulepu and Kawailoa Bay. Almost no shade — go early and carry water.", lines:[[[21.87509,-159.43695],[21.87501,-159.43686],[21.87501,-159.43669],[21.875,-159.4365],[21.87498,-159.4361],[21.87495,-159.43602],[21.87483,-159.43578],[21.87475,-159.43567],[21.8747,-159.43559],[21.87458,-159.43541],[21.87455,-159.43533],[21.87455,-159.43521],[21.8746,-159.4348],[21.8746,-159.4346],[21.87463,-159.43451],[21.87471,-159.4344],[21.87478,-159.43423],[21.87484,-159.43414],[21.8752,-159.43386],[21.87532,-159.43371],[21.87561,-159.43349],[21.87566,-159.43341],[21.87577,-159.4332],[21.87587,-159.43292],[21.87592,-159.43283],[21.87605,-159.43271],[21.87627,-159.43253],[21.87648,-159.4324],[21.87686,-159.43232],[21.87695,-159.43227],[21.87702,-159.43221],[21.87705,-159.43215],[21.87712,-159.43204],[21.87732,-159.43177],[21.87761,-159.4316],[21.87773,-159.43153],[21.87793,-159.43137],[21.87798,-159.4313],[21.87803,-159.43118],[21.87807,-159.43111],[21.87814,-159.43105],[21.87823,-159.431],[21.87831,-159.43086],[21.87835,-159.43065],[21.87842,-159.43056],[21.87848,-159.43049],[21.87854,-159.43043],[21.87863,-159.43031],[21.8787,-159.43022],[21.87872,-159.43012],[21.87879,-159.43007],[21.87882,-159.42998],[21.87894,-159.42997],[21.87904,-159.42998],[21.87911,-159.42998],[21.87921,-159.42995],[21.87926,-159.42988],[21.87932,-159.42979],[21.87942,-159.42979],[21.87958,-159.42978],[21.8797,-159.42973],[21.87979,-159.42974],[21.87988,-159.42975],[21.87994,-159.42969],[21.88006,-159.42967],[21.88015,-159.42964],[21.88023,-159.42962],[21.88031,-159.42963],[21.88037,-159.42957],[21.88043,-159.42952],[21.88048,-159.42945],[21.88052,-159.42938],[21.88059,-159.42931],[21.88065,-159.42923],[21.88067,-159.42914],[21.8807,-159.42904],[21.88072,-159.42896],[21.88076,-159.42885],[21.88081,-159.42877],[21.88079,-159.42868],[21.88071,-159.42863],[21.88067,-159.42856],[21.8807,-159.42847],[21.8807,-159.42838],[21.88073,-159.42829],[21.88074,-159.42821],[21.88077,-159.42812],[21.88084,-159.42807],[21.8809,-159.428],[21.88099,-159.42781],[21.88109,-159.42761],[21.88116,-159.42749],[21.88122,-159.42733],[21.8813,-159.42718],[21.88133,-159.4269],[21.88137,-159.42673],[21.88138,-159.42665],[21.88138,-159.42654],[21.88138,-159.42645],[21.88139,-159.42633],[21.88144,-159.42618],[21.88148,-159.42606],[21.8815,-159.4259],[21.88152,-159.42576],[21.88153,-159.42567],[21.88155,-159.42553],[21.88154,-159.4254],[21.88155,-159.42526],[21.88154,-159.42517],[21.88152,-159.42505],[21.88154,-159.42495],[21.88156,-159.42487],[21.88157,-159.42479],[21.88152,-159.42468],[21.88153,-159.42441],[21.8816,-159.42365],[21.88164,-159.42325],[21.88165,-159.423],[21.88164,-159.42288],[21.88168,-159.42269],[21.88172,-159.42258],[21.88173,-159.42247],[21.88174,-159.42236],[21.88176,-159.42225],[21.8818,-159.42219],[21.88184,-159.42209],[21.88182,-159.42201],[21.88174,-159.42194],[21.88175,-159.42184],[21.88179,-159.42178],[21.88184,-159.42171],[21.88191,-159.42164],[21.88198,-159.42159],[21.88201,-159.42148],[21.88207,-159.42142],[21.88214,-159.42136],[21.88219,-159.42129],[21.88222,-159.42119],[21.88226,-159.4211],[21.88231,-159.42101],[21.88233,-159.42091],[21.88237,-159.42085],[21.88247,-159.42078],[21.88251,-159.42071],[21.88256,-159.42062],[21.88263,-159.42055],[21.8827,-159.42044],[21.88275,-159.42034],[21.88282,-159.42022],[21.8829,-159.42016],[21.88297,-159.42011],[21.88309,-159.41995],[21.88311,-159.41983],[21.88317,-159.41973],[21.88321,-159.41966],[21.88324,-159.41958],[21.88326,-159.41949],[21.8833,-159.41942],[21.88337,-159.41935],[21.88342,-159.41928],[21.88353,-159.41924],[21.88361,-159.41922],[21.88369,-159.41913],[21.88375,-159.41903],[21.88379,-159.41886],[21.88405,-159.41877],[21.88414,-159.41872],[21.88433,-159.4186],[21.88449,-159.41859],[21.88456,-159.41855],[21.88468,-159.41855],[21.88487,-159.41842],[21.885,-159.41839],[21.88516,-159.41835],[21.88523,-159.41834],[21.88533,-159.41836],[21.88576,-159.4185],[21.88614,-159.4186],[21.88631,-159.41868],[21.88654,-159.41883],[21.88662,-159.41885],[21.88671,-159.41889],[21.88679,-159.41892],[21.88691,-159.41891],[21.88703,-159.41894],[21.88714,-159.4189],[21.88722,-159.41883],[21.88725,-159.41873],[21.88728,-159.41863],[21.88739,-159.41855],[21.88752,-159.41845],[21.88759,-159.41838],[21.88765,-159.41826],[21.88776,-159.41818],[21.88782,-159.41811],[21.88788,-159.41805],[21.88812,-159.41792],[21.88823,-159.41792],[21.88827,-159.41784],[21.8884,-159.41778],[21.88847,-159.41796],[21.88852,-159.41802],[21.88853,-159.41812],[21.88857,-159.41819],[21.8886,-159.4183],[21.88865,-159.41837],[21.88873,-159.41841],[21.8888,-159.41834],[21.8889,-159.41816],[21.88895,-159.41809],[21.88886,-159.41802],[21.88871,-159.41789],[21.8886,-159.41775],[21.88857,-159.41765],[21.88857,-159.41747],[21.88867,-159.41713],[21.88879,-159.41669],[21.88884,-159.4164],[21.88893,-159.41607],[21.88901,-159.41583],[21.88903,-159.41572],[21.88909,-159.41565],[21.88909,-159.41551],[21.88912,-159.41538],[21.88919,-159.41519],[21.88926,-159.41493],[21.88928,-159.4147],[21.88937,-159.41433],[21.88943,-159.41411],[21.88946,-159.41401],[21.88946,-159.41349],[21.88951,-159.41316],[21.88954,-159.41285],[21.88964,-159.41265],[21.88964,-159.41252],[21.88961,-159.41242],[21.88971,-159.41217],[21.88972,-159.41202],[21.88966,-159.4119],[21.88969,-159.4118],[21.88975,-159.41167],[21.88987,-159.41132],[21.88987,-159.41118],[21.8899,-159.41099],[21.88997,-159.41067],[21.89,-159.41051],[21.89007,-159.41043],[21.89016,-159.41037],[21.89037,-159.41031],[21.89049,-159.41034],[21.89076,-159.41053],[21.89103,-159.41061],[21.89147,-159.41074],[21.89195,-159.41086],[21.89219,-159.41085],[21.89248,-159.41072],[21.89268,-159.41063],[21.89271,-159.41052],[21.89277,-159.41043],[21.89293,-159.4103],[21.893,-159.41014],[21.8931,-159.41005],[21.89317,-159.40991],[21.89315,-159.4098],[21.89307,-159.4097],[21.89308,-159.40934],[21.89312,-159.40916],[21.89326,-159.4088],[21.89326,-159.40854],[21.89323,-159.40841],[21.8931,-159.40831],[21.89301,-159.40818],[21.89301,-159.40808],[21.89307,-159.4076],[21.89306,-159.4075],[21.89303,-159.40729],[21.89304,-159.40714],[21.89316,-159.40684],[21.89318,-159.40658],[21.8933,-159.40635],[21.89346,-159.40622]]] },
+{ id:"canyon-waipoo", name:"Canyon Trail to Waipo'o Falls", short:"Canyon Trail", oneWay:1.6, note:"ACCESS CHECK FIRST: Ko'ke'e Road was closed in Oct 2026 after Hurricane Lowell and canyon access was only partly reopened — confirm the road and trail are open before driving up.", lines:[[[22.0439,-159.64054],[22.04434,-159.64058],[22.04455,-159.64047],[22.04474,-159.64019],[22.04547,-159.63982],[22.04572,-159.63983],[22.04615,-159.63999],[22.04632,-159.63984],[22.04674,-159.64002],[22.04669,-159.63995],[22.04643,-159.6396],[22.04657,-159.63943],[22.04722,-159.63988],[22.04773,-159.63992],[22.04804,-159.64007],[22.04836,-159.6399],[22.04839,-159.64009],[22.04837,-159.6402],[22.0486,-159.64026],[22.04953,-159.63984],[22.05044,-159.63967],[22.05084,-159.63942],[22.05113,-159.63914],[22.0522,-159.63863],[22.05268,-159.63833],[22.05285,-159.63831],[22.05316,-159.63814],[22.05354,-159.63816],[22.05372,-159.63812],[22.05388,-159.63808],[22.05415,-159.63788],[22.05437,-159.63783],[22.0553,-159.63788],[22.05563,-159.63791],[22.05586,-159.63781],[22.0559,-159.63773],[22.05599,-159.63768],[22.05627,-159.63783],[22.05661,-159.6379],[22.05667,-159.63802],[22.0569,-159.63802],[22.05706,-159.63809],[22.05749,-159.63829],[22.05769,-159.63824],[22.05772,-159.63837],[22.05818,-159.63866],[22.05852,-159.63847],[22.05877,-159.63868],[22.05892,-159.63909],[22.05919,-159.63953],[22.0593,-159.6399],[22.05924,-159.64003],[22.05932,-159.64024],[22.05944,-159.64034],[22.05966,-159.6406],[22.0599,-159.64085],[22.06,-159.64108],[22.06015,-159.64126],[22.06034,-159.64137],[22.06041,-159.64162],[22.0606,-159.64165],[22.06071,-159.64187],[22.06091,-159.64203],[22.06091,-159.64211],[22.0611,-159.64226],[22.06116,-159.64213],[22.06133,-159.64207],[22.0615,-159.6421],[22.06173,-159.64207],[22.06181,-159.64208],[22.06184,-159.64211]]] }
+];
+/* ================= Patch 14: sunset spots layer (Sunsets button) ================= */
+var SUNSETS = [
+{ id:"kekaha", name:"Kekaha Beach", lat:21.96474, lng:-159.70502, crowd:"Quiet", verdict:"Works in November", status:"open", drive:"~35-40 min home", note:"Long west-facing locals' beach with a direct line to the November sunset over the ocean, Ni'ihau offshore. Roadside parking off Hwy 50, steps to the sand. Watch the sunset, don't swim at dusk - strong shorebreak and currents." },
+{ id:"pakala", name:"Pakala Beach (Infinities)", lat:21.93527, lng:-159.64945, crowd:"Quiet", verdict:"Works in November", status:"open", drive:"~20-25 min home", note:"Hidden locals' surf beach west of Hanapepe - sunset over the water with surfers in the frame. Unmarked ~0.3 mi trail from the highway (guardrail break, rusty fence is a trip hazard): bring a flashlight and leave right at sundown. Be a respectful guest; don't take surfer parking." },
+{ id:"glass-beach", name:"Glass Beach, Port Allen", lat:21.89901, lng:-159.58428, crowd:"Quiet", verdict:"Works in November", status:"open", drive:"~15-20 min home", note:"Tiny sea-glass cove facing across Hanapepe Bay toward Waimea. Industrial harbor setting, no facilities, rocky - not a swimming spot. About a minute from the car, and you'll likely have it to yourselves." },
+{ id:"kukuiula-harbor", name:"Kukui'ula Small Boat Harbor", lat:21.88417, lng:-159.48682, crowd:"Quiet", verdict:"Works in November", status:"open", drive:"~10 min home", note:"Working harbor with a breakwater to watch from - no resort crowd. Uneven jetty rock and no railings, so arrive in daylight and watch your footing. Baby Beach, just east, is the same shoreline; the very last dip can be clipped by the headland there." },
+{ id:"spouting-horn", name:"Spouting Horn Park, Poipu", lat:21.88545, lng:-159.49525, crowd:"Moderate", verdict:"Works in November", status:"open", drive:"~10 min home", note:"The blowhole spray backlit by sunset on the Lawai coast. Paved lot, railings, a minute from the car. Busiest of the Poipu sunset picks, but people cycle through - and it's the closest real sunset to the house." },
+{ id:"shipwreck-bluffs", name:"Shipwreck Beach to Maha'ulepu bluffs", lat:21.87583, lng:-159.43690, crowd:"Moderate, quieter a short walk east", verdict:"Partial - golden light, not the sun dipping in the water", status:"open", drive:"~15 min home", note:"Golden-hour light on the cliffs and sky color; a few hundred yards east on the Heritage Trail empties out. GATE WARNING: never drive out toward Gillin's for a November sunset - that gate closes 6:00 PM sharp in winter and cars get locked in. On foot from Shipwreck only, back at the car by dusk." },
+{ id:"kalapaki", name:"Kalapaki Beach, Lihue", lat:21.96218, lng:-159.34985, crowd:"Moderate", verdict:"Partial - sunset color, not the sun over the water", status:"open", drive:"~25 min home", note:"Calm sheltered bay; the sun sets behind the Ha'upu ridge, so you get color reflected on the water rather than the dip. Easiest access on this list: flat, facilities, parking at the beach." },
+{ id:"polihale", name:"Polihale State Park", lat:22.08097, lng:-159.76044, crowd:"Quiet", verdict:"Works in November - the island's best sunset, when open", status:"closed", drive:"~1 hr 15 min+ home, incl. dirt road", note:"CLOSED right now (checked Oct 28, 2026): all state parks except the named partial reopenings are closed after Hurricane Lowell - check DLNR before even thinking about the drive. When open: westernmost beach, sun straight into the ocean, Ni'ihau on the horizon, 5 miles of rough dirt road (Becky's truck needs her OK for that road), no cell service." },
+{ id:"salt-pond", name:"Salt Pond Beach Park", lat:21.90071, lng:-159.60782, crowd:"Quiet to moderate", verdict:"Works in November, when open", status:"closed", drive:"~15 min home", note:"CLOSED right now (checked Oct 28, 2026): county park and pavilions closed after Hurricane Lowell - check before you go. It's close to the house and the most likely closed spot to reopen during the trip. Locals' family cove past the traditional salt ponds (look, don't walk in the ponds)." },
+{ id:"waimea-canyon-lookout", name:"Waimea Canyon Lookout", lat:21.99130, lng:-159.67273, crowd:"Moderate", verdict:"Partial - canyon light and sky color; the lookout faces east into the canyon", status:"open", drive:"~35-40 min home", note:"REOPENED Oct 24, 2026 - first lookout only, daylight hours, parking fee. Go for late-afternoon light and start the winding drive down around sunset. Everything above it (Pu'u Hinahina, Pu'u o Kila, all of Ko'ke'e) is still closed, and Ko'ke'e Road is closed until further notice. Cool at altitude after sundown - layer up." },
+{ id:"puu-o-kila", name:"Pu'u o Kila / Kalalau Lookout", lat:22.14728, lng:-159.63144, crowd:"-", verdict:"Moot right now", status:"closed", drive:"-", note:"CLOSED (checked Oct 28, 2026): the lookout and all of Ko'ke'e State Park are closed and Ko'ke'e Road is closed until further notice. On the map only so you don't route up there expecting it open. Coordinates approximate." },
+{ id:"hanalei-bay", name:"Hanalei Bay (popular comparison)", lat:22.20658, lng:-159.49696, crowd:"Popular", verdict:"Summer-only for the sun over the water; November gives color only", status:"open", drive:"~1 hr 15 min-1 hr 30 min home", note:"The postcard bay, included honestly labeled: in November the sun drops behind the mountains, not over the water. The pier at sunset is a scene. Only worth it as the tail of a north-shore day - longest dark drive home on this list, and the Hanalei bridge can close in heavy rain." },
+{ id:"poipu-beach-park-sunset", name:"Poipu Beach Park (popular comparison)", lat:21.8733, lng:-159.4538, crowd:"Popular", verdict:"Works in November", status:"open", drive:"~15 min home", note:"Works - sun over the water past the tombolo, plus turtles resting most evenings - but this is THE crowded Poipu sunset. Pinned only as the comparison the quiet spots are alternatives to." }
+];
+var sunsetsOn = false, sunsetLayer = null, sunsetMarkers = {};
+function sunsetIcon(su){
+  return L.divIcon({ className:"", html:'<div class="sunset-pin'+(su.status==="closed"?" closed":"")+'">&#9728;</div>', iconSize:[26,26], iconAnchor:[13,13] });
+}
+function drawSunsets(){
+  if(!mapReady || typeof L === "undefined" || sunsetLayer) return;
+  sunsetLayer = L.layerGroup();
+  SUNSETS.forEach(function(su){
+    var m = L.marker([su.lat, su.lng], { icon: sunsetIcon(su) });
+    m.bindPopup('<div class="sunset-pop"><strong>'+esc(su.name)+'</strong>'
+      + '<div class="sp-line">'+esc(su.verdict)+'</div>'
+      + (su.status==="closed" ? '<div class="sp-closed">CLOSED - check before you go</div>' : '')
+      + '<div>Crowds: '+esc(su.crowd)+' &middot; Drive back: '+esc(su.drive)+'</div>'
+      + '<div>'+esc(su.note)+'</div></div>');
+    sunsetMarkers[su.id] = m;
+    if(sunsetsOn) m.addTo(sunsetLayer);
+  });
+  if(sunsetsOn) sunsetLayer.addTo(map);
+}
+function setSunsets(on){
+  sunsetsOn = on;
+  if(sunsetLayer){
+    if(on) sunsetLayer.addTo(map); else map.removeLayer(sunsetLayer);
+  }
+  renderMapChips(); refreshMarkers();
+}
+function focusSunset(id){
+  var su = null; SUNSETS.forEach(function(x){ if(x.id===id) su = x; }); if(!su) return;
+  if(!document.getElementById("view-map").classList.contains("on")) showView("map");
+  initMap(); drawSunsets();
+  if(!sunsetsOn) setSunsets(true);
+  var wrap = document.getElementById("map-wrap");
+  if(wrap) wrap.scrollIntoView({ behavior:"smooth", block:"start" });
+  setTimeout(function(){
+    if(!mapReady) return;
+    map.flyTo([su.lat, su.lng], Math.max(map.getZoom(), 13), { duration:0.7 });
+    var m = sunsetMarkers[su.id];
+    if(m) setTimeout(function(){ m.openPopup(); }, 750);
+  }, 380);
+}
+var trailsOn = true, trailLayer = null, trailLabelLayer = null, trailLines = {};
+function drawTrails(){
+  if(!mapReady || typeof L === "undefined" || trailLayer) return;
+  trailLayer = L.layerGroup().addTo(map);
+  trailLabelLayer = L.layerGroup().addTo(map);
+  TRAILS.forEach(function(t){
+    var grp = L.layerGroup();
+    t.lines.forEach(function(line){
+      L.polyline(line, { color:"rgba(255,255,255,.65)", weight:6, opacity:.9, interactive:false }).addTo(grp);
+      var pl = L.polyline(line, { color:"#e39b2d", weight:3, dashArray:"7 5" }).addTo(grp);
+      pl.bindPopup('<div class="trail-pop"><strong>'+esc(t.name)+'</strong><div class="tp-mi">'+t.oneWay.toFixed(1)+' mi each way · '+(2*t.oneWay).toFixed(1)+' mi round trip</div><div>'+esc(t.note)+'</div></div>');
+      t._pl = pl;
+    });
+    trailLines[t.id] = grp;
+    if(trailsOn) grp.addTo(trailLayer);
+  });
+  map.on("zoomend", updateTrailLabels);
+  updateTrailLabels();
+}
+function updateTrailLabels(){
+  if(!trailLabelLayer || !mapReady) return;
+  trailLabelLayer.clearLayers();
+  if(!trailsOn || map.getZoom() < 12) return;
+  TRAILS.forEach(function(t){
+    var line = t.lines[0]; if(!line || !line.length) return;
+    var mid = line[Math.floor(line.length/2)];
+    L.tooltip({ permanent:true, direction:"center", className:"trail-label", opacity:1 }).setLatLng(mid).setContent(esc(t.short) + " · " + t.oneWay.toFixed(1) + " mi each way").addTo(trailLabelLayer);
+  });
+}
+function setTrails(on){
+  trailsOn = on;
+  if(trailLayer){
+    Object.keys(trailLines).forEach(function(k){
+      if(on) trailLines[k].addTo(trailLayer); else trailLayer.removeLayer(trailLines[k]);
+    });
+  }
+  updateTrailLabels();
+  renderMapChips(); refreshMarkers();
+}
+function focusTrail(id){
+  var t = null; TRAILS.forEach(function(x){ if(x.id===id) t = x; }); if(!t) return;
+  if(!document.getElementById("view-map").classList.contains("on")) showView("map");
+  initMap(); drawTrails();
+  if(!trailsOn) setTrails(true);
+  var pts = []; t.lines.forEach(function(l){ pts = pts.concat(l); });
+  if(pts.length) map.fitBounds(L.latLngBounds(pts).pad(0.15));
+  if(t._pl) setTimeout(function(){ t._pl.openPopup(); }, 400);
+}
 var mapDay = null, mapFilter = "all", mapQuery = "", mapInitDone = false;
 function distKm(a, b){
   var R = 6371, dLa = (b.lat-a.lat)*Math.PI/180, dLo = (b.lng-a.lng)*Math.PI/180;
@@ -2000,7 +2297,7 @@ function mapPlaceVisible(p){
 function renderMapChips(){
   var c = document.getElementById("map-chips"); if(!c) return;
   var defs = [ ["all","All places"], ["rental","Rentals"], ["market","Farmers markets"], ["beach","Beaches"], ["eat","Local eats"] ];
-  c.innerHTML = defs.map(function(d){ return '<button class="mchip'+(mapFilter===d[0]?" on":"")+'" type="button" data-mapfilter="'+d[0]+'">'+d[1]+'</button>'; }).join("");
+  c.innerHTML = defs.map(function(d){ return '<button class="mchip'+(mapFilter===d[0]?" on":"")+'" type="button" data-mapfilter="'+d[0]+'">'+d[1]+'</button>'; }).join("") + '<button class="mchip'+(trailsOn?" on":"")+'" type="button" data-trailstoggle="1">Trails</button>' + '<button class="mchip'+(sunsetsOn?" on":"")+'" type="button" data-sunsetstoggle="1">Sunsets</button>';
 }
 function renderMapDays(){
   var w = document.getElementById("map-days"); if(!w) return;
@@ -2016,6 +2313,10 @@ function renderMapDays(){
   w.innerHTML = html;
 }
 document.addEventListener("click", function(e){
+  var tt = e.target.closest("[data-trailstoggle]");
+  if(tt){ setTrails(!trailsOn); return; }
+  var st2 = e.target.closest("[data-sunsetstoggle]");
+  if(st2){ if(typeof drawSunsets==="function") drawSunsets(); setSunsets(!sunsetsOn); return; }
   var mf = e.target.closest("[data-mapfilter]");
   if(mf){ mapFilter = mf.getAttribute("data-mapfilter"); renderMapChips(); refreshMarkers(); return; }
   var md = e.target.closest("[data-mapday]");
@@ -2023,6 +2324,144 @@ document.addEventListener("click", function(e){
 });
 var mapSearchEl = document.getElementById("map-search");
 if(mapSearchEl) mapSearchEl.addEventListener("input", function(){ mapQuery = mapSearchEl.value.trim().toLowerCase(); refreshMarkers(); });
+
+/* ---- map search: find saved places, or add new ones that stay ---- */
+var mapListEl = document.getElementById("map-list");
+var mapResEl = document.getElementById("map-results");
+var mapResToken = 0;
+function hideMapResults(){ if(mapResEl){ mapResEl.innerHTML=""; mapResEl.classList.remove("on"); } }
+function savedMatches(q){
+  q = (q||"").trim().toLowerCase(); if(q.length<2) return [];
+  return allPlaces().filter(function(p){
+    return typeof p.lat==="number" && (p.name+" "+p.cat+" "+p.area).toLowerCase().indexOf(q)>=0;
+  }).slice(0,6);
+}
+function focusPlace(id){
+  var p = getPlace(id); if(!p || typeof p.lat!=="number") return;
+  if(!document.getElementById("view-map").classList.contains("on")) showView("map");
+  initMap();
+  if(mapQuery || mapFilter!=="all"){
+    mapQuery=""; if(mapSearchEl) mapSearchEl.value="";
+    mapFilter="all"; renderMapChips();
+  }
+  refreshMarkers();
+  var wrap = document.getElementById("map-wrap");
+  if(wrap) wrap.scrollIntoView({ behavior:"smooth", block:"start" });
+  setTimeout(function(){
+    if(!mapReady) return;
+    map.flyTo([p.lat, p.lng], Math.max(map.getZoom(), 14), { duration:0.7 });
+    var m = markers[p.id];
+    if(m) m.setIcon(pinIconHL(p));
+    setTimeout(function(){ showMapCard(p.id); }, 750);
+    setTimeout(function(){ refreshMarkers(); }, 3200);
+  }, 380);
+}
+function renderMapResults(){
+  if(!mapResEl || !mapSearchEl) return;
+  var q = mapSearchEl.value.trim();
+  if(q.length<2){ hideMapResults(); return; }
+  var hits = savedMatches(q);
+  var html = "";
+  hits.forEach(function(p){
+    html += '<button type="button" class="mr-row" data-mr-saved="'+p.id+'"><span class="cdot '+effPhase(p)+'"></span><span class="mr-main"><span class="mr-name">'+esc(p.name)+'</span><span class="mr-sub">Already on your map \u00b7 '+esc(p.cat)+' \u00b7 '+esc(p.area)+'</span></span></button>';
+  });
+  if(q.length>=3){
+    html += '<button type="button" class="mr-row" id="mr-online"><span class="mr-main"><span class="mr-name">Search online for \u201c'+esc(q)+'\u201d</span><span class="mr-sub">Finds it and adds a pin that stays on your map</span></span></button>';
+  }
+  if(!html){ hideMapResults(); return; }
+  mapResEl.innerHTML = html; mapResEl.classList.add("on");
+  var ob = document.getElementById("mr-online");
+  if(ob) ob.addEventListener("click", function(){ searchOnlineAdd(q); });
+}
+function searchOnlineAdd(q){
+  var token = ++mapResToken;
+  if(!mapResEl) return;
+  mapResEl.innerHTML = '<div class="mr-note">Searching online for \u201c'+esc(q)+'\u201d\u2026</div>';
+  mapResEl.classList.add("on");
+  var url = "https://nominatim.openstreetmap.org/search?format=json&limit=5&addressdetails=1&viewbox=-159.85,22.30,-159.25,21.80&bounded=0&q=" + encodeURIComponent(q + ", Kauai, Hawaii");
+  fetch(url, { headers:{ "Accept":"application/json" } })
+    .then(function(r){ return r.json(); })
+    .then(function(rows){
+      if(token!==mapResToken) return;
+      if(!rows || !rows.length){ mapResEl.innerHTML = '<div class="mr-note">No match found online for \u201c'+esc(q)+'\u201d. Check the spelling, or add it from the Places tab.</div>'; return; }
+      var html = '<div class="mr-note">Tap the right one \u2014 it gets added to your map and stays there:</div>';
+      rows.forEach(function(r0, i){
+        var nm = String(r0.display_name||"").split(",")[0] || q;
+        var sub = String(r0.display_name||"").replace(/, United States$/, "");
+        html += '<button type="button" class="mr-row" data-mr-add="'+i+'"><span class="mr-main"><span class="mr-name">'+esc(nm)+'</span><span class="mr-sub">'+esc(sub)+'</span></span></button>';
+      });
+      mapResEl.innerHTML = html; mapResEl.classList.add("on");
+      mapResEl.querySelectorAll("[data-mr-add]").forEach(function(b){
+        b.addEventListener("click", function(){
+          var r0 = rows[parseInt(b.getAttribute("data-mr-add"),10)];
+          var ad = r0.addressdetails || {};
+          var nm = String(r0.display_name||"").split(",")[0] || q;
+          var p = {
+            id: "custom-" + Date.now().toString(36),
+            name: nm, cat: "Added by you",
+            area: ad.city || ad.town || ad.village || ad.county || "",
+            address: String(r0.display_name||"").replace(/, United States$/, ""),
+            phone:"", cost:"", hours:"", about:"Added from the map search.", menu:"", dietary:"", expect:"",
+            phase: "explore", bookEarly:false,
+            lat: parseFloat(r0.lat), lng: parseFloat(r0.lon), links: []
+          };
+          putPlace(p); renderAll(); hideMapResults();
+          if(mapSearchEl) mapSearchEl.value=""; mapQuery="";
+          refreshMarkers(); focusPlace(p.id);
+          toast("Added \u2014 " + nm + " now lives on your map.");
+        });
+      });
+    })
+    .catch(function(){ if(token===mapResToken && mapResEl) mapResEl.innerHTML = '<div class="mr-note">Online search failed (no connection?) \u2014 try again in a bit.</div>'; });
+}
+function renderMapList(list){
+  if(!mapListEl) return;
+  var cnt = document.getElementById("map-list-count");
+  var arr = (list||[]).slice().sort(function(a,b){ return a.name.localeCompare(b.name); });
+  if(cnt) cnt.textContent = arr.length + (arr.length===1 ? " place" : " places");
+  var trailsHtml = "";
+  if(trailsOn && typeof TRAILS!=="undefined" && TRAILS.length){
+    trailsHtml = '<div class="ml-head">Trails on your map</div>' + TRAILS.map(function(t){
+      return '<button type="button" class="ml-row" data-focustrail="'+t.id+'"><span class="cdot" style="background:#e39b2d"></span><span class="ml-main"><span class="ml-name">'+esc(t.name)+'</span><span class="ml-sub">Trail \u00b7 '+t.oneWay.toFixed(1)+' mi each way \u00b7 '+(2*t.oneWay).toFixed(1)+' mi round trip</span></span></button>';
+    }).join("");
+  }
+  var sunsetsHtml = "";
+  if(sunsetsOn && typeof SUNSETS!=="undefined" && SUNSETS.length){
+    sunsetsHtml = '<div class="ml-head">Sunset spots on your map</div>' + SUNSETS.map(function(su){
+      return '<button type="button" class="ml-row" data-focussunset="'+su.id+'"><span class="cdot" style="background:#e2601a"></span><span class="ml-main"><span class="ml-name">'+esc(su.name)+'</span><span class="ml-sub">Sunset \u00b7 '+esc(su.crowd)+' \u00b7 '+esc(su.verdict)+(su.status==="closed"?' \u00b7 CLOSED - check first':'')+'</span></span></button>';
+    }).join("");
+  }
+  if(!arr.length && !trailsHtml && !sunsetsHtml){ mapListEl.innerHTML = '<p class="mr-note">Nothing matches the filters above.</p>'; return; }
+  mapListEl.innerHTML = arr.map(function(p){
+    var day = state.sched[p.id] ? '<span class="ml-day">'+esc(dayLabel(state.sched[p.id]))+'</span>' : '';
+    return '<button type="button" class="ml-row" data-focusplace="'+p.id+'"><span class="cdot '+effPhase(p)+'"></span><span class="ml-main"><span class="ml-name">'+esc(p.name)+'</span><span class="ml-sub">'+esc(p.cat)+' \u00b7 '+esc(p.area)+'</span></span>'+day+'</button>';
+  }).join("") + trailsHtml + sunsetsHtml;
+}
+if(mapSearchEl){
+  var mrDeb = null;
+  mapSearchEl.addEventListener("input", function(){ clearTimeout(mrDeb); mrDeb = setTimeout(renderMapResults, 200); });
+  mapSearchEl.addEventListener("keydown", function(e){
+    if(e.key==="Enter"){
+      e.preventDefault();
+      var q = mapSearchEl.value.trim();
+      var hits = savedMatches(q);
+      if(hits.length){ hideMapResults(); focusPlace(hits[0].id); }
+      else if(q.length>=3){ searchOnlineAdd(q); }
+    }
+    if(e.key==="Escape"){ hideMapResults(); }
+  });
+}
+document.addEventListener("click", function(e){
+  var sv = e.target.closest("[data-mr-saved]");
+  if(sv){ hideMapResults(); focusPlace(sv.getAttribute("data-mr-saved")); return; }
+  var ft = e.target.closest("[data-focustrail]");
+  if(ft){ focusTrail(ft.getAttribute("data-focustrail")); return; }
+  var fs = e.target.closest("[data-focussunset]");
+  if(fs){ focusSunset(fs.getAttribute("data-focussunset")); return; }
+  var fp = e.target.closest("[data-focusplace]");
+  if(fp){ focusPlace(fp.getAttribute("data-focusplace")); return; }
+  if(mapResEl && !e.target.closest(".map-tools")) hideMapResults();
+});
 var wxMapBtn = document.getElementById("wx-map-btn");
 if(wxMapBtn) wxMapBtn.addEventListener("click", function(){ showView("map"); });
 renderMapChips(); renderMapDays();
