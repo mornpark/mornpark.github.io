@@ -491,6 +491,78 @@
   .sunset-pop .sp-line{ font-weight:700; margin:2px 0; }
   .sunset-pop .sp-closed{ color:#b3261e; font-weight:700; }
   .ml-head{ padding:10px 2px 4px; font-size:12px; font-weight:700; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); }
+
+  /* ---------- Patch 16: Today home, Plan B, For Kim, drive estimates ---------- */
+  body{ font-size:17px; line-height:1.55; }
+  .card h3{ font-size:20px; }
+  .meta{ font-size:14px; }
+  .card .fact{ font-size:15.5px; }
+  .btn{ min-height:48px; }
+  button:focus-visible, a:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{ outline:3px solid #1769aa; outline-offset:2px; }
+  .for-kim{
+    margin-top:10px; padding:10px 12px; font-size:15px; line-height:1.5;
+    background:var(--surface2); border-left:5px solid var(--relax); border-radius:0 10px 10px 0;
+  }
+  .for-kim strong{ display:block; font-size:12.5px; letter-spacing:.07em; text-transform:uppercase; margin-bottom:2px; }
+  .badge.kim{ border-color:var(--relax); color:var(--ink); background:var(--relax-bg); }
+  .filter-note{ align-self:center; font-size:13.5px; color:var(--ink2); }
+  .today-hero{
+    background:var(--surface); border:1px solid var(--line); border-radius:14px; box-shadow:var(--shadow);
+    padding:18px; margin-bottom:14px;
+  }
+  .today-hero h2{ margin:2px 0 4px; font-size:30px; line-height:1.15; }
+  .today-hero p{ margin:0; font-size:16.5px; color:var(--ink2); }
+  .today-kicker{ font-size:12.5px; font-weight:800; letter-spacing:.09em; text-transform:uppercase; color:var(--ink2); }
+  .today-daynav{ display:flex; gap:8px; margin-top:14px; }
+  .today-daynav .btn{ flex:1; }
+  .today-map{
+    height:290px; border:1px solid var(--line); border-radius:14px; overflow:hidden;
+    background:var(--surface2); margin-bottom:14px; position:relative; z-index:0;
+  }
+  .map-offline{
+    padding:18px; font-size:15.5px; color:var(--ink2); display:flex; align-items:center; min-height:100%;
+  }
+  .home-pin{
+    width:30px; height:30px; border-radius:50%; background:#17323b; color:#fff; border:2.5px solid #fff;
+    box-shadow:0 2px 8px rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center;
+    font-size:16px; font-weight:800;
+  }
+  .today-item{
+    display:flex; gap:12px; background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    box-shadow:var(--shadow); padding:15px; margin-bottom:10px;
+  }
+  .today-num{
+    flex:none; width:34px; height:34px; border-radius:50%; background:var(--ink); color:var(--bg);
+    display:flex; align-items:center; justify-content:center; font-weight:800; font-size:16px;
+  }
+  .today-main{ flex:1; min-width:0; }
+  .today-main h3{ margin:0 0 2px; font-size:19px; line-height:1.25; }
+  .today-main h3 .nm{ cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+  .today-note{ font-size:15.5px; color:var(--ink2); margin-top:3px; }
+  .today-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
+  .today-actions .btn{ min-height:44px; padding:9px 13px; font-size:14.5px; }
+  .planb-box{
+    border:1.5px solid var(--ink); border-radius:12px; padding:13px 14px; margin:12px 0 16px; background:var(--surface);
+  }
+  .planb-box h3{ margin:0 0 4px; font-size:17px; }
+  .planb-box p{ margin:0; font-size:15.5px; color:var(--ink2); }
+  .planb-line{ margin-top:8px; font-size:14.5px; border-top:1px dashed var(--line); padding-top:8px; }
+  .planb-line .nm{ font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+  .onway-row{
+    display:flex; gap:10px; align-items:flex-start; width:100%; text-align:left; background:var(--surface);
+    border:1px solid var(--line); border-radius:12px; padding:12px 13px; margin-bottom:8px; cursor:pointer; color:var(--ink);
+  }
+  .onway-row .ow-main{ flex:1; min-width:0; }
+  .onway-row .ow-name{ font-weight:700; font-size:16.5px; display:block; }
+  .onway-row .ow-meta{ font-size:14px; color:var(--ink2); display:block; margin-top:1px; }
+  .day-entry{ flex-wrap:wrap; }
+  .entry-planb{ flex-basis:100%; margin-left:26px; }
+  .sugg-items{ margin-top:6px; }
+  .sugg-item{ padding:9px 0; border-top:1px solid var(--line); font-size:15.5px; }
+  .sugg-item .nm{ font-weight:700; cursor:pointer; text-decoration:underline; text-underline-offset:3px; }
+  .sugg-item span{ color:var(--ink2); }
+  .planb-select, .planb-text{ width:100%; border:1px solid var(--line); background:var(--surface); padding:11px 12px; font-size:16px; margin-top:6px; }
+  .planb-text{ min-height:74px; resize:vertical; }
 </style>
 </head>
 <body>
@@ -506,7 +578,10 @@
     <span class="phase-chip"><span class="sw relax">3</span>Relax · Nov 18–24</span>
   </div>
   <nav class="tabs" role="tablist" aria-label="App sections">
-    <button role="tab" id="tab-places" aria-selected="true" data-view="places">
+    <button role="tab" id="tab-today" aria-selected="true" data-view="today">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>Today
+    </button>
+    <button role="tab" id="tab-places" aria-selected="false" data-view="places">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Places
     </button>
     <button role="tab" id="tab-beaches" aria-selected="false" data-view="beaches">
@@ -516,7 +591,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h10M4 18h13"/></svg>sug’std
     </button>
     <button role="tab" id="tab-calendar" aria-selected="false" data-view="calendar">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Calendar
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="5" width="18" height="16"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Schedule
     </button>
     <button role="tab" id="tab-map" aria-selected="false" data-view="map">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>Map
@@ -525,10 +600,18 @@
 </header>
 
 <main>
+  <!-- TODAY -->
+  <section class="view on" id="view-today">
+    <div id="today-hero-wrap"></div>
+    <div class="today-map" id="today-map"></div>
+    <div id="today-rest"></div>
+    <p class="foot-note">Today reads the same schedule as the Schedule tab — move a place there and it moves here too. Drive times are offline estimates from Becky's house in Kalaheo, not live traffic. The mini-map needs a connection for its map tiles; the plan itself works offline.</p>
+  </section>
+
   <!-- PLACES -->
-  <section class="view on" id="view-places">
+  <section class="view" id="view-places">
     <div class="wx-box" id="wx-box">
-      <div class="wx-head"><h3>Kauai weather — next 5 days</h3><button class="btn primary" id="wx-cal-btn" type="button">Calendar</button><button class="btn" id="wx-map-btn" type="button">Map</button></div>
+      <div class="wx-head"><h3>Kauai weather — next 5 days</h3><button class="btn primary" id="wx-cal-btn" type="button">Schedule</button><button class="btn" id="wx-map-btn" type="button">Map</button></div>
       <div class="wx-days" id="wx-days"><p class="wx-load">Loading live weather…</p></div>
       <p class="wx-note" id="wx-note">Live forecast for Kalaheo (the house). Tap a day for the full picture and picks matched to that weather.</p>
     </div>
@@ -546,6 +629,10 @@
         </button>
       </div>
       <div class="chips" id="cat-chips" role="group" aria-label="Filter by category"></div>
+      <div class="chips">
+        <button class="chip" id="gf-toggle" type="button" aria-pressed="false">Gluten-free only</button>
+        <span class="filter-note">For Kim: her cooked-fish &amp; vegan picks are on the restaurant cards.</span>
+      </div>
     </div>
     <div id="fav-wrap"></div>
     <div id="all-wrap"></div>
@@ -627,7 +714,7 @@
   <!-- SUGGESTED -->
   <section class="view" id="view-suggested">
     <div id="sugg-wrap"></div>
-    <p class="foot-note">Plan A is the day as planned. Plan B is the swap if it rains or you would rather take the second option — most Plan Bs are indoors or close to the house. Anchors (fishing, weaving, meetings) stay put; the flexible pieces move around them.</p>
+    <p class="foot-note">Plan A is the day as planned. Plan B is the swap if it rains or you would rather take the second option — most Plan Bs are indoors or close to the house. Anchors (weaving, meetings, the spearfishing lesson) stay put; the flexible pieces move around them. Anything you schedule yourself in the Schedule tab also carries its own Plan B there and on Today.</p>
   </section>
 </main>
 
@@ -846,17 +933,19 @@ var SEED = [
   expect:"County and community markets can shift with weather and holidays — a quick check before a special trip is worth it. Go early; the good stuff sells out.",
   links:[] },
 
-{ id:"koloa-fish-market", name:"Koloa Fish Market", cat:"Restaurant", area:"Koloa", address:"3390 Poipu Rd, Koloa, HI 96756", phone:"(808) 742-6199", lat:21.8768, lng:-159.4588, phase:"relax", bookEarly:false,
+{ id:"koloa-fish-market", name:"Koloa Fish Market", cat:"Restaurant", area:"Koloa", address:"3390 Poipu Rd, Koloa, HI 96756", phone:"(808) 742-6199", lat:21.8768, lng:-159.4588, phase:"relax", bookEarly:false, badges:["gf"],
   cost:"Fresh fish and poke by the pound — market pricing.",
   hours:"10 AM–3 PM; closed Thursday and Sunday in current listings — call to confirm.",
   about:"The south shore's fish stop: fresh catch and poke to take back to Becky's kitchen. This is a cook-at-home anchor for the trip's fish dinners.",
+  dietary:"GLUTEN-FREE: one of the strongest GF stops from the food-video research. A March 2026 review reports they have several pokes and 'all but two are Gluten Free' — the two aren't named, so ask at the counter which to avoid (shoyu-based pokes are the usual suspects). Find Me Gluten Free reviewers describe the staff as very aware of celiac, with careful GF prep, and list GF rice bowls and desserts too. Tamari availability is unconfirmed — don't count on a tamari swap; pick from the already-GF pokes. The plate-lunch side (macaroni salad, chicken katsu, shoyu chicken) has no GF confirmation.",
   expect:"Call ahead for the day's catch if a specific fish matters.",
   links:[] },
 
-{ id:"kilauea-fish-market", name:"Kilauea Fish Market", cat:"Restaurant", area:"Kilauea", address:"Kilauea, HI 96754 (Lighthouse Rd side of town)", phone:"", lat:22.2098, lng:-159.4078, phase:"explore", bookEarly:false,
+{ id:"kilauea-fish-market", name:"Kilauea Fish Market", cat:"Restaurant", area:"Kilauea", address:"4270 Kilauea Rd, Kilauea, HI 96754", phone:"", lat:22.2098, lng:-159.4078, phase:"explore", bookEarly:false, badges:["gf"],
   cost:"Fresh fish, poke and plate lunches — market pricing.",
-  hours:"Mon–Sat, 11 AM–8 PM per listings.",
+  hours:"Mon–Sat, 11 AM–8 PM per listings; closed Sundays.",
   about:"The north shore's fish market — fresh catch and poke in Kilauea town, the natural pair to a Hanalei or Anini day when dinner is fish at home or a plate on the spot.",
+  dietary:"GLUTEN-FREE: gluten-free fish tacos are reported — ask for corn tortillas, because sources conflict on the default (menu text in one listing describes the grilled mahi tacos on flour tortillas; a food-travel write-up describes corn). The fish burritos are flour-wrapped, so they are not GF; rice plates are the fallback.",
   expect:"Listings vary — a quick call confirms the day's hours and catch.",
   links:[] },
 
@@ -864,8 +953,34 @@ var SEED = [
   cost:"Poke by the pound and fresh seafood — local institution pricing.",
   hours:"Mon–Sat, 6:30 AM–4:30 PM; closed Sunday.",
   about:"Lihue's beloved seafood counter — the poke stop the Nov 6 arrival plan name-checks. Fresh fish for the house, poke for right now.",
+  dietary:"GLUTEN-FREE: nigiri is fine eaten plain — the gluten hides in the dipping shoyu. Tamari is not confirmed here, so ask at the counter rather than assuming a swap is available.",
   expect:"Go early for the best selection; it is a working local spot, not a tourist counter.",
   links:[] },
+
+{ id:"kauai-juice-co", name:"Kauai Juice Co", cat:"Restaurant", area:"Koloa", address:"5460 Koloa Rd, Koloa, HI 96756", phone:"(808) 631-3372", lat:21.9047, lng:-159.4641, phase:"relax", bookEarly:false, badges:["gf"],
+  cost:"Moderate — cold-pressed juices, smoothies, kombucha and bowls at juice-bar prices.",
+  hours:"Daily 8:00 AM–5:30 PM at the Koloa store.",
+  about:"Cold-pressed juice bar in Old Koloa Town — the Koloa store is the closest of their locations to the Kalaheo house, with sister locations in Kapa'a and Kilauea, so there's one on almost any route across the island. Fresh grab-and-go juices, kombucha, hand-pressed nut milks and smoothie bowls, all made from local produce.",
+  dietary:"GLUTEN-FREE: the strongest GF card in the food-video research — all products are 100% gluten-free per the company's own FAQ. One honest caution: it is not a certified dedicated gluten-free facility, so the FAQ promise is about ingredients, not a certified allergen-free kitchen.",
+  expect:"Mostly grab-and-go bottles from the cooler — an easy stock-up of juices for the house fridge on a Koloa pass.",
+  links:[["Official website","http://kauaijuiceco.com/"]] },
+
+{ id:"kalalea-juice-hale", name:"Kalalea Juice Hale", cat:"Restaurant", area:"Anahola", address:"4390 Pu'u Hale Loop, Anahola, HI 96703", phone:"(808) 346-0074", lat:22.1455, lng:-159.3157, phase:"explore", bookEarly:false, badges:["gf","vegan"],
+  cost:"Moderate — acai bowls, smoothies and shave ice at roadside-stand prices.",
+  hours:"Hours vary by listing — roughly 9 AM–4 PM, closed Tuesdays (some listings also show Mondays closed). Check their Instagram before making a special trip.",
+  about:"Family-run orange roadside stand in Anahola, on Kuhio Hwy between Kapa'a and Kilauea under Kalalea Mountain — the natural stop on the way north. Organic acai bowls (The O.G., The Next Level, The King Kong) with house-made granola, smoothies, cold-pressed juices, shave ice with homemade fruit syrups and coffee, all made from scratch with local fruit. No official website or printed menu — Instagram only.",
+  dietary:"GLUTEN-FREE: workable, diner-reported rather than official. Ask for the gluten-free granola on acai bowls — a reviewer documents the swap ('they make their own delicious granola and have gluten-free granola for the gluten intolerant'); the standard house granola is not stated to be GF. Juices and smoothies are fruit-based and naturally GF-friendly. No official allergen statement exists, and shared-blender cross-contact is unaddressed by any source.",
+  expect:"Roadside stand with outdoor seating and a mountain backdrop — treat it as a happy stop on a north-shore drive, not a timed reservation.",
+  links:[["Instagram — @kalaleajuicehale","https://instagram.com/kalaleajuicehale"]] },
+
+{ id:"jo2", name:"JO2 Natural Cuisine", cat:"Restaurant", area:"Kapa'a", address:"4-971 Kuhio Hwy, Kapa'a, HI 96746", phone:"(808) 212-1627", lat:22.0655, lng:-159.3196, phase:"relax", bookEarly:false, badges:["gf"],
+  cost:"Expensive — fine dining; an early-evening three-course prix fixe (5–6 PM) is the value play, listed around $50–$55.",
+  hours:"Dinner only, Tue–Sat 5:00–9:00 PM; closed Sunday and Monday. Reservations required.",
+  about:"Chef Jean-Marie Josselin's Kapa'a fine-dining room — French technique, the clean flavors of Japanese cooking and Kauai-grown ingredients, tucked into an unassuming strip-mall corner. This is the video's ravioli pick: the poached Hokkaido scallop ravioli with yuzu butter sauce.",
+  menu:"Order: hamachi sashimi, green bean tempura, cauliflower curry, rack of lamb — and the scallop ravioli if gluten is not your issue (see the dietary note). Green tea tiramisu or the deconstructed banana cream pie to finish.",
+  dietary:"GLUTEN-FREE: the kitchen accommodates gluten-free diners well — servers ask about allergies up front, and reviewers report eating well on sashimi, risotto and even tempura. BUT the scallop ravioli from the video is fresh wheat pasta and is NOT gluten-free, and no GF pasta or ravioli substitute was found. Nothing GF is promised in writing — flag the allergy when you reserve.",
+  expect:"Book ahead — it's small and popular, and the strip-mall exterior undersells what's inside.",
+  links:[["Official website","http://jotwo.com/"]] },
 { id:"captain-j", name:"Captain J — Deep Sea Fishing Kauai", cat:"Activity", area:"Port Allen (Eleele)", address:"4353 Waialo Rd, Eleele, HI 96705 — Port Allen Harbor", phone:"(808) 651-4502", lat:21.9028, lng:-159.5925, phase:"active", bookEarly:false,
   cost:"Private charter: 4 hr $950 · 6 hr $1,200 · 8 hr $1,600. Plus the $20 fishing license (below).",
   hours:"Charters by reservation, departing Port Allen Harbor. Reservations line: Mon–Fri 6:30 AM–7 PM, Sat–Sun 6:30 AM–5 PM.",
@@ -1161,7 +1276,7 @@ var SEED = [
   expect:"Monday farmers market and Friday-night live music at Center Stage when they run. Easy parking, everything in one stop.",
   links:[["Kukui Grove Center — store directory","https://www.kukuigrovecenter.com/directory/"]] },
 
-{ id:"kukui-grove-cinema", name:"Kukui Grove Cinema", cat:"Activity", area:"Lihue", address:"4368 Kukui Grove St, Lihue, HI 96766", phone:"(808) 245-3552", phase:"active", bookEarly:false,
+{ id:"kukui-grove-cinema", name:"Kukui Grove Cinema", cat:"Activity", area:"Lihue", address:"4368 Kukui Grove St, Lihue, HI 96766", phone:"(808) 245-3552", lat:21.9697, lng:-159.3792, phase:"active", bookEarly:false,
   cost:"When it operated: about $6 matinee / $9 regular, cash only. It is closed — see below.",
   hours:"CLOSED — no showtimes.",
   about:"STATUS CHECKED OCT 2026: this was Lihue's four-screen cinema (it was never a Regal, whatever the plan text says), and it closed in 2020. Current listings still show it permanently closed and its old website is offline. A classic-film festival was advertised at the building for Feb 2026, so one-off events may still happen there — but there are no regular movies to plan around. Call (808) 245-3552 or (808) 245-5055 if you want to double-check before writing it off.",
@@ -1275,6 +1390,19 @@ var SEED = [
   hours:"Check current hours; popular flavors sell out, so earlier is better.",
   about:"A pie shop right in Kalaheo — minutes from Becky's house. Fruit and cream pies, slices to go or whole pies for the house. From the video list you saved; one of your yes picks, and the closest one to home base.",
   expect:"The low-effort dessert move: grab slices after a south-shore day, or a whole pie for the house. Confirm the day's flavors when you get there.",
+  links:[] },
+/* ---- Patch 16: Day 1 souvenir-jewelry stops (added 2026-10-31) ---- */
+{ id:"abc-stores-rice-st", name:"ABC Stores — Rice St, Lihue (souvenir jewelry)", cat:"Business", area:"Lihue", address:"3416 Rice St, Lihue, HI 96766", phone:"", lat:21.9590, lng:-159.3490, phase:"active", bookEarly:false,
+  cost:"Budget stop: the Island Edge genuine puka shell line has historically run about $6–$8 for a necklace and about $5–$6 for a bracelet (ABC catalog prices — the exact 2026 shelf price was not published, so check the card in store). A necklace + bracelet set should land around $12–$20, inside the $20–$30 jewelry budget.",
+  hours:"Daily 7:30 AM–9:00 PM per the store listing.",
+  about:"The Day 1 browse-and-pick jewelry stop, a few minutes off the airport-to-Costco line. ABC stocks a house shell-jewelry line ('Island Edge Genuine Puka Shell Jewelry' — natural seashell). It does not have to be puka: browse what they have and pick whatever catches your eye, inside about $20–$30.",
+  expect:"In-hand quality check: real shell feels cool to the touch, beads are slightly irregular (identical, perfectly round, glossy-bright beads are plastic), the hole looks weathered/conical rather than drilled straight, and two beads tapped together give a ceramic 'clink,' not a dull plastic sound. For swimming every day, pick a strand strung on nylon cord or fishline, knotted between shells if you can — avoid elastic stretch cord and cotton/hemp, which fail in salt water. Rinse in fresh water after ocean days.",
+  links:[] },
+{ id:"spouting-horn-park", name:"Spouting Horn Park — vendor stalls (Poipu)", cat:"Business", area:"Poipu", address:"Lawai Rd, Poipu, HI 96756 (Spouting Horn Park)", phone:"", lat:21.88545, lng:-159.49525, phase:"active", bookEarly:false,
+  cost:"Vendor prices vary by maker — travelers report shell jewelry from about $5 up, with maker-strung pieces often beating shop prices. Keep the same $20–$30 browse budget.",
+  hours:"Park hours run into the evening (to about 7 PM); vendor stalls are independent and busiest in the daytime — presence varies day to day.",
+  about:"Local artisans sell jewelry and crafts under tents at Spouting Horn Park, past Koloa on Lawai Rd — the quality-upgrade browse stop if the ABC selection does not grab you. Buying direct from makers, and you can inspect the cord and clasp in hand and ask what a piece is strung on.",
+  expect:"A small detour on the way home to Kalaheo after Costco, or save it for the first Poipu/Koloa day. Use the same real-shell checks as the ABC card: cool to the touch, irregular beads, weathered hole, ceramic clink, nylon/fishline stringing for swimming.",
   links:[] }
 ];
 
@@ -1299,6 +1427,7 @@ var store = { ok:true,
 var state = store.get() || {};
 if(!state.favs) state.favs = {};
 if(!state.sched) state.sched = {};       /* id -> "2026-11-13" */
+if(!state.planB) state.planB = {};       /* id -> {placeId, text} Plan B for a scheduled place */
 if(!state.notes) state.notes = {};       /* "2026-11-13" -> diary text */
 if(!state.deleted) state.deleted = {};    /* seed id -> true */
 if(!state.edits) state.edits = {};        /* seed id -> full edited place */
@@ -1332,7 +1461,7 @@ function putPlace(p){
 function removePlace(id){
   if(isSeed(id)){ state.deleted[id]=true; delete state.edits[id]; }
   else state.custom = state.custom.filter(function(x){ return x.id!==id; });
-  delete state.favs[id]; delete state.sched[id];
+  delete state.favs[id]; delete state.sched[id]; delete state.planB[id];
   save();
 }
 
@@ -1341,7 +1470,61 @@ function esc(s){ return String(s==null?"":s).replace(/[&<>"']/g,function(c){ ret
 function telHref(phone){ var d = String(phone||"").replace(/\D/g,""); return d ? "tel:+1"+d.slice(-10) : ""; }
 function dirHref(p){
   var q = p.name + " " + (p.address || p.area || "") + " Kauai Hawaii";
-  return "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(q);
+  return "https://www.google.com/maps/dir/?api=1&destination=" + encodeURIComponent(q);
+}
+/* ================= Patch 16: home base, drive estimates, Kim data ================= */
+var HOME_BASE = { name:"Becky's house", address:"3984 Papalina Rd, Kalaheo, HI 96765", lat:21.895, lng:-159.527 };
+function homeDistKm(p){
+  if(!p || typeof p.lat!=="number" || typeof p.lng!=="number") return null;
+  var R = 6371, dLa = (p.lat-HOME_BASE.lat)*Math.PI/180, dLo = (p.lng-HOME_BASE.lng)*Math.PI/180;
+  var h = Math.sin(dLa/2)*Math.sin(dLa/2) + Math.cos(HOME_BASE.lat*Math.PI/180)*Math.cos(p.lat*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);
+  return 2*R*Math.asin(Math.sqrt(h));
+}
+function driveMinutes(p){
+  var d = homeDistKm(p); if(d==null) return null;
+  /* The straight line cuts across the island; the real road follows the coast.
+     Far-north and far-west places need the bigger detour factor. */
+  var factor = 1.3, speed = 52;
+  if(p.lat >= 22.10){ factor = 1.85; speed = 46; }
+  else if(p.lng <= -159.60){ factor = 1.35; speed = 50; }
+  var roadKm = d * factor;
+  if(factor===1.3 && roadKm < 12) speed = 42; /* short local hops */
+  var mins = roadKm / speed * 60;
+  return Math.max(5, Math.round(mins/5)*5);
+}
+function driveLabel(p){
+  var m = driveMinutes(p);
+  return m==null ? "" : "About " + m + " min drive from Becky's house (estimate)";
+}
+/* "For Kim" picks — cooked fish + vegan only (Kim does not eat raw fish). Researched 2026-10-31. */
+var FOR_KIM = {
+  "kauai-juice-co":"Glow or Omega This juice, a Royal Hawaiian or Ocean Vibes smoothie bowl, or the Marinated Kelp Noodle Salad. No fish here — it's a juice bar — and everything is 100% gluten-free per the company's own FAQ.",
+  "koloa-fish-market":"Sautéed Ahi plate with caper butter — the ahi is fully cooked (skip the raw poke). Grilled ahi / grilled mahi plates also work. No vegan entrée here, just sides (edamame, kimchi cucumber, poi). The cooked plates' GF status isn't stated — ask at the counter; staff are celiac-aware.",
+  "kalalea-juice-hale":"No fish at all — vegan bowls are her lane: The King Kong or The O.G. Ask for the gluten-free granola swap, and hold the honey for strict vegan.",
+  "jo2":"Lemongrass Sesame Crusted Mahi Mahi (the signature cooked fish), or seared ono / salmon / scallops. Vegan is thin: Spaghetti Squash with Thai Yellow Curry, or Roasted Curried Cauliflower. The kitchen asks about allergies up front — confirm GF sauces when you reserve.",
+  "kilauea-fish-market":"Grilled Fish Plate — the official menu tags it Gluten free — or the Garlic Shrimp Plate (also menu-tagged GF). Grilled fish tacos: ask for corn tortillas. Vegan: Organic Green Salad (menu-tagged Vegan) or the Teriyaki Organic Tofu & Rice Bowl.",
+  "konohiki":"Chicken and Shrimp Bento from the hot case; plain inari (cone) sushi is the vegan pick. Weakest GF documentation of the six — tamari was never confirmed, and the tempura / fried items are battered (cooked, but not GF). Ask at the counter."
+};
+function forKimLine(p){ return (p && (p.forKim || FOR_KIM[p.id])) || ""; }
+/* Kim-friendly markers — only where the place data itself supports them. */
+var KIM_FRIENDLY = {
+  "poipu-beach-park":["Calm, standing-depth water"],
+  "baby-beach":["Calm, standing-depth water"],
+  "kalapaki-beach":["Calm water","Easy parking"],
+  "lydgate":["Calm, standing-depth water","Shade available"],
+  "anini":["Calm, shallow water","Shade available"],
+  "salt-pond":["Calm, shallow pools"],
+  "kukui-grove":["Easy parking"],
+  "puka-dog":["Easy parking"]
+};
+function kimFriendly(p){ return (p && (p.kimFriendly || KIM_FRIENDLY[p.id])) || []; }
+function kimBadgesHTML(p){
+  var list = kimFriendly(p); if(!list.length) return "";
+  return list.map(function(x){ return '<span class="badge kim">Kim-friendly · '+esc(x)+'</span>'; }).join("");
+}
+function placeHasGF(p){
+  if(p.badges && p.badges.indexOf("gf")>=0) return true;
+  return dietaryBadges(p).indexOf("Gluten-free")>=0;
 }
 var DAYS = [];
 (function(){
@@ -1387,7 +1570,7 @@ function toast(msg){
 }
 
 /* ================= card rendering ================= */
-var curCat="All", curSearch="";
+var curCat="All", curSearch="", curGF=false;
 function cardHTML(p){
   var fav = !!state.favs[p.id];
   var sched = state.sched[p.id];
@@ -1401,17 +1584,21 @@ function cardHTML(p){
     + '<div class="meta">'+esc(p.cat)+' · '+esc(p.area)+'</div>'
     + (p.cost ? '<div class="fact">'+I.tag+'<span>'+esc(firstSentence(p.cost))+'</span></div>' : '')
     + (p.hours ? '<div class="fact">'+I.clock+'<span>'+esc(firstSentence(p.hours))+'</span></div>' : '')
+    + (driveLabel(p) ? '<div class="fact">'+I.nav+'<span>'+esc(driveLabel(p))+'</span></div>' : '')
     + (dietaryBadges(p) ? '<div class="badges">'+dietaryBadges(p)+'</div>'
        : (/no gf\/vegan options found/i.test(p.dietary||"") ? '<div class="badges"><span class="badge soft">No GF/vegan options found on the menu — worth asking when you order</span></div>' : ''))
+    + (kimBadgesHTML(p) ? '<div class="badges">'+kimBadgesHTML(p)+'</div>' : '')
+    + (forKimLine(p) ? '<div class="for-kim"><strong>For Kim</strong>'+esc(forKimLine(p))+'</div>' : '')
     + (p.bookEarly ? '<div class="book-flag">BOOK EARLY — ideally before you land</div>' : '')
     + (sched ? '<div class="sched-line">'+I.cal+'<span class="cdot '+(phaseOfIso(sched)||p.phase)+'"></span><span>Scheduled: '+esc(dayLabel(sched))+'</span></div>' : '')
     + '<div style="margin-top:10px"><span class="phase-tag '+p.phase+'">'+PHASES[p.phase].label.toUpperCase()+' · '+PHASES[p.phase].dates+'</span></div>'
     + '<div class="actions">'+callBtn
-    + '<a class="btn" href="'+dirHref(p)+'" target="_blank" rel="noopener" data-stop="1">'+I.nav+'Directions</a>'
+    + '<a class="btn" href="'+dirHref(p)+'" target="_blank" rel="noopener" data-stop="1">'+I.nav+'Navigate</a>'
     + '<button class="btn" type="button" data-stop="1" data-schedule="'+p.id+'">'+I.cal+'Schedule!</button></div>'
     + '</div></article>';
 }
 function placeMatches(p){
+  if(curGF && !placeHasGF(p)) return false;
   if(curCat!=="All" && p.cat!==curCat) return false;
   if(!curSearch) return true;
   var hay = (p.name+" "+p.cat+" "+p.area+" "+(p.about||"")).toLowerCase();
@@ -1447,7 +1634,7 @@ function renderCalendar(){
       + '<h3>'+PHASES[ph].label+' — '+PHASES[ph].dates+'</h3>'
       + '<p>'+(ph==="active" ? "First week: stay busy — tours, water, the working days of the trip."
               : ph==="explore" ? "Second week: exploring — North Shore, big scenery, the far drives."
-              : "Third week: resting and relaxing — beaches, luaus, slow mornings.")+'</p></div></div>';
+              : "Third week: resting and relaxing — beaches, slow mornings, early nights.")+'</p></div></div>';
     DAYS.filter(function(d){ return d.phase===ph; }).forEach(function(d){
       var here = allPlaces().filter(function(p){ return state.sched[p.id]===d.iso; });
       var wd = weekdayOf(d.iso);
@@ -1460,16 +1647,17 @@ function renderCalendar(){
       here.sort(function(a,b){ return a.name.localeCompare(b.name); }).forEach(function(p){
         var idx = DAYS.indexOf(d);
         html += '<div class="day-entry"><span class="cdot '+ph+'"></span><span class="nm" data-open="'+p.id+'">'+esc(p.name)+'</span>'
-          + '<span class="entry-tools"><button class="mini-btn" type="button" data-move="'+p.id+'">Move</button><button class="mini-btn" type="button" data-unsched="'+p.id+'" aria-label="Remove from calendar">&times;</button></span>'
+          + '<span class="entry-tools"><button class="mini-btn" type="button" data-planb="'+p.id+'">Plan B</button><button class="mini-btn" type="button" data-move="'+p.id+'">Move</button><button class="mini-btn" type="button" data-unsched="'+p.id+'" aria-label="Remove from calendar">&times;</button></span>'
           + '<span class="nudge"><button data-nudge="'+p.id+'|-1" '+(idx<=0?"disabled":"")+' aria-label="Move a day earlier">'+I.left+'</button>'
-          + '<button data-nudge="'+p.id+'|1" '+(idx>=DAYS.length-1?"disabled":"")+' aria-label="Move a day later">'+I.right+'</button></span></div>';
+          + '<button data-nudge="'+p.id+'|1" '+(idx>=DAYS.length-1?"disabled":"")+' aria-label="Move a day later">'+I.right+'</button></span>'
+          + '<span class="entry-planb">'+planBLineHTML(p.id)+'</span></div>';
       });
-      if(here.length){
-        var nb = nearbyFor(here, d.iso);
-        if(nb.eats.length || nb.mkts.length){
-          html += '<div class="near-block"><div class="near-head">Near that day\u2019s plans — auto-added</div>';
-          nb.mkts.forEach(function(x){ html += '<div class="near-row"><span class="nm" data-open="'+x.p.id+'">'+esc(x.p.name)+'</span><span class="near-meta">Market · '+esc(firstSentence(x.p.hours||""))+' · '+x.mi+' mi</span></div>'; });
-          nb.eats.forEach(function(x){ html += '<div class="near-row"><span class="nm" data-open="'+x.p.id+'">'+esc(x.p.name)+'</span><span class="near-meta">Local eats · '+x.mi+' mi</span></div>'; });
+      var dayAnchorsCal = dayAnchors(d.iso);
+      if(dayAnchorsCal.length){
+        var ow = onWayFor(d.iso, dayAnchorsCal);
+        if(ow.length){
+          html += '<div class="near-block"><div class="near-head">On the way that day — auto-added</div>';
+          ow.forEach(function(x){ html += '<div class="near-row"><span class="nm" data-open="'+x.p.id+'">'+esc(x.p.name)+'</span><span class="near-meta">'+esc(x.p.cat)+' · '+esc(x.p.area)+' · '+x.mi+' mi from the day\u2019s stops'+(driveLabel(x.p) ? ' · '+esc(driveLabel(x.p)) : '')+'</span></div>'; });
           html += '</div>';
         }
       }
@@ -1508,11 +1696,14 @@ function detailHTML(p){
     + '<div class="sheet-body">'
     + (p.bookEarly ? '<div class="book-flag" style="margin:0 0 14px">BOOK EARLY — ideally before you land</div>' : '')
     + '<div class="detail-actions">'+callBtn
-    + '<a class="btn" href="'+dirHref(p)+'" target="_blank" rel="noopener">'+I.nav+'Directions</a>'
+    + '<a class="btn" href="'+dirHref(p)+'" target="_blank" rel="noopener">'+I.nav+'Navigate</a>'
     + '<button class="btn" data-star="'+p.id+'">'+(fav?"Starred":"Star it")+'</button></div>'
     + (p.address ? '<p class="big-fact">'+esc(p.address)+'</p>' : '')
+    + (driveLabel(p) ? '<p class="big-fact">'+esc(driveLabel(p))+' — an offline estimate, not live traffic.</p>' : '')
     + (p.phone ? '<p class="big-fact">'+esc(p.phone)+'</p>' : '<p>No phone number saved — Call is off until you add one in Edit.</p>')
+    + (kimBadgesHTML(p) ? '<div class="badges" style="margin:0 0 12px">'+kimBadgesHTML(p)+'</div>' : '')
     + section("What it is", p.about)
+    + (forKimLine(p) ? '<h4>For Kim — cooked fish &amp; vegan picks</h4><div class="for-kim" style="margin-top:0">'+esc(forKimLine(p))+'</div>' : '')
     + section("Hours", p.hours)
     + section("Cost", p.cost)
     + section(p.cat==="Restaurant" ? "Menu & what to order" : "What's included", p.menu)
@@ -1524,7 +1715,8 @@ function detailHTML(p){
     + '<button class="btn primary" data-setsched="'+p.id+'">Set date</button>'
     + (sched ? '<button class="btn" data-clearsched="'+p.id+'">Clear</button>' : '')
     + '</div>'
-    + (sched ? '<p style="margin-top:8px">Scheduled: <strong>'+esc(dayLabel(sched))+'</strong> — shown on the dashboard card and in the Calendar tab.</p>' : '<p style="margin-top:8px">Not scheduled yet. Pick any day Nov 6–24.</p>')
+    + (sched ? '<p style="margin-top:8px">Scheduled: <strong>'+esc(dayLabel(sched))+'</strong> — shown on Today, on the card, and in the Schedule tab.</p>' : '<p style="margin-top:8px">Not scheduled yet. Pick any day Nov 6–24.</p>')
+    + (sched ? '<h4>Plan B for this stop</h4>' + planBLineHTML(p.id) + '<div class="detail-actions"><button class="btn" type="button" data-planb="'+p.id+'">'+(state.planB[p.id] ? "Change Plan B" : "Set a Plan B")+'</button></div>' : '')
     + '<div class="danger-zone"><button class="btn" data-edit="'+p.id+'">Edit place</button>'
     + '<button class="btn danger" data-del="'+p.id+'">Delete place</button></div>'
     + '</div>';
@@ -1535,6 +1727,57 @@ function openDetail(id){
   sh.innerHTML = detailHTML(p);
   openSheet("detail-sheet");
 }
+
+/* ================= Patch 16: per-item Plan B ================= */
+function planBOf(id){ return state.planB[id] || null; }
+function planBLineHTML(id){
+  var pb = planBOf(id);
+  if(!pb || (!pb.placeId && !pb.text)) return '<div class="planb-line">No Plan B set yet — tap Plan B to add one.</div>';
+  var alt = pb.placeId ? getPlace(pb.placeId) : null;
+  var html = '<div class="planb-line"><strong>Plan B:</strong> ';
+  if(alt) html += '<span class="nm" data-open="'+alt.id+'">'+esc(alt.name)+'</span>';
+  if(pb.text) html += (alt ? ' — ' : '') + esc(pb.text);
+  return html + '</div>';
+}
+function openPlanB(id){
+  var p = getPlace(id); if(!p) return;
+  var pb = planBOf(id) || {};
+  var opts = '<option value="">— No specific place —</option>' + allPlaces().filter(function(x){ return x.id!==id; })
+    .sort(function(a,b){ return a.name.localeCompare(b.name); })
+    .map(function(x){ return '<option value="'+x.id+'"'+(pb.placeId===x.id?" selected":"")+'>'+esc(x.name)+' ('+esc(x.area)+')</option>'; }).join("");
+  var sh = document.getElementById("detail-sheet");
+  sh.innerHTML = '<div class="sheet-head"><div class="strip '+p.phase+'"></div><div class="inner">'
+    + '<h2>Plan B — '+esc(p.name)+'</h2><div class="meta">If this stop falls through, what happens instead? Saved on this device; shows on Today and in Schedule.</div></div></div>'
+    + '<button class="sheet-close" data-close="1" aria-label="Close">'+I.x+'</button>'
+    + '<div class="sheet-body"><form class="place-form" id="planb-form">'
+    + '<label for="pb-place">Swap to this place instead</label><select class="planb-select" id="pb-place">'+opts+'</select>'
+    + '<label for="pb-text">Or describe the backup plan</label><textarea class="planb-text" id="pb-text" placeholder="e.g. House day — leftovers, reading, early night.">'+esc(pb.text||"")+'</textarea>'
+    + '<div class="form-actions"><button class="btn" type="button" data-close="1">Cancel</button>'
+    + (pb.placeId || pb.text ? '<button class="btn danger" type="button" data-clearplanb="'+p.id+'">Clear Plan B</button>' : '')
+    + '<button class="btn primary" type="submit">Save Plan B</button></div>'
+    + '</form></div>';
+  openSheet("detail-sheet");
+  document.getElementById("planb-form").addEventListener("submit", function(ev){
+    ev.preventDefault();
+    var placeId = document.getElementById("pb-place").value;
+    var text = document.getElementById("pb-text").value.trim();
+    if(placeId || text) state.planB[id] = { placeId:placeId || "", text:text };
+    else delete state.planB[id];
+    save(); closeSheets(); renderAll();
+    toast("Plan B saved for " + p.name + ".");
+  });
+}
+document.addEventListener("click", function(e){
+  var pbBtn = e.target.closest("[data-planb]");
+  if(pbBtn){ openPlanB(pbBtn.getAttribute("data-planb")); return; }
+  var clr = e.target.closest("[data-clearplanb]");
+  if(clr){
+    var cid = clr.getAttribute("data-clearplanb");
+    delete state.planB[cid]; save(); closeSheets(); renderAll();
+    toast("Plan B cleared.");
+    return;
+  }
+});
 
 /* ================= add / edit form ================= */
 var DIRECTORY = SEED.concat(DIRECTORY_EXTRA);
@@ -1722,8 +1965,10 @@ function showMapCard(id){
     + '<h3>'+esc(p.name)+'</h3><div class="meta">'+esc(p.cat)+' · '+esc(p.area)+'</div>'
     + (p.cost ? '<div class="fact" style="display:flex;gap:8px;margin-top:7px;font-size:14.5px">'+I.tag.replace("<svg",'<svg style="width:15px;height:15px;flex:none;margin-top:3px"')+'<span>'+esc(firstSentence(p.cost))+'</span></div>' : '')
     + (state.sched[p.id] ? '<div class="sched-line">'+I.cal+'<span class="cdot '+(phaseOfIso(state.sched[p.id])||p.phase)+'"></span><span>'+esc(dayLabel(state.sched[p.id]))+'</span></div>' : '')
+    + (driveLabel(p) ? '<div class="fact" style="display:flex;gap:8px;margin-top:7px;font-size:14.5px">'+I.nav.replace("<svg",'<svg style="width:15px;height:15px;flex:none;margin-top:3px"')+'<span>'+esc(driveLabel(p))+'</span></div>' : '')
+    + (forKimLine(p) ? '<div class="for-kim"><strong>For Kim</strong>'+esc(forKimLine(p))+'</div>' : '')
     + '<div class="actions">'+callBtn
-    + '<a class="btn" href="'+dirHref(p)+'" target="_blank" rel="noopener">'+I.nav+'Directions</a>'
+    + '<a class="btn" href="'+dirHref(p)+'" target="_blank" rel="noopener">'+I.nav+'Navigate</a>'
     + '<button class="btn" type="button" data-schedule="'+p.id+'">Schedule!</button>'
     + '<button class="btn" id="map-card-open">Details</button></div></div>';
   c.classList.add("on");
@@ -1750,6 +1995,7 @@ document.getElementById("locate-btn").addEventListener("click", function(){
 function showView(v){
   document.querySelectorAll("nav.tabs button").forEach(function(b){ b.setAttribute("aria-selected", b.dataset.view===v ? "true":"false"); });
   document.querySelectorAll(".view").forEach(function(s){ s.classList.toggle("on", s.id==="view-"+v); });
+  if(v==="today"){ renderToday(); initTodayMap(); }
   if(v==="map"){ initMap(); invalidateMap(); refreshMarkers(); }
   window.scrollTo(0,0);
 }
@@ -1804,6 +2050,16 @@ suggestBox.addEventListener("mousedown", function(e){
 });
 document.addEventListener("click", function(e){ if(!e.target.closest(".search-wrap")) hideSuggest(); });
 document.getElementById("add-btn").addEventListener("click", function(){ openForm(null); });
+var gfToggle = document.getElementById("gf-toggle");
+if(gfToggle) gfToggle.addEventListener("click", function(){
+  curGF = !curGF;
+  gfToggle.setAttribute("aria-pressed", curGF ? "true" : "false");
+  gfToggle.classList.toggle("on", curGF);
+  gfToggle.style.background = curGF ? "var(--ink)" : "";
+  gfToggle.style.color = curGF ? "var(--bg)" : "";
+  renderPlaces();
+  toast(curGF ? "Gluten-free places only." : "Showing all places again.");
+});
 
 document.addEventListener("click", function(e){
   var star = e.target.closest("[data-star]");
@@ -1856,110 +2112,356 @@ document.addEventListener("keydown", function(e){
   if(e.key==="Enter" && e.target.matches && e.target.matches(".card")) openDetail(e.target.getAttribute("data-open"));
 });
 
-/* ================= suggested days ================= */
-var SUGGESTED = [
-{ d:"Fri Nov 6", ph:"active",
-  a:"Land, poke, stock up", an:"AS789 lands 12:06 PM. Poke stop in Lihue (Fish Express or Konohiki), then the big grocery run — Costco for bulk, Foodland for fresh. Settle into the Kalaheo house, unpack, early night.",
-  b:"Skip-the-extras arrival", bn:"Groceries and the drive only, with Kauai Coffee's visitor center on the way to the house if you want one stop. Takeout near Koloa, unpack slow. Arrival day works in any weather." },
-{ d:"Sat Nov 7", ph:"active",
-  a:"Market morning in Lihue", an:"Kauai Community Market at KCC, 9:30 AM–1 PM — produce, fruit and prepared food for the week. Afternoon at the house: settle in, plan the week's cooking, beach walk, no big outing.",
-  b:"Museum and a movie", bn:"Kaua'i Museum late morning, then Kukui Grove and the Regal theater in the afternoon. Saturday showers usually pass, so if it clears, do the market run after lunch instead." },
-{ d:"Sun Nov 8", ph:"active",
-  a:"West-side beach day", an:"Salt Pond Beach Park and a Hanapepe wander in the afternoon — calm water, on the same side of the island as the morning meeting. Cook at home in the evening.",
-  b:"Museum on the way home", bn:"After the meeting, stop in Lihue for the Kaua'i Museum and a Hamura Saimin lunch instead of the beach, then an easy drive back to Kalaheo.",
-  also:"Kingdom Hall Wai'aka, Kekaha — Sunday 10:00 AM (about 25 min west of the house)." },
-{ d:"Mon Nov 9", ph:"active",
-  a:"Fishing #1 — Port Allen", an:"Early charter with Captain J out of Port Allen Harbor. Buy the $20 ocean license that morning. Eat your catch at home tonight; Koloa Sunshine Market at noon only if you are not wiped out.",
-  b:"Lihue indoor day", bn:"If the charter is blown out: Kaua'i Museum plus Clayworks pottery (Raku) in Lihue, and let fishing slide to the Nov 15 flex day — weather moves are built into this week on purpose." },
-{ d:"Tue Nov 10", ph:"active",
-  a:"Spearfishing at Anini", an:"Beginner spearfishing lesson, Anini Road, 10:00 AM — rent fins the day before. Waipa Farmers Market in Hanalei from 2 PM for produce to go with any fish you keep. OPTION C (north-shore overnight): turn the north run into two days — camp at Anini Beach Park Campground (county permit, $3/person) and do Hanalei and Kalihiwai the next morning. See the campground cards in Places.",
-  b:"Paint class and Poipu", bn:"If the north shore is rough: Kaua'i Museum paint class 10 AM–12 PM in Lihue, Kauai Coffee on the way home, slow Poipu afternoon. Do not force rough water — rebook or slide it." },
-{ d:"Wed Nov 11", ph:"active",
-  a:"Weaving day", an:"Calm-morning snorkel first if the water is kind (Anini, or the south shore if it is rough). Kaua'i Museum lauhala weaving 1–3 PM — Kim's basket session. Kauai Culinary Market at Kukui'ula, 3:30–6 PM, on the way home.",
-  b:"Weaving, minus the water", bn:"Skip the snorkel. Weaving stays (it is indoors), then a slow Poipu afternoon and an early dinner before the evening meeting.",
-  also:"Kingdom Hall Wai'aka, Kekaha — Wednesday 7:00 PM." },
-{ d:"Thu Nov 12", ph:"explore",
-  a:"Waimea Canyon — check first", an:"Canyon Trail to Waipo'o Falls (about 3 miles round trip) IF the canyon has reopened — it was closed in mid-October, so check DLNR status before driving up. Real shoes, extra water; red dirt is slick when wet.",
-  b:"Heritage trail near home", bn:"Maha'ulepu Heritage Trail from Poipu — 4 miles of coast, turn back anytime — plus Kauai Coffee. If it is raining hard instead: Kaua'i Museum and a Lihue food day, and give the canyon a day to dry." },
-{ d:"Fri Nov 13", ph:"explore",
-  a:"Helicopter morning", an:"Morning flight out of Lihue — the clearest views, and booking it here leaves room to move it for weather inside Explore week. Easy afternoon: Lihue Sunshine Market (Vidinha Stadium, 3 PM) and a fish restock.",
-  b:"Feather lei and pottery", bn:"If cloud or rain grounds the flight, slide it to the Nov 14 or 15 morning. Today instead: museum lei hulu (feather lei) 11 AM–1 PM plus Clayworks in Lihue." },
-{ d:"Sat Nov 14", ph:"explore",
-  a:"North Shore market and beach", an:"Hanalei Saturday Market 9:30 AM–12 PM (or Anaina Hou in Kilauea, 9 AM–1 PM), beach afternoon with a surf check before swimming, Hanalei Dolphin for dinner or fish to cook.",
-  b:"Kilauea covered day", bn:"Common Ground in Kilauea for the evening (experiences from 5 PM, Tuesday–Saturday), with gallery and shop stops on the way up. If the north is soaked, swap today with Nov 13's indoor plan." },
-{ d:"Sun Nov 15", ph:"explore",
-  a:"Flex day — kayak the Wailua", an:"The catch-up day: Ali'i Kayaks to Secret Falls, guided or self-guided — or whatever slipped earlier in the trip for weather lands here. Nothing else gets to crowd it.",
-  b:"True rest day", bn:"House day after the meeting: leftovers, reading, a gentle look at the last Explore days. This counts as the plan working, not a missed day.",
-  also:"Kingdom Hall Wai'aka, Kekaha — Sunday 10:00 AM." },
-{ d:"Mon Nov 16", ph:"explore",
-  a:"Fishing #2 — Port Allen", an:"Second charter, the other format from Fishing #1 (shared if you went private, longer if the first went well). Mahi and aku are the November best bets. Fish tacos or seared ahi at home tonight.",
-  b:"Poipu day, rum evening", bn:"If the charter is blown out: Koloa and Poipu at an easy pace, and the Rum Safari at Kilohana in the evening — its tentative reopening is today, so check before counting on it." },
-{ d:"Tue Nov 17", ph:"explore",
-  a:"Maha'ulepu — or Hā'ena if a slot opens", an:"Default: Maha'ulepu Heritage Trail from Poipu, close to home. If the morning parking watch finds a Hā'ena morning or afternoon slot, this day swaps to the Kalalau Trail's first stretch, to Hanakāpī'ai and back — that swap is what the watch is for.",
-  b:"Museum and saimin", bn:"Kaua'i Museum, Hamura Saimin for lunch, Kukui Grove after. Sleeping Giant is not the rain swap — it turns to mud. The museum is." },
-{ d:"Wed Nov 18", ph:"relax",
-  a:"Pottery or painting", an:"No early start. Clayworks Raku (ready in a day or two) or Painting Paradise watercolor. Kauai Culinary Market in the afternoon only if you want one gentle outing. Cook a favorite at home.",
-  b:"Rain-proof by design", bn:"The crafts are indoors either way, so rain changes nothing. Add a Kukui Grove movie if you want a second outing, and keep the evening slow.",
-  also:"Kingdom Hall Wai'aka, Kekaha — Wednesday 7:00 PM." },
-{ d:"Thu Nov 19", ph:"relax",
-  a:"Favorite beach, second visit", an:"Pick the calm beach you liked most and go back to it. Short walk only, early night. Kilauea market in the afternoon only if you happen to be nearby.",
-  b:"Painting and house day", bn:"Painting Paradise watercolor (it packs flat for the trip home), or a full house day. This week, a drive has to earn its keep." },
-{ d:"Fri Nov 20", ph:"relax",
-  a:"Feather lei, only if wanted", an:"Kaua'i Museum lei hulu 11 AM–1 PM if Kim wants it — not by default. Otherwise beach, reading, nap. Last big grocery top-up today, sized to run out by Nov 24.",
-  b:"Museum day in Lihue", bn:"The lei hulu class doubles as the rain plan. Pair it with Lihue errands and the grocery top-up and the day is done by mid-afternoon." },
-{ d:"Sat Nov 21", ph:"relax",
-  a:"Last market run", an:"Kauai Community Market (Lihue, Saturday morning) or Hanalei / Anaina Hou — gifts and fruit, not a full shop. Buy fish for one final cook-at-home dinner, tonight or Sunday.",
-  b:"Galleries and a sunset dinner", bn:"Poipu and Kukui'ula galleries instead of the market, and The Beach House at sunset instead of cooking — book the sunset table ahead." },
-{ d:"Sun Nov 22", ph:"relax",
-  a:"Do almost nothing", an:"Beach and a swim if conditions allow, leftovers and poke at home. Start the gentle pack: crafts wrapped, photos backed up.",
-  b:"House day", bn:"Rain this week is the plan working, not failing: pack, rest, finish the perishables. Nothing new gets booked today.",
-  also:"Kingdom Hall Wai'aka, Kekaha — Sunday 10:00 AM." },
-{ d:"Mon Nov 23", ph:"relax",
-  a:"Final favorites", an:"One favorite beach or short walk in the morning, favorite takeout for lunch, finish packing in daylight. Eat the perishables; buy nothing new except breakfast for Tuesday.",
-  b:"Keepsakes and takeout", bn:"Museum shop or a gallery for a last keepsake, a Kenji Burger or Puka Dog run, then pack. Same finish line, no beach required." },
-{ d:"Tue Nov 24", ph:"relax",
-  a:"Fly home", an:"Slow morning, tidy the house (key back in its spot, plants and trash per Becky's sheet), one last look at the water. Head to LIH in good time for AS788, 4:45 PM to SFO — landing 11:57 PM, with your parents meeting you.",
-  b:"Same day, slower edges", bn:"Travel day is weather-proof. If the morning is clear, one last short beach stop on the way to Lihue; if not, a long coffee and an early, calm run to the airport." }
+/* ================= Patch 16: structured day plans + Today =================
+   Day plans are structured, place-linked items (not prose). The Schedule tab
+   (state.sched) stays the single source of truth: a place you move in the
+   Schedule moves here too, and a place scheduled onto a day joins that day.
+   Affordability-cut activities (fishing charters, helicopter, luau, boat
+   tours, mountain tubing) are NOT carried into these plans. */
+var DAY_PLANS = [
+{ iso:"2026-11-06", title:"Land, browse, stock up",
+  items:[
+    { t:"12:06 PM", label:"Land at Lihue (AS789)", note:"Bags, car, breathe. The day is Lihue errands, then home to Kalaheo." },
+    { place:"konohiki", label:"Poke stop — Konohiki Seafoods", note:"Fresh fish for the house, poke for right now. The Fish Express is the other good arrival bite nearby." },
+    { place:"abc-stores-rice-st", label:"Souvenir jewelry browse — ABC Stores, Rice St", note:"Browse-and-pick: about $20–$30, whatever catches your eye — it does not have to be puka. The real-shell checks are on the ABC card. Spouting Horn's vendor stalls (also in Places) are the other browse." },
+    { place:"costco", label:"Costco Lihue — the big stock-up", note:"Bulk breakfast supplies, coffee, water and the week's staples." },
+    { place:"kukui-grove", label:"Kukui Grove — fresh groceries", note:"Times Supermarket inside covers the fresh run (the Lihue Foodland is closed; Times or the Lihue Safeway are the fresh answer)." },
+    { label:"Settle into Becky's house", note:"Unpack, learn the house, early night." }
+  ],
+  planB:{ title:"Skip-the-extras arrival", place:"kauai-coffee", note:"Groceries and the drive only, with Kauai Coffee's visitor center on the way to the house if you want one stop. Takeout near Koloa, unpack slow. Arrival day works in any weather." } },
+{ iso:"2026-11-07", title:"Market morning in Lihue",
+  items:[
+    { t:"9:30 AM–1 PM", place:"market-kcc", label:"Kauai Community Market (KCC)", note:"Produce, fruit and prepared food for the week." },
+    { label:"Afternoon at the house", note:"Settle in, plan the week's cooking, a beach walk, no big outing." }
+  ],
+  planB:{ title:"Museum and Kukui Grove", place:"kauai-museum", note:"Kaua'i Museum late morning, then Kukui Grove in the afternoon. If the showers clear, do the market run after lunch instead." } },
+{ iso:"2026-11-08", title:"West-side beach day",
+  items:[
+    { place:"salt-pond", label:"Salt Pond Beach Park", note:"Calm water, same side of the island as the morning meeting. Check first: the park was reported closed after the storm (Oct 28), so confirm it has reopened. Cook at home in the evening." },
+    { label:"Hanapepe wander", note:"Galleries and an old-town stroll in the afternoon." }
+  ],
+  planB:{ title:"Museum on the way home", place:"kauai-museum", note:"After the meeting, stop in Lihue for the Kaua'i Museum and a Hamura Saimin lunch instead of the beach, then an easy drive back to Kalaheo." } },
+{ iso:"2026-11-09", title:"Lihue making day",
+  items:[
+    { place:"kauai-museum", label:"Kaua'i Museum", note:"Get oriented in the island's story." },
+    { place:"clayworks", label:"Clayworks at Kilohana — pottery", note:"The Raku session is the trip-friendly pick." },
+    { place:"kauai-coffee", label:"Kauai Coffee visitor center", note:"On the way home — free tastings." },
+    { place:"poipu-beach-park", label:"Poipu Beach Park — gentle afternoon", note:"The calm, standing-depth side is Kim's water." }
+  ],
+  planB:{ title:"House and Poipu, slower", place:"poipu-beach-park", note:"Skip Lihue: a gentle Poipu Beach Park afternoon and a house evening. Nothing today has to happen." } },
+{ iso:"2026-11-10", title:"Spearfishing at Anini",
+  items:[
+    { t:"10:00 AM", place:"spearfishing", label:"Hawaiian Reef Spearfishing — beginner lesson", note:"Justin solo. Rent fins the day before; the $20 one-day fishing license is bought online." },
+    { t:"2–5 PM", place:"market-waipa", label:"Waipa Farmers Market, Hanalei", note:"Produce to go with any fish you keep." },
+    { place:"anini-campground", label:"Option C — Anini Beach Park Campground", note:"Optional only: turn the north run into two days with a county-permit camp night ($3/person). Becky's house stays home base either way." }
+  ],
+  planB:{ title:"Paint class and Poipu", place:"painting-paradise", note:"If the north shore is rough: Painting Paradise in Lihue late morning, Kauai Coffee on the way home, slow Poipu afternoon. Do not force rough water — rebook or slide it." } },
+{ iso:"2026-11-11", title:"Weaving day",
+  items:[
+    { place:"poipu-beach-park", label:"Calm-morning water first", note:"South shore if it is rough up north; Anini is the other option." },
+    { t:"1–3 PM", place:"kauai-museum", label:"Lauhala weaving — Kaua'i Museum", note:"Kim's basket session. Bookings go through Eugene directly — confirm the session and the fee." },
+    { t:"3:30–6 PM", place:"market-kukuiula", label:"Kauai Culinary Market (Kukui'ula)", note:"On the way home." }
+  ],
+  planB:{ title:"Weaving, minus the water", place:"kauai-museum", note:"Skip the water. Weaving stays (it is indoors), then a slow Poipu afternoon and an early dinner before the evening meeting." } },
+{ iso:"2026-11-12", title:"Waimea Canyon — check first",
+  items:[
+    { label:"Canyon Trail to Waipo'o Falls", note:"About 3 miles round trip IF the canyon has reopened — it was closed in mid-October, so check DLNR status before driving up. The trail line is on the Map tab. Real shoes, extra water; red dirt is slick when wet." }
+  ],
+  planB:{ title:"Heritage trail near home", place:"kauai-coffee", note:"Maha'ulepu Heritage Trail from Poipu — coast walking, turn back anytime — plus Kauai Coffee. If it is raining hard instead: Kaua'i Museum and a Lihue food day, and give the canyon a day to dry." } },
+{ iso:"2026-11-13", title:"Lihue hands-on day",
+  items:[
+    { t:"11 AM–1 PM", place:"kauai-museum", label:"Lei hulu (feather lei) — Kaua'i Museum", note:"The museum's feather-lei session." },
+    { place:"clayworks", label:"Clayworks pottery", note:"Kilohana Plantation, same Lihue run." },
+    { t:"3–4:30 PM", place:"market-lihue-fri", label:"Lihue Sunshine Market (Vidinha Stadium)", note:"The fish-and-produce restock routes through here." },
+    { place:"fish-express", label:"The Fish Express — fish restock", note:"Takeout poke counter a few minutes from the airport side of town." }
+  ],
+  planB:{ title:"Museum day, slower", place:"kauai-museum", note:"The museum carries the day on its own; add Kukui Grove only if you want a second stop." } },
+{ iso:"2026-11-14", title:"North Shore market and beach",
+  items:[
+    { t:"9:30 AM–12 PM", place:"market-hanalei", label:"Hanalei Saturday Market", note:"Or Anaina Hou in Kilauea, 9 AM–1 PM." },
+    { place:"anini", label:"Beach afternoon — Anini", note:"Surf check before swimming; rough winter day = look only." },
+    { place:"hanalei-dolphin", label:"Hanalei Dolphin — dinner", note:"Or the fish market next door for fish to cook at home." }
+  ],
+  planB:{ title:"Kilauea covered day", place:"common-ground", note:"Common Ground in Kilauea for the evening (experiences from 5 PM, Tuesday–Saturday), with gallery and shop stops on the way up. If the north is soaked, swap today with Nov 13's indoor plan." } },
+{ iso:"2026-11-15", title:"Flex day — kayak the Wailua",
+  items:[
+    { place:"alii-kayaks", label:"Ali'i Kayaks — Wailua River", note:"The catch-up day: guided or self-guided — or whatever slipped earlier in the trip for weather lands here. Nothing else gets to crowd it." }
+  ],
+  planB:{ title:"True rest day", note:"House day after the meeting: leftovers, reading, a gentle look at the last Explore days. This counts as the plan working, not a missed day." } },
+{ iso:"2026-11-16", title:"Poipu day, easy pace",
+  items:[
+    { place:"little-fish", label:"Little Fish Coffee — slow morning", note:"Acai bowl and coffee near the beach." },
+    { place:"poipu-beach-park", label:"Poipu Beach Park", note:"Easy water and a slow afternoon." },
+    { place:"koloa-fish-market", label:"Koloa Fish Market — fish for dinner at home", note:"Fresh catch to cook at Becky's." }
+  ],
+  planB:{ title:"Rum evening", place:"rum-safari", note:"Rum Safari at Kilohana in the evening — its tentative reopening is today, so check before counting on it. Otherwise the house evening stands." } },
+{ iso:"2026-11-17", title:"Maha'ulepu — or Hā'ena if a slot opens",
+  items:[
+    { label:"Maha'ulepu Heritage Trail", note:"Default: from Poipu, close to home. The trail line is on the Map tab." },
+    { place:"haena", label:"Hā'ena swap — only if a slot opens", note:"If the morning parking watch finds a Hā'ena morning or afternoon slot, this day swaps to the Kalalau Trail's first stretch, to Hanakāpī'ai and back — that swap is what the watch is for." }
+  ],
+  planB:{ title:"Museum and saimin", place:"kauai-museum", note:"Kaua'i Museum, Hamura Saimin for lunch, Kukui Grove after. Sleeping Giant is not the rain swap — it turns to mud. The museum is." } },
+{ iso:"2026-11-18", title:"Pottery or painting",
+  items:[
+    { place:"clayworks", label:"Clayworks Raku — or Painting Paradise", note:"No early start. Raku is ready in a day or two; Painting Paradise is the other indoor pick." },
+    { place:"market-kukuiula", label:"Kauai Culinary Market — one gentle outing", note:"Only if you want it." },
+    { label:"Cook a favorite at home", note:"Slow evening before the meeting." }
+  ],
+  planB:{ title:"Rain-proof by design", place:"kukui-grove", note:"The crafts are indoors either way, so rain changes nothing. Add a Kukui Grove browse if you want a second outing, and keep the evening slow." } },
+{ iso:"2026-11-19", title:"Favorite beach, second visit",
+  items:[
+    { label:"Your favorite calm beach, again", note:"Pick the calm beach you liked most and go back to it. Short walk only, early night." },
+    { place:"market-kilauea-thu", label:"Kilauea Thursday Market — only if you are nearby", note:"Afternoon, about 3:30–5 PM." }
+  ],
+  planB:{ title:"Painting and house day", place:"painting-paradise", note:"Painting Paradise watercolor (it packs flat for the trip home), or a full house day. This week, a drive has to earn its keep." } },
+{ iso:"2026-11-20", title:"Feather lei, only if wanted",
+  items:[
+    { t:"11 AM–1 PM", place:"kauai-museum", label:"Lei hulu — only if Kim wants it", note:"Not by default. Otherwise beach, reading, nap." },
+    { place:"kukui-grove", label:"Last big grocery top-up", note:"Sized to run out by Nov 24 — Times Supermarket inside Kukui Grove covers fresh." }
+  ],
+  planB:{ title:"Museum day in Lihue", place:"kauai-museum", note:"The lei hulu class doubles as the rain plan. Pair it with Lihue errands and the grocery top-up and the day is done by mid-afternoon." } },
+{ iso:"2026-11-21", title:"Last market run",
+  items:[
+    { place:"market-kcc", label:"Kauai Community Market (KCC)", note:"Gifts and fruit, not a full shop." },
+    { place:"koloa-fish-market", label:"Fish for one final cook-at-home dinner", note:"Tonight or Sunday." }
+  ],
+  planB:{ title:"Galleries and a sunset dinner", place:"beach-house", note:"Poipu and Kukui'ula galleries instead of the market, and The Beach House at sunset instead of cooking — book the sunset table ahead." } },
+{ iso:"2026-11-22", title:"Do almost nothing",
+  items:[
+    { label:"Beach and a swim, if conditions allow", note:"Leftovers and poke at home." },
+    { label:"Start the gentle pack", note:"Crafts wrapped, photos backed up." }
+  ],
+  planB:{ title:"House day", note:"Rain this week is the plan working, not failing: pack, rest, finish the perishables. Nothing new gets booked today." } },
+{ iso:"2026-11-23", title:"Final favorites",
+  items:[
+    { label:"One favorite beach or short walk — morning", note:"Nothing new gets booked today." },
+    { place:"puka-dog", label:"Favorite takeout for lunch", note:"A Puka Dog run — or Kenji Burger if that is the favorite." },
+    { label:"Finish packing in daylight", note:"Eat the perishables; buy nothing new except breakfast for Tuesday." }
+  ],
+  planB:{ title:"Keepsakes and takeout", place:"kauai-museum", note:"Museum shop or a gallery for a last keepsake, a takeout run, then pack. Same finish line, no beach required." } },
+{ iso:"2026-11-24", title:"Fly home",
+  items:[
+    { label:"Slow morning, tidy the house", note:"Key back in its spot, plants and trash per Becky's sheet, one last look at the water." },
+    { t:"4:45 PM", label:"Head to LIH for AS788", note:"Landing SFO 11:57 PM — the return pickup is the younger driver you have in mind, not your parents; it is too late for them." }
+  ],
+  planB:{ title:"Same day, slower edges", place:"kalapaki-beach", note:"Travel day is weather-proof. If the morning is clear, one last short beach stop on the way to Lihue — Kalapaki is right there; if not, a long coffee and an early, calm run to the airport." } }
 ];
-/* Patch 12: place names inside Suggested plans become tappable (open the place page) */
-var PLACE_ALIASES = { "Regal theater":"kukui-grove-cinema", "Kukui Grove":"kukui-grove", "Kauai Coffee":"kauai-coffee", "Costco":"costco", "Foodland":"foodland-princeville", "Clayworks":"clayworks", "Fish Express":"fish-express", "Sleeping Giant":"sleeping-giant", "Kingdom Hall Wai'aka":"kingdom-hall", "The Beach House":"beach-house", "Rum Safari":"rum-safari", "Waimea Theater":"waimea-theatre" };
-function linkifyPlaces(text){
-  if(!text) return "";
-  var terms = [];
-  allPlaces().forEach(function(p){ if(p.name) terms.push([p.name, p.id]); });
-  Object.keys(PLACE_ALIASES).forEach(function(k){ terms.push([k, PLACE_ALIASES[k]]); });
-  terms.sort(function(a,b){ return b[0].length - a[0].length; });
-  var idFor = {};
-  terms.forEach(function(t){ if(!idFor[t[0]]) idFor[t[0]] = t[1]; });
-  var pat = terms.map(function(t){ return t[0].replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); }).join("|");
-  if(!pat) return esc(text);
-  var parts = String(text).split(new RegExp("("+pat+")", "g"));
-  return parts.map(function(part, i){
-    if(i % 2 === 1 && idFor[part]) return '<span class="nm" data-open="'+idFor[part]+'">'+esc(part)+'</span>';
-    return esc(part);
-  }).join("");
+function dayPlanFor(iso){
+  for(var i=0;i<DAY_PLANS.length;i++) if(DAY_PLANS[i].iso===iso) return DAY_PLANS[i];
+  return null;
 }
+/* The unified item list for a day: structured plan items (minus any place the
+   Schedule has moved to another day), the weekly meeting, then anything the
+   Schedule put on this day that the plan did not already name. */
+function dayItems(iso){
+  var items = [], seen = {};
+  var plan = dayPlanFor(iso);
+  if(plan) plan.items.forEach(function(it){
+    if(it.place){
+      var p = getPlace(it.place); if(!p) return;
+      if(state.sched[p.id] && state.sched[p.id]!==iso) return;
+      seen[p.id] = 1;
+      items.push({ place:p, label:it.label||p.name, note:it.note||"", time:it.t||"", source:"plan" });
+    } else {
+      items.push({ place:null, label:it.label||"", note:it.note||"", time:it.t||"", source:"plan" });
+    }
+  });
+  var wd = weekdayOf(iso);
+  if(wd===0 || wd===3){
+    var hall = getPlace("kingdom-hall");
+    if(hall && !seen[hall.id] && (!state.sched[hall.id] || state.sched[hall.id]===iso)){
+      var mit = { place:hall, label:"Congregation meeting — Kingdom Hall, Kekaha", note:"The weekly meeting.", time:(wd===0 ? "10:00 AM" : "7:00 PM"), source:"plan" };
+      if(wd===0) items.unshift(mit); else items.push(mit);
+      seen[hall.id] = 1;
+    }
+  }
+  allPlaces().forEach(function(p){
+    if(state.sched[p.id]===iso && !seen[p.id]){
+      seen[p.id] = 1;
+      items.push({ place:p, label:p.name, note:"Added in the Schedule tab.", time:"", source:"sched" });
+    }
+  });
+  return items;
+}
+function dayAnchors(iso){
+  var out = [], seen = {};
+  dayItems(iso).forEach(function(it){
+    if(it.place && typeof it.place.lat==="number" && !seen[it.place.id]){ seen[it.place.id] = 1; out.push(it.place); }
+  });
+  return out;
+}
+/* Restaurants and places sitting on the day's route/area — near the day's own stops. */
+function onWayFor(iso, anchors){
+  if(!anchors || !anchors.length) return [];
+  var inDay = {};
+  dayItems(iso).forEach(function(it){ if(it.place) inDay[it.place.id] = 1; });
+  var out = [];
+  allPlaces().forEach(function(p){
+    if(typeof p.lat!=="number" || inDay[p.id]) return;
+    if(p.id==="kukui-grove-cinema" || p.id==="waimea-theatre") return; /* both closed — records, not stops */
+    var dmin = Math.min.apply(null, anchors.map(function(a){ return distKm(a, p); }));
+    var limit = p.cat==="Restaurant" ? 10 : 7;
+    if(dmin<=limit) out.push({ p:p, mi:(Math.round(dmin*0.621*10)/10), d:dmin });
+  });
+  out.sort(function(x,y){ return x.d - y.d; });
+  return out.slice(0,5);
+}
+
+/* ================= Today (home) ================= */
+var todayIsoSel = null, todayMap = null, todayLayer = null;
+function currentTripIso(){
+  var t = new Date().toLocaleDateString("en-CA",{timeZone:"Pacific/Honolulu"});
+  if(t < "2026-11-06") return "2026-11-06";
+  if(t > "2026-11-24") return "2026-11-24";
+  return t;
+}
+function renderToday(){
+  var hero = document.getElementById("today-hero-wrap");
+  var rest = document.getElementById("today-rest");
+  if(!hero || !rest) return;
+  if(!todayIsoSel) todayIsoSel = currentTripIso();
+  var iso = todayIsoSel, day = null;
+  DAYS.forEach(function(d){ if(d.iso===iso) day = d; });
+  if(!day){ day = DAYS[0]; iso = day.iso; todayIsoSel = iso; }
+  var plan = dayPlanFor(iso);
+  var realToday = new Date().toLocaleDateString("en-CA",{timeZone:"Pacific/Honolulu"});
+  var whenNote = realToday===iso ? "This is today."
+    : (realToday < "2026-11-06" && iso==="2026-11-06") ? "The trip has not started yet — this is arrival day, ready to go."
+    : (realToday < iso ? "Coming up — this is the plan as it stands."
+    : "Already past — here is how the day was set up.");
+  var idx = DAYS.indexOf(day);
+  hero.innerHTML = '<div class="today-hero"><div class="today-kicker">Today · '+esc(PHASES[day.phase].label)+'</div>'
+    + '<h2>'+esc(day.label)+'</h2>'
+    + '<p><strong>'+esc(plan ? plan.title : "Your day")+'</strong> — '+esc(whenNote)+'</p>'
+    + '<div class="today-daynav">'
+    + '<button class="btn" type="button" data-todaynav="-1"'+(idx<=0?" disabled":"")+'>‹ Earlier day</button>'
+    + '<button class="btn" type="button" data-todayjump="1">Trip today</button>'
+    + '<button class="btn" type="button" data-todaynav="1"'+(idx>=DAYS.length-1?" disabled":"")+'>Later day ›</button>'
+    + '</div></div>';
+  var items = dayItems(iso);
+  var html = '<h2 class="section">The day, in order</h2>';
+  if(!items.length) html += '<div class="empty">Nothing on this day yet. The Schedule tab can put any place here.</div>';
+  items.forEach(function(it, i){
+    html += '<div class="today-item"><div class="today-num">'+(i+1)+'</div><div class="today-main">';
+    if(it.place){
+      html += '<h3><span class="nm" data-open="'+it.place.id+'">'+esc(it.label)+'</span></h3>'
+        + '<div class="meta">'+esc(it.place.cat)+' · '+esc(it.place.area)+(it.time ? ' · '+esc(it.time) : '')+(it.source==="sched" ? ' · added in Schedule' : '')+'</div>'
+        + (driveLabel(it.place) ? '<div class="today-note">'+esc(driveLabel(it.place))+'</div>' : '')
+        + (it.note ? '<div class="today-note">'+esc(it.note)+'</div>' : '')
+        + (forKimLine(it.place) ? '<div class="for-kim"><strong>For Kim</strong>'+esc(forKimLine(it.place))+'</div>' : '')
+        + '<div class="today-actions">'
+        + '<a class="btn" href="'+dirHref(it.place)+'" target="_blank" rel="noopener">'+I.nav+'Navigate</a>'
+        + (it.place.phone ? '<a class="btn" href="'+telHref(it.place.phone)+'">'+I.phone+'Call</a>' : '<span class="btn disabled">'+I.phone+'Call</span>')
+        + '<button class="btn" type="button" data-open="'+it.place.id+'">Details</button>'
+        + (state.sched[it.place.id]===iso ? '<button class="btn" type="button" data-planb="'+it.place.id+'">Plan B</button>' : '')
+        + '</div>'
+        + (state.sched[it.place.id]===iso ? planBLineHTML(it.place.id) : '');
+    } else {
+      html += '<h3>'+esc(it.label)+'</h3>'
+        + (it.time ? '<div class="meta">'+esc(it.time)+'</div>' : '')
+        + (it.note ? '<div class="today-note">'+esc(it.note)+'</div>' : '');
+    }
+    html += '</div></div>';
+  });
+  if(plan && plan.planB){
+    var pbPlace = plan.planB.place ? getPlace(plan.planB.place) : null;
+    html += '<div class="planb-box"><h3>Plan B for the day</h3><p><strong>'
+      + (pbPlace ? '<span class="nm" style="cursor:pointer;text-decoration:underline;text-underline-offset:3px" data-open="'+pbPlace.id+'">'+esc(plan.planB.title)+'</span>' : esc(plan.planB.title))
+      + '</strong> — '+esc(plan.planB.note)+'</p></div>';
+  }
+  var ow = onWayFor(iso, dayAnchors(iso));
+  if(ow.length){
+    html += '<h2 class="section">On the way today</h2>';
+    ow.forEach(function(x){
+      html += '<button type="button" class="onway-row" data-open="'+x.p.id+'"><span class="ow-main"><span class="ow-name">'+esc(x.p.name)+'</span>'
+        + '<span class="ow-meta">'+esc(x.p.cat)+' · '+esc(x.p.area)+' · '+x.mi+' mi from the day\u2019s stops'+(driveLabel(x.p) ? ' · '+esc(driveLabel(x.p)) : '')+(placeHasGF(x.p) ? ' · Gluten-free' : '')+'</span></span></button>';
+    });
+  }
+  html += '<div class="today-daynav"><button class="btn" type="button" data-goschedule="1">Open the Schedule</button><button class="btn" type="button" data-gomap="1">Open the full Map</button></div>';
+  rest.innerHTML = html;
+  if(document.getElementById("view-today").classList.contains("on")) initTodayMap();
+}
+function initTodayMap(){
+  var el = document.getElementById("today-map"); if(!el) return;
+  if(typeof L==="undefined"){
+    el.innerHTML = '<div class="map-offline">The mini-map needs a connection for its map tiles. Your plan below works fully offline.</div>';
+    return;
+  }
+  if(!todayMap){
+    todayMap = L.map("today-map", { scrollWheelZoom:false });
+    L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+      maxZoom:18, attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+    }).addTo(todayMap);
+  }
+  if(todayLayer) todayMap.removeLayer(todayLayer);
+  todayLayer = L.layerGroup().addTo(todayMap);
+  var iso = todayIsoSel || currentTripIso();
+  var pts = [[HOME_BASE.lat, HOME_BASE.lng]];
+  var hm = L.marker([HOME_BASE.lat, HOME_BASE.lng], { icon: L.divIcon({ className:"", html:'<div class="home-pin">H</div>', iconSize:[30,30], iconAnchor:[15,15] }) }).addTo(todayLayer);
+  hm.bindTooltip("Becky's house — home base", { permanent:true, direction:"top", offset:[0,-16], className:"beach-label" });
+  hm.on("click", function(){ toast("Becky's house — 3984 Papalina Rd, Kalaheo."); });
+  dayAnchors(iso).forEach(function(p){
+    pts.push([p.lat, p.lng]);
+    var m = L.marker([p.lat, p.lng], { icon: pinIcon(p, false) }).addTo(todayLayer);
+    m.bindTooltip(p.name, { direction:"top", offset:[0,-13], className:"beach-label" });
+    m.on("click", function(){ openDetail(p.id); });
+  });
+  todayMap.fitBounds(L.latLngBounds(pts).pad(0.18));
+  setTimeout(function(){ if(todayMap) todayMap.invalidateSize(); }, 80);
+}
+document.addEventListener("click", function(e){
+  var nv = e.target.closest("[data-todaynav]");
+  if(nv){
+    var cur = todayIsoSel || currentTripIso(), idx = -1;
+    DAYS.forEach(function(d,i){ if(d.iso===cur) idx = i; });
+    var ni = idx + parseInt(nv.getAttribute("data-todaynav"),10);
+    if(ni>=0 && ni<DAYS.length){ todayIsoSel = DAYS[ni].iso; renderToday(); initTodayMap(); window.scrollTo(0,0); }
+    return;
+  }
+  var tj = e.target.closest("[data-todayjump]");
+  if(tj){ todayIsoSel = currentTripIso(); renderToday(); initTodayMap(); window.scrollTo(0,0); return; }
+  var gs = e.target.closest("[data-goschedule]");
+  if(gs){ showView("calendar"); return; }
+  var gm = e.target.closest("[data-gomap]");
+  if(gm){ showView("map"); return; }
+});
+
 function renderSuggested(){
   var wrap = document.getElementById("sugg-wrap");
   if(!wrap) return;
   var html = "", lastPh = "";
-  SUGGESTED.forEach(function(s){
-    if(s.ph !== lastPh){
-      lastPh = s.ph;
-      html += '<h2 class="section">'+esc(PHASES[s.ph].label)+' — '+esc(PHASES[s.ph].dates)+'</h2>';
+  DAY_PLANS.forEach(function(dp){
+    var day = null; DAYS.forEach(function(d){ if(d.iso===dp.iso) day = d; });
+    var ph = day ? day.phase : "active";
+    if(ph !== lastPh){
+      lastPh = ph;
+      html += '<h2 class="section">'+esc(PHASES[ph].label)+' — '+esc(PHASES[ph].dates)+'</h2>';
     }
-    html += '<article class="sugg-day"><div class="strip '+s.ph+'"></div><div class="body">'
-      + '<h3>'+esc(s.d)+'</h3>'
-      + '<div class="plan a"><div class="tag">Plan A</div><div class="txt"><strong>'+linkifyPlaces(s.a)+'</strong><span>'+linkifyPlaces(s.an)+'</span></div></div>'
-      + '<div class="plan b"><div class="tag">Plan B</div><div class="txt"><strong>'+linkifyPlaces(s.b)+'</strong><span>'+linkifyPlaces(s.bn)+'</span></div></div>'
-      + (s.also ? '<p class="sugg-also">'+linkifyPlaces(s.also)+'</p>' : '')
-      + suggNear(s)
-      + '</div></article>';
+    html += '<article class="sugg-day"><div class="strip '+ph+'"></div><div class="body">'
+      + '<h3>'+esc(day ? day.label : dp.iso)+'<span class="phase-name">'+esc(dp.title)+'</span></h3>'
+      + '<div class="sugg-items">'
+      + dp.items.map(function(it){
+          var nm;
+          if(it.place){
+            var p = getPlace(it.place);
+            nm = p ? '<span class="nm" data-open="'+p.id+'">'+esc(it.label||p.name)+'</span>' : esc(it.label||"");
+          } else nm = esc(it.label||"");
+          return '<div class="sugg-item">'+(it.t ? '<strong>'+esc(it.t)+'</strong> · ' : '')+nm+(it.note ? ' — <span>'+esc(it.note)+'</span>' : '')+'</div>';
+        }).join("")
+      + '</div>'
+      + '<div class="plan b"><div class="tag">Plan B</div><div class="txt"><strong>'
+      + (dp.planB.place ? '<span class="nm" data-open="'+dp.planB.place+'">'+esc(dp.planB.title)+'</span>' : esc(dp.planB.title))
+      + '</strong><span>'+esc(dp.planB.note)+'</span></div></div>';
+    var ow = onWayFor(dp.iso, dayAnchors(dp.iso));
+    if(ow.length){
+      html += '<p class="sugg-near"><strong>On the way:</strong> ' + ow.map(function(x){ return '<span class="nm" data-open="'+x.p.id+'">'+esc(x.p.name)+'</span> '+esc(x.p.cat)+' · '+x.mi+' mi'; }).join(" &middot; ") + '</p>';
+    }
+    html += '</div></article>';
   });
   wrap.innerHTML = html;
 }
 
-function renderAll(){ renderPlaces(); renderCalendar(); renderSuggested(); if(mapReady) refreshMarkers(); }
+function renderAll(){ renderPlaces(); renderCalendar(); renderSuggested(); renderToday(); if(mapReady) refreshMarkers(); }
 renderAll();
 if(!store.ok) toast("Note: this browser blocked local saving — changes will last for this visit only.");
 /* ================= weather (live, Open-Meteo) + schedule-to-calendar + day diary ================= */
@@ -2080,7 +2582,7 @@ function openWxDay(iso){
   html += '<h4>On your calendar this day</h4>';
   if(!here.length) html += '<p>Nothing scheduled yet. Every card has a Schedule! button — tap one, then tap this day in the calendar.</p>';
   here.forEach(function(p){
-    html += '<p><strong>'+esc(p.name)+'</strong>'+(rainy && wxIsWater(p) ? '<br><span style="color:#9c2b1b;font-weight:600">Weather may fight this one — it is a water plan on a wet day. The Plan B for that day lives in the sug\u2019std tab.</span>' : '')+'</p>';
+    html += '<p><strong>'+esc(p.name)+'</strong>'+(rainy && wxIsWater(p) ? '<br><span style="color:#9c2b1b;font-weight:600">Weather may fight this one — it is a water plan on a wet day. The Plan B for that day is on the Today tab.</span>' : '')+'</p>';
   });
   html += '<h4>Good picks for this weather</h4>';
   wxPicks(r).forEach(function(x){
@@ -2127,7 +2629,7 @@ document.addEventListener("click", function(e){
   var wx=e.target.closest("[data-wxday]"); if(wx){ openWxDay(wx.getAttribute("data-wxday")); return; }
   var cp=e.target.closest("[data-cancelpend]"); if(cp){ pendSched=null; renderCalendar(); return; }
   var pk=e.target.closest("[data-pickday]");
-  if(pk && pendSched && !e.target.closest("[data-note],[data-nudge],[data-move],[data-unsched],[data-cancelpend],[data-open]")){
+  if(pk && pendSched && !e.target.closest("[data-note],[data-nudge],[data-move],[data-unsched],[data-cancelpend],[data-open],[data-planb]")){
     var iso2=pk.getAttribute("data-pickday"), p2=getPlace(pendSched);
     state.sched[pendSched]=iso2; save(); pendSched=null; renderAll();
     toast((p2?p2.name:"Place")+" — "+dayLabel(iso2)+"."); return;
@@ -2551,6 +3053,9 @@ document.addEventListener("click", function(e){
   }
   renderBeaches(); renderVs();
 })();
+
+/* Patch 16: the app opens on Today. */
+showView("today");
 
 
 
