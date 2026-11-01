@@ -610,6 +610,9 @@
   .dish h4{ font-family:"Marcellus",Georgia,serif; font-weight:400; font-size:21px; margin:0 0 8px; line-height:1.3; }
   .dish p{ margin:0 0 16px; font-size:15.5px; line-height:1.6; color:var(--ink2); }
   .dish .yt-btn{ color:#d21034; font-weight:800; letter-spacing:.07em; }
+  .dish .dish-actions{ display:flex; gap:10px; flex-wrap:wrap; }
+  .dish .dish-del{ color:var(--ink2); font-weight:700; letter-spacing:.06em; }
+  .dish-restore{ margin-top:18px; }
 
   /* ---------- Patch 17: Schedule editing — drag handle, reorder, Edit picker ---------- */
   .cal-tools{ display:flex; gap:8px; margin-bottom:14px; }
@@ -1563,6 +1566,7 @@ if(!state.schedOrder) state.schedOrder = {}; /* iso -> [entry keys] — Justin's
 if(!state.schedText) state.schedText = {};    /* textId -> {label, note, t, iso} — Sug'std text items placed on the Schedule */
 if(!state.suggGone) state.suggGone = {};      /* Sug'std item key -> true, once an item has been moved out of Sug'std */
 if(!state.schedUndo) state.schedUndo = {};    /* iso -> [entry keys] — the order a day had just before a drive sort, so Undo order can restore it */
+if(!state.grindsGone) state.grindsGone = {};  /* Grinds dish name -> true, once Justin deletes a dish from his menu */
 function save(){ store.set(state); }
 
 function allPlaces(){
@@ -2178,19 +2182,38 @@ var GRINDS = {
 };
 function ytHref(q){ return "https://www.youtube.com/results?search_query=" + encodeURIComponent(q); }
 function dishCard(d){
+  if(state.grindsGone && state.grindsGone[d.name]) return "";
   return '<article class="card dish"><h4>'+esc(d.name)+'</h4><p>'+esc(d.desc)+'</p>'
-    + '<a class="btn yt-btn" href="'+ytHref(d.yt)+'" target="_blank" rel="noopener">WATCH ON YT</a></article>';
+    + '<div class="dish-actions"><a class="btn yt-btn" href="'+ytHref(d.yt)+'" target="_blank" rel="noopener">WATCH ON YT</a>'
+    + '<button type="button" class="btn dish-del" data-dishdel="'+esc(d.name)+'">DELETE</button></div></article>';
 }
-function renderGrinds(){
+function renderGrinds(force){
   var w = document.getElementById("grinds-wrap");
-  if(!w || w.dataset.done) return;
+  if(!w || (w.dataset.done && !force)) return;
   w.dataset.done = "1";
   var html = '<p class="cmp-intro">Cook-at-the-house favorites, built from the grocery runs — <strong>all gluten-free, cooked seafood and lamb only, no eggs and no beef.</strong> No recipes here on purpose: pick a dish, tap “YouTube it,” watch it made once, then cook it your way.</p>';
   html += '<h3 class="menu-head">Morning Grinds — Breakfast</h3>';
   html += GRINDS.breakfasts.map(dishCard).join("");
   html += '<h3 class="menu-head">Evening Grinds — Dinner</h3>';
   html += GRINDS.dinners.map(dishCard).join("");
+  var goneCount = state.grindsGone ? Object.keys(state.grindsGone).length : 0;
+  if(goneCount) html += '<button type="button" class="btn dish-restore" data-dishrestore="1">Restore deleted dishes ('+goneCount+')</button>';
   w.innerHTML = html;
+  w.querySelectorAll("[data-dishdel]").forEach(function(b){
+    b.addEventListener("click", function(){
+      var nm = b.getAttribute("data-dishdel");
+      if(!state.grindsGone) state.grindsGone = {};
+      state.grindsGone[nm] = true;
+      save(); renderGrinds(true);
+      toast("Deleted — " + nm + " is off your menu.");
+    });
+  });
+  var rb = w.querySelector("[data-dishrestore]");
+  if(rb) rb.addEventListener("click", function(){
+    state.grindsGone = {};
+    save(); renderGrinds(true);
+    toast("Deleted dishes restored.");
+  });
 }
 
 /* ================= tabs & global events ================= */
