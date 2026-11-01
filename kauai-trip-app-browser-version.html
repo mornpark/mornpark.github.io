@@ -3279,7 +3279,7 @@ document.addEventListener("click", function(e){
    - Every Schedule item carries a ☰ handle: press-and-hold (~1s) lifts it,
      then drag to reorder within the day. Up/down arrows do the same job.
    - Every item has its own Edit button (and every day a day-level Edit
-     button) opening the picker: "From Sug'std" (this day, Submit) and
+     button) opening the picker: "Day Sug'std" (this day, Submit) and
      "Whole Sug'std" (all days, per-day Choose -> "Move it over" /
      "Copy it over" question; the picker stays open; X saves).
    - Move = lands on the target Schedule day AND leaves Sug'std.
@@ -3349,7 +3349,7 @@ function renderPicker(){
   var html = '<div class="sheet-head"><div class="inner"><h2>Edit — '+esc(tgt)+'</h2><div class="meta">Add stops to this day from Sug\u2019std. Sug\u2019std itself only changes when you pick \u201CMove it over.\u201D</div></div></div>'
     + '<button class="sheet-close" data-close="1" aria-label="Close">'+I.x+'</button>'
     + '<div class="sheet-body">'
-    + '<div class="pick-tabs" role="tablist"><button type="button" class="pick-tab" data-picktab="same" aria-selected="'+(pickTab==="same")+'">From Sug\u2019std</button>'
+    + '<div class="pick-tabs" role="tablist"><button type="button" class="pick-tab" data-picktab="same" aria-selected="'+(pickTab==="same")+'">Day Sug\u2019std</button>'
     + '<button type="button" class="pick-tab" data-picktab="whole" aria-selected="'+(pickTab==="whole")+'">Whole Sug\u2019std</button></div>';
   if(pickTab==="same"){
     var items = suggItemsFor(pickTargetIso);
