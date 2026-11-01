@@ -751,6 +751,63 @@
     .book-day{ break-before:page; border:none !important; margin:0 !important; padding:0 !important; background:#fff !important; }
     .book-photo{ max-height:8.4in; }
   }
+  /* ---------- Make a book: controls + styles (Patch 20, screen) ---------- */
+  .book-controls{ border:1px solid var(--line); background:var(--surface); padding:12px 14px; margin-bottom:18px; }
+  .book-ctl-row{ margin-bottom:12px; }
+  .book-ctl-row:last-child{ margin-bottom:0; }
+  .book-ctl-label{ display:block; font-size:12px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; color:var(--ink2); margin-bottom:8px; }
+  .book-style-btns{ display:flex; gap:8px; flex-wrap:wrap; }
+  .book-style-btn{ font:inherit; font-size:14.5px; font-weight:700; padding:9px 13px; border-radius:999px; border:1.5px solid var(--ink); background:var(--surface); color:var(--ink); cursor:pointer; }
+  .book-style-btn.on{ background:var(--ink); color:var(--bg); }
+  .book-cover-picks{ display:flex; gap:8px; flex-wrap:wrap; align-items:stretch; }
+  .book-cover-pick{ font:inherit; cursor:pointer; border:2px solid var(--line); background:var(--surface2); border-radius:10px; padding:0; width:56px; height:56px; overflow:hidden; display:flex; align-items:center; justify-content:center; }
+  .book-cover-pick img{ width:100%; height:100%; object-fit:cover; display:block; }
+  .book-cover-pick.on{ border-color:var(--ink); box-shadow:0 0 0 2px var(--ink) inset; }
+  .book-cover-pick.is-text{ width:auto; padding:0 12px; font-size:13px; font-weight:700; color:var(--ink); }
+  .book-cover-hint{ font-size:13px; color:var(--ink2); align-self:center; }
+  .book-sample-toggle{ display:flex; align-items:center; gap:9px; font-size:15px; font-weight:600; cursor:pointer; }
+  .book-sample-toggle input{ width:20px; height:20px; accent-color:var(--ink); }
+  .book-date{ font-size:13.5px; color:var(--ink2); margin:-6px 0 14px; }
+  .book-photo-ph{ width:100%; aspect-ratio:4/3; margin:16px auto; display:flex; align-items:center; justify-content:center; background:linear-gradient(135deg,#b9c9bf,#7d9c8a 55%,#55755f); color:rgba(255,255,255,.92); font-weight:800; letter-spacing:.34em; font-size:15px; text-indent:.34em; }
+  /* Clean: today's look + teal headings + date subline */
+  .bk-clean .book-day h2{ color:#14665a; }
+  .bk-clean .book-date{ text-transform:uppercase; letter-spacing:.08em; font-size:12.5px; font-weight:700; margin-top:-8px; }
+  .bk-clean .book-cover.has-photo{ padding-top:0; overflow:hidden; }
+  .bk-clean .book-cover-photo{ display:block; width:calc(100% + 44px); max-width:none; margin:0 -22px 26px; height:300px; object-fit:cover; }
+  /* Photo-forward: minimal caps headings, big photos, full-bleed cover */
+  .bk-photo .book-cover.has-photo{ padding:0; border:none; position:relative; overflow:hidden; min-height:76vh; background:#20302a; }
+  .bk-photo .book-cover-photo{ position:absolute; inset:0; width:100%; height:100%; object-fit:cover; display:block; }
+  .bk-photo .book-cover-band{ position:absolute; left:0; right:0; bottom:0; padding:64px 22px 26px; text-align:left; background:linear-gradient(to top, rgba(10,16,13,.82), rgba(10,16,13,0)); color:#fff; }
+  .bk-photo .book-cover-band h1{ color:#fff; }
+  .bk-photo .book-cover-band .book-cover-kicker{ color:rgba(255,255,255,.85); }
+  .bk-photo .book-cover-band .book-cover-sub{ color:rgba(255,255,255,.92); margin:0; }
+  .bk-photo .book-day{ padding:30px 22px; }
+  .bk-photo .book-day h2{ font-family:inherit; font-size:19px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; margin-bottom:4px; }
+  .bk-photo .book-date{ text-transform:uppercase; letter-spacing:.1em; font-size:12px; font-weight:700; margin:0 0 16px; }
+  .bk-photo .book-text p{ margin-bottom:18px; }
+  .bk-photo .book-photo{ margin:22px auto; }
+  .bk-photo .book-photo.hero{ margin-top:2px; }
+  .bk-photo .book-photo-ph.hero{ margin-top:2px; aspect-ratio:16/11; }
+  /* Journal: cream pages, serif, ruled headings, framed photos */
+  .bk-journal .book-cover, .bk-journal .book-day{ background:#faf6ee; }
+  .bk-journal .book-cover h1, .bk-journal .book-day h2{ font-family:Georgia,"Times New Roman",serif; }
+  .bk-journal .book-day h2{ border-bottom:1px solid #c9bfa8; padding-bottom:8px; }
+  .bk-journal .book-date{ font-family:Georgia,"Times New Roman",serif; font-style:italic; font-size:14.5px; }
+  .bk-journal .book-text{ font-family:Georgia,"Times New Roman",serif; }
+  .bk-journal .book-photo{ background:#fff; border:12px solid #fff; box-shadow:0 2px 10px rgba(25,22,18,.28); box-sizing:border-box; }
+  .bk-journal .book-photo-ph{ border:12px solid #fff; box-shadow:0 2px 10px rgba(25,22,18,.28); box-sizing:border-box; }
+  .bk-journal .book-cover-photo{ background:#fff; border:12px solid #fff; box-shadow:0 2px 10px rgba(25,22,18,.28); box-sizing:border-box; width:auto; max-width:82%; height:auto; display:block; margin:6px auto 18px; }
+  /* ---------- Make a book: styles (Patch 20, print) ---------- */
+  @media print{
+    #book-sheet .book-controls{ display:none !important; }
+    #book-sheet .book-sample{ display:none !important; }
+    #book-sheet.bk-journal .book-cover, #book-sheet.bk-journal .book-day{ background:#faf6ee !important; -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    #book-sheet.bk-journal .book-photo{ box-shadow:none; }
+    #book-sheet.bk-photo .book-cover.has-photo{ height:8.8in; min-height:0; padding:0 !important; position:relative; overflow:hidden; }
+    #book-sheet.bk-photo .book-cover-band{ -webkit-print-color-adjust:exact; print-color-adjust:exact; }
+    #book-sheet.bk-clean .book-cover.has-photo{ padding:0 !important; }
+    #book-sheet.bk-clean .book-cover-photo{ width:100%; max-width:100%; height:4.6in; margin:0 0 0.3in; }
+  }
 </style>
 </head>
 <body>
@@ -1659,6 +1716,8 @@ if(!state.schedText) state.schedText = {};    /* textId -> {label, note, t, iso}
 if(!state.suggGone) state.suggGone = {};      /* Sug'std item key -> true, once an item has been moved out of Sug'std */
 if(!state.schedUndo) state.schedUndo = {};    /* iso -> [entry keys] — the order a day had just before a drive sort, so Undo order can restore it */
 if(!state.grindsGone) state.grindsGone = {};  /* Grinds dish name -> true, once Justin deletes a dish from his menu */
+if(!state.bookStyle) state.bookStyle = "clean";   /* Make-a-book style: "clean" | "photo" | "journal" */
+if(state.bookCover === undefined) state.bookCover = null; /* diary photo id for the book cover, or null = title only */
 function save(){ store.set(state); }
 
 /* ================= Patch 19: diary photos (IndexedDB) + book view =================
@@ -2052,9 +2111,81 @@ function pickPhotosForNote(){
   });
 }
 
-/* ---- Make a book: the whole diary laid out for PDF -> Blurb ---- */
-function openBook(){
-  var sh = document.getElementById("book-sheet"); if(!sh) return;
+/* ---- Make a book: styles + cover-photo picker + sample preview (Patch 20) ---- */
+var bookSampleOn = false;
+function bookStyleNow(){
+  return (state.bookStyle === "photo" || state.bookStyle === "journal") ? state.bookStyle : "clean";
+}
+function allNotePhotoIds(){
+  var ids = [], seen = {};
+  Object.keys(state.notes || {}).forEach(function(iso){
+    photoIdsIn(state.notes[iso]).forEach(function(id){
+      if(!seen[id]){ seen[id] = 1; ids.push(id); }
+    });
+  });
+  return ids;
+}
+function dayLongLabel(iso){
+  var names = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+  var months = ["January","February","March","April","May","June","July","August","September","October","November","December"];
+  var p = String(iso).split("-"), dt = new Date(+p[0], (+p[1]) - 1, +p[2]);
+  return names[dt.getDay()] + ", " + months[(+p[1]) - 1] + " " + (+p[2]);
+}
+function phaseName(ph){ return ph === "explore" ? "Explore week" : (ph === "relax" ? "Relax week" : "Active week"); }
+function bookDayBodyHTML(noteText, style){
+  if(style === "photo"){
+    var m = /\[\[photo:([^\]]+)\]\]/.exec(noteText);
+    if(m){
+      var hero = '<img class="book-photo hero" data-photo-id="'+esc(m[1])+'" src="'+PHOTO_PLACEHOLDER+'" alt="Diary photo">';
+      var rest = (noteText.slice(0, m.index) + noteText.slice(m.index + m[0].length)).trim();
+      return hero + renderBookNoteHTML(rest);
+    }
+  }
+  return renderBookNoteHTML(noteText);
+}
+function bookDayHTML(label, dateLine, bodyHTML, extraCls){
+  return '<section class="book-day'+(extraCls ? " " + extraCls : "")+'"><h2>'+label+'</h2>'
+    + (dateLine ? '<div class="book-date">'+dateLine+'</div>' : '')
+    + '<div class="book-text">'+bodyHTML+'</div></section>';
+}
+function bookCoverHTML(style, coverId){
+  var kicker = '<div class="book-cover-kicker">Trip diary</div>';
+  var title = '<h1>Kauai — November 6–24, 2026</h1>';
+  var sub = '<p class="book-cover-sub">Written day by day — the plans that changed, the good stuff worth remembering, and the photos right where they happened.</p>';
+  if(!coverId) return '<section class="book-cover">'+kicker+title+sub+'</section>';
+  var img = '<img class="book-cover-photo" data-photo-id="'+esc(coverId)+'" src="'+PHOTO_PLACEHOLDER+'" alt="Cover photo">';
+  if(style === "photo") return '<section class="book-cover has-photo">'+img+'<div class="book-cover-band">'+kicker+title+sub+'</div></section>';
+  if(style === "journal") return '<section class="book-cover has-photo">'+kicker+title+img+sub+'</section>';
+  return '<section class="book-cover has-photo">'+img+kicker+title+sub+'</section>';
+}
+function bookSampleBodyHTML(style){
+  var ph = function(cls){ return '<div class="book-photo-ph'+(cls ? " " + cls : "")+'"><span>PHOTO</span></div>'; };
+  var p1 = '<p>Landed at Lihue just after noon, grabbed the car, and drove south through the tunnel of trees with the windows down. First stop was poke and shave ice before we even found the house — priorities.</p>';
+  var p2 = '<p>Golden hour at Poipu: the light did something unreal over the water, and a turtle hauled out onto the sand like it owned the place. Early night tonight — tomorrow we explore.</p>';
+  if(style === "photo") return ph("hero") + p1 + p2 + ph("");
+  return p1 + ph("") + p2 + ph("");
+}
+function bookControlsHTML(style, coverIds){
+  var styles = [["clean","A · Clean"],["photo","B · Photo-forward"],["journal","C · Journal"]];
+  var h = '<div class="book-controls">'
+    + '<div class="book-ctl-row"><span class="book-ctl-label">Book style</span><div class="book-style-btns">'
+    + styles.map(function(s){ return '<button type="button" class="book-style-btn'+(s[0] === style ? " on" : "")+'" data-bookstyle="'+s[0]+'">'+s[1]+'</button>'; }).join("")
+    + '</div></div>'
+    + '<div class="book-ctl-row"><span class="book-ctl-label">Cover photo</span><div class="book-cover-picks">'
+    + '<button type="button" class="book-cover-pick is-text'+(!state.bookCover ? " on" : "")+'" data-bookcoverpick="">Title only</button>';
+  coverIds.forEach(function(id){
+    h += '<button type="button" class="book-cover-pick'+(state.bookCover === id ? " on" : "")+'" data-bookcoverpick="'+esc(id)+'" aria-label="Use this photo as the cover"><img data-bookcoverthumb="'+esc(id)+'" src="'+PHOTO_PLACEHOLDER+'" alt=""></button>';
+  });
+  if(!coverIds.length) h += '<span class="book-cover-hint">Photos you add to day notes will show up here.</span>';
+  h += '</div></div>'
+    + '<div class="book-ctl-row"><label class="book-sample-toggle"><input type="checkbox" data-booksample="1"'+(bookSampleOn ? " checked" : "")+'> Preview sample day <span style="font-weight:400;color:var(--ink2)">(never printed)</span></label></div>'
+    + '</div>';
+  return h;
+}
+function buildBook(sh, coverId){
+  var style = bookStyleNow();
+  sh.classList.remove("bk-clean", "bk-photo", "bk-journal");
+  sh.classList.add("bk-" + style);
   var html = '<div class="sheet-head"><div class="inner"><h2>Make a book</h2><div class="meta">Your whole trip diary, laid out like a book — ready to turn into one PDF.</div></div></div>'
     + '<button class="sheet-close" type="button" data-close="1" aria-label="Close">'+I.x+'</button>'
     + '<div class="sheet-body">'
@@ -2062,21 +2193,45 @@ function openBook(){
     + '<p><strong>2)</strong> Upload that one file at Blurb (PDF to Book): page 1 becomes the front cover.</p>'
     + '<p><strong>3)</strong> Pick hardcover, pay, they mail it.</p></div>'
     + '<a class="btn book-blurb" href="https://support.blurb.com/hc/en-us/articles/207792796-How-to-upload-a-PDF-to-Blurb-through-PDF-to-Book" target="_blank" rel="noopener">Open Blurb — PDF to Book</a>'
-    + '<section class="book-cover"><div class="book-cover-kicker">Trip diary</div><h1>Kauai — November 6–24, 2026</h1>'
-    + '<p class="book-cover-sub">Written day by day — the plans that changed, the good stuff worth remembering, and the photos right where they happened.</p></section>';
+    + bookControlsHTML(style, allNotePhotoIds())
+    + bookCoverHTML(style, coverId);
+  if(bookSampleOn){
+    html += bookDayHTML("Friday, November 6 — Arrival day", "Sample page — preview only, never printed", bookSampleBodyHTML(style), "book-sample");
+  }
   var any = false;
   DAYS.forEach(function(d){
     var n = (state.notes[d.iso] || "").trim();
     if(!n) return;
     any = true;
-    html += '<section class="book-day"><h2>'+esc(d.label)+'</h2><div class="book-text">'+renderBookNoteHTML(n)+'</div></section>';
+    html += bookDayHTML(esc(dayLongLabel(d.iso)), esc(phaseName(d.phase) + " · 2026"), bookDayBodyHTML(n, style), "");
   });
-  if(!any) html += '<section class="book-day"><h2>No diary pages yet</h2><div class="book-text"><p>Write a day note first — it will show up here as a book page, photos and all.</p></div></section>';
+  if(!any) html += bookDayHTML("No diary pages yet", "", '<p>Write a day note first — it will show up here as a book page, photos and all.</p>', "");
   html += '</div>';
   sh.innerHTML = html;
   hydratePhotos(sh);
+  sh.querySelectorAll("img[data-bookcoverthumb]").forEach(function(img){
+    loadPhoto(img.getAttribute("data-bookcoverthumb"), function(url){ if(url) img.src = url; });
+  });
   openSheet("book-sheet");
 }
+function openBook(){
+  var sh = document.getElementById("book-sheet"); if(!sh) return;
+  var coverId = state.bookCover || null;
+  if(coverId){
+    /* Verify the chosen cover photo still exists; fall back to the text cover if it is gone. */
+    loadPhoto(coverId, function(url){ buildBook(sh, url ? coverId : null); });
+  } else buildBook(sh, null);
+}
+document.addEventListener("click", function(e){
+  var sb = e.target.closest("[data-bookstyle]");
+  if(sb){ state.bookStyle = sb.getAttribute("data-bookstyle"); save(); openBook(); return; }
+  var cp = e.target.closest("[data-bookcoverpick]");
+  if(cp){ var v = cp.getAttribute("data-bookcoverpick"); state.bookCover = v ? v : null; save(); openBook(); return; }
+});
+document.addEventListener("change", function(e){
+  var tg = e.target.closest ? e.target.closest("[data-booksample]") : null;
+  if(tg){ bookSampleOn = !!tg.checked; openBook(); }
+});
 
 function allPlaces(){
   var out = [];
