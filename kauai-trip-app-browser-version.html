@@ -689,6 +689,16 @@
     font:inherit; font-size:16px; font-weight:700; line-height:1; cursor:pointer;
     display:flex; align-items:center; justify-content:center; padding:0;
   }
+  .note-ed{
+    width:100%; min-height:150px; border:1px solid var(--ink); background:var(--surface);
+    color:var(--ink); font:inherit; font-size:15.5px; line-height:1.55; padding:11px;
+    box-sizing:border-box; border-radius:10px; outline:none; cursor:text;
+    overflow-wrap:break-word; -webkit-user-select:text; user-select:text;
+  }
+  .note-ed.is-empty::before{
+    content:attr(data-placeholder); color:var(--ink2); opacity:.7; pointer-events:none;
+  }
+  .note-ed .note-photo-thumb{ cursor:default; }
   .photo-lightbox{
     position:fixed; inset:0; z-index:1200; display:none;
     align-items:center; justify-content:center; background:rgba(8,6,4,.93);
@@ -1664,7 +1674,7 @@ var photoWaiters = {};
 var photoDbPromise = null;
 var photoSeq = 0;
 var noteEditIso = null;
-var noteCaret = 0;
+var noteSavedRange = null;   /* last caret Range inside the note editor — saved across the photo-picker round-trip */
 
 function photoDb(){
   if(photoDbPromise) return photoDbPromise;
@@ -1785,47 +1795,197 @@ function closePhotoLightbox(){
   if(im) im.removeAttribute("src");
 }
 
-/* ---- note editor: caret tracking, photo strip, detach ---- */
-function updateNoteCaret(){
-  var ta = document.getElementById("note-ta");
-  if(ta && typeof ta.selectionStart === "number") noteCaret = ta.selectionStart;
+/* ---- note editor: contenteditable with inline photo chips ----
+   The editor DOM maps 1:1 onto the stored string: text nodes are text,
+   <img data-photoid> chips are [[photo:ID]] tokens, <br> and block
+   boundaries are "\n". noteTextToEditorHTML builds the editor from the
+   stored string; noteEditorToText serializes it back — opening a note and
+   saving it untouched returns the identical string. */
+function noteChipHTML(id){
+  return '<img class="note-photo-thumb" data-photoid="'+esc(id)+'" data-photo-id="'+esc(id)+'" contenteditable="false" src="'+PHOTO_PLACEHOLDER+'" alt="Photo">';
 }
-["keyup","click","touchend","input"].forEach(function(evt){
+function noteTextToEditorHTML(text){
+  var raw = String(text || ""), out = "", last = 0, m;
+  PHOTO_TOKEN_RE.lastIndex = 0;
+  while((m = PHOTO_TOKEN_RE.exec(raw))){
+    out += esc(raw.slice(last, m.index)).replace(/\n/g, "<br>");
+    out += noteChipHTML(m[1]);
+    last = m.index + m[0].length;
+  }
+  PHOTO_TOKEN_RE.lastIndex = 0;
+  out += esc(raw.slice(last)).replace(/\n/g, "<br>");
+  return out;
+}
+function noteEditorToText(root){
+  var out = "";
+  function walk(node){
+    var kids = node.childNodes;
+    for(var i = 0; i < kids.length; i++){
+      var n = kids[i];
+      if(n.nodeType === 3){ out += String(n.nodeValue || "").replace(/\u00a0/g, " "); }
+      else if(n.nodeType === 1){
+        var tag = String(n.tagName || "").toLowerCase();
+        if(n.hasAttribute && n.hasAttribute("data-photoid")){ out += "[[photo:" + n.getAttribute("data-photoid") + "]]"; }
+        else if(tag === "br"){ out += "\n"; }
+        else if(tag === "div" || tag === "p"){
+          if(out && !/\n$/.test(out)) out += "\n";
+          walk(n);
+          if(!/\n$/.test(out)) out += "\n";
+        }
+        else walk(n);
+      }
+    }
+  }
+  if(root) walk(root);
+  return out;
+}
+function photoIdsInEditor(ed){
+  var ids = [], seen = {};
+  if(!ed || !ed.querySelectorAll) return ids;
+  ed.querySelectorAll("[data-photoid]").forEach(function(img){
+    var id = img.getAttribute("data-photoid");
+    if(id && !seen[id]){ seen[id] = 1; ids.push(id); }
+  });
+  return ids;
+}
+function saveNoteSelection(){
+  var ed = document.getElementById("note-ed");
+  if(!ed || !window.getSelection) return;
+  var sel = window.getSelection();
+  if(!sel || !sel.rangeCount) return;
+  var r = sel.getRangeAt(0);
+  if(ed.contains(r.commonAncestorContainer)) noteSavedRange = r.cloneRange();
+}
+["keyup","click","mouseup","touchend","input"].forEach(function(evt){
   document.addEventListener(evt, function(e){
-    if(e.target && e.target.id === "note-ta") updateNoteCaret();
+    var ed = document.getElementById("note-ed");
+    if(ed && e.target && ed.contains(e.target)){
+      saveNoteSelection();
+      if(evt === "input") updateNotePlaceholder();
+    }
   }, true);
 });
-function notePhotoStripHTML(text){
-  return photoIdsIn(text).map(function(id){
+document.addEventListener("paste", function(e){
+  var ed = document.getElementById("note-ed");
+  if(!ed) return;
+  var inside = (e.target && ed.contains(e.target)) || document.activeElement === ed;
+  if(!inside) return;
+  e.preventDefault();
+  var text = "";
+  if(e.clipboardData && e.clipboardData.getData) text = e.clipboardData.getData("text/plain") || "";
+  if(text) insertNoteTextAtCaret(text, false);
+}, true);
+function updateNotePlaceholder(){
+  var ed = document.getElementById("note-ed");
+  if(!ed) return;
+  var empty = !ed.querySelector("[data-photoid]") && String(ed.textContent || "").replace(/[\u200b\u00a0]/g, " ").trim() === "";
+  ed.classList.toggle("is-empty", empty);
+}
+function restoreNoteSelection(ed){
+  ed.focus();
+  if(!noteSavedRange || !window.getSelection) return false;
+  try{
+    if(!ed.contains(noteSavedRange.commonAncestorContainer)) return false;
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(noteSavedRange);
+    return true;
+  }catch(e){ return false; }
+}
+function insertNodesAtCaret(nodes){
+  var ed = document.getElementById("note-ed");
+  if(!ed || !nodes.length) return;
+  var range;
+  if(!restoreNoteSelection(ed)){
+    range = document.createRange();
+    range.selectNodeContents(ed);
+    range.collapse(false);
+    var s0 = window.getSelection();
+    s0.removeAllRanges();
+    s0.addRange(range);
+  }
+  range = window.getSelection().getRangeAt(0);
+  range.deleteContents();
+  var frag = document.createDocumentFragment(), lastNode = null;
+  nodes.forEach(function(n){ lastNode = n; frag.appendChild(n); });
+  range.insertNode(frag);
+  if(lastNode){
+    var r2 = document.createRange();
+    r2.setStartAfter(lastNode);
+    r2.collapse(true);
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+    sel.addRange(r2);
+    noteSavedRange = r2.cloneRange();
+  }
+  updateNotePlaceholder();
+}
+function insertNoteTextAtCaret(text, atStartIfNoCaret){
+  var ed = document.getElementById("note-ed");
+  if(!ed || !text) return;
+  if(!restoreNoteSelection(ed)){
+    var sel = window.getSelection();
+    var live = sel && sel.rangeCount && ed.contains(sel.getRangeAt(0).commonAncestorContainer);
+    if(!live && sel){
+      var r = document.createRange();
+      r.selectNodeContents(ed);
+      r.collapse(!!atStartIfNoCaret);
+      sel.removeAllRanges();
+      sel.addRange(r);
+    }
+  }
+  var done = false;
+  try{ done = !!document.execCommand("insertText", false, text); }catch(e){ done = false; }
+  if(done){ saveNoteSelection(); updateNotePlaceholder(); }
+  else insertNodesAtCaret([document.createTextNode(text)]);
+}
+function insertNotePhotoChip(id){
+  var ed = document.getElementById("note-ed");
+  if(!ed) return;
+  var before = ed.querySelectorAll("[data-photoid]").length;
+  var ok = false;
+  restoreNoteSelection(ed);
+  try{ ok = !!document.execCommand("insertHTML", false, noteChipHTML(id) + " "); }catch(e){ ok = false; }
+  if(!ok || ed.querySelectorAll("[data-photoid]").length === before){
+    var img = document.createElement("img");
+    img.className = "note-photo-thumb";
+    img.setAttribute("data-photoid", id);
+    img.setAttribute("data-photo-id", id);
+    img.setAttribute("contenteditable", "false");
+    img.setAttribute("alt", "Photo");
+    img.src = photoCache[id] || PHOTO_PLACEHOLDER;
+    insertNodesAtCaret([img, document.createTextNode(" ")]);
+  } else {
+    saveNoteSelection();
+    updateNotePlaceholder();
+  }
+  hydratePhotos(ed);
+  refreshNotePhotoStrip();
+}
+function notePhotoStripHTML(ids){
+  return ids.map(function(id){
     return '<div class="note-photo-item"><img data-photo-id="'+esc(id)+'" src="'+PHOTO_PLACEHOLDER+'" alt="Attached photo">'
       + '<button class="note-photo-x" type="button" data-photo-detach="'+esc(id)+'" aria-label="Remove this photo from the note">&times;</button></div>';
   }).join("");
 }
 function refreshNotePhotoStrip(){
-  var strip = document.getElementById("note-photo-strip"), ta = document.getElementById("note-ta");
-  if(!strip || !ta) return;
-  strip.innerHTML = notePhotoStripHTML(ta.value);
+  var strip = document.getElementById("note-photo-strip"), ed = document.getElementById("note-ed");
+  if(!strip || !ed) return;
+  strip.innerHTML = notePhotoStripHTML(photoIdsInEditor(ed));
   hydratePhotos(strip);
 }
-function insertTextAtCaret(ta, textToInsert){
-  var start = (typeof ta.selectionStart === "number") ? ta.selectionStart : ta.value.length;
-  var end = (typeof ta.selectionEnd === "number") ? ta.selectionEnd : start;
-  ta.value = ta.value.slice(0, start) + textToInsert + ta.value.slice(end);
-  var pos = start + textToInsert.length;
-  ta.focus();
-  try{ ta.setSelectionRange(pos, pos); }catch(e){}
-  noteCaret = pos;
-}
 function detachPhoto(id){
-  var ta = document.getElementById("note-ta"); if(!ta) return;
-  var token = "[[photo:" + id + "]]";
-  if(ta.value.indexOf(token) >= 0) ta.value = ta.value.split(token).join("");
+  var ed = document.getElementById("note-ed"); if(!ed) return;
+  ed.querySelectorAll("[data-photoid]").forEach(function(img){
+    if(img.getAttribute("data-photoid") === id && img.parentNode) img.parentNode.removeChild(img);
+  });
   refreshNotePhotoStrip();
-  ta.focus();
+  updateNotePlaceholder();
+  ed.focus();
   toast("Photo taken out of this note — tap Save note to make it stick.");
 }
 
-/* ---- photo picking: downscale on canvas, store in IndexedDB, insert token ---- */
+/* ---- photo picking: downscale on canvas, store in IndexedDB, insert chip ---- */
 function processPhotoFile(file){
   return new Promise(function(resolve, reject){
     if(!file || (file.type && file.type.indexOf("image/") !== 0)){ reject(new Error("not an image")); return; }
@@ -1855,8 +2015,8 @@ function newPhotoId(){
   return "p" + Date.now() + "-" + photoSeq;
 }
 function pickPhotosForNote(){
-  var ta = document.getElementById("note-ta"); if(!ta) return;
-  updateNoteCaret();
+  if(!document.getElementById("note-ed")) return;
+  saveNoteSelection();
   photoDb().then(function(){
     var input = document.createElement("input");
     input.type = "file";
@@ -1874,8 +2034,7 @@ function pickPhotosForNote(){
           return processPhotoFile(file).then(function(dataUrl){
             var id = newPhotoId();
             return photoPut(id, dataUrl).then(function(){
-              var ta2 = document.getElementById("note-ta");
-              if(ta2){ insertTextAtCaret(ta2, "[[photo:" + id + "]]"); inserted++; }
+              if(document.getElementById("note-ed")){ insertNotePhotoChip(id); inserted++; }
             });
           }).catch(function(){ failed++; });
         });
@@ -3199,7 +3358,7 @@ function openNote(iso){
   var sh=document.getElementById("detail-sheet");
   var cur=state.notes[iso]||"";
   noteEditIso = iso;
-  noteCaret = cur.length;
+  noteSavedRange = null;
   sh.innerHTML='<div class="sheet-inner"><button class="close-x" type="button" data-close="1" aria-label="Close">'+I.x+'</button>'
     + '<h3 style="margin-right:40px">'+esc(dayLabel(iso))+' — day notes</h3>'
     + '<p>What actually happened: plans that changed, a migraine day, the good stuff worth remembering. Saved on this device.</p>'
@@ -3207,29 +3366,33 @@ function openNote(iso){
     + '<button class="btn" type="button" data-chip="Rain — went to Plan B. ">Rain / Plan B</button>'
     + '<button class="btn" type="button" data-chip="Went as planned. ">As planned</button></div>'
     + '<div class="note-photo-tools"><button class="btn" type="button" data-note-photo-add="1">+ Photo</button><span class="note-photo-hint">Puts a photo right where your cursor is — keep typing after it.</span></div>'
-    + '<textarea class="note-ta" id="note-ta" placeholder="Write the day as it really went…">'+esc(cur)+'</textarea>'
+    + '<div class="note-ed" id="note-ed" contenteditable="true" data-placeholder="Write the day as it really went…" role="textbox" aria-multiline="true" aria-label="Day notes"></div>'
     + '<div class="note-photo-strip" id="note-photo-strip"></div>'
     + '<div class="danger-zone"><button class="btn" type="button" data-close="1">Cancel</button>'
     + '<button class="btn primary" type="button" data-savenote="'+iso+'">Save note</button></div></div>';
   openSheet("detail-sheet");
+  var ed=document.getElementById("note-ed");
+  ed.innerHTML = noteTextToEditorHTML(cur);
+  hydratePhotos(ed);
   refreshNotePhotoStrip();
-  setTimeout(function(){ var t=document.getElementById("note-ta"); if(t) t.focus(); },80);
+  updateNotePlaceholder();
+  setTimeout(function(){ var t=document.getElementById("note-ed"); if(t) t.focus(); },80);
 }
 document.addEventListener("click", function(e){
   var cl=e.target.closest("[data-close]"); if(cl){ closeSheets(); return; }
   var pclose=e.target.closest("[data-photo-close]");
   if(pclose || e.target.id==="photo-lightbox"){ closePhotoLightbox(); return; }
   var pho=e.target.closest("img[data-photo-id]");
-  if(pho){ openPhotoLightbox(pho.getAttribute("data-photo-id")); return; }
+  if(pho && !pho.closest("#note-ed")){ openPhotoLightbox(pho.getAttribute("data-photo-id")); return; }
   var padd=e.target.closest("[data-note-photo-add]");
   if(padd){ pickPhotosForNote(); return; }
   var pdet=e.target.closest("[data-photo-detach]");
   if(pdet){ detachPhoto(pdet.getAttribute("data-photo-detach")); return; }
   var chip=e.target.closest("[data-chip]");
-  if(chip){ var ta=document.getElementById("note-ta"); if(ta){ ta.value = chip.getAttribute("data-chip") + ta.value; ta.focus(); } return; }
+  if(chip){ insertNoteTextAtCaret(chip.getAttribute("data-chip"), true); return; }
   var sv=e.target.closest("[data-savenote]");
   if(sv){
-    var iso=sv.getAttribute("data-savenote"), t2=document.getElementById("note-ta"), v=t2?t2.value.trim():"";
+    var iso=sv.getAttribute("data-savenote"), ed2=document.getElementById("note-ed"), v=ed2?noteEditorToText(ed2).trim():"";
     var oldIds=photoIdsIn(state.notes[iso]||"");
     if(v) state.notes[iso]=v; else delete state.notes[iso];
     var newIds=photoIdsIn(v);
