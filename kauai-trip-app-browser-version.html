@@ -655,6 +655,14 @@
   .tn-day-head strong{ font-size:16.5px; }
   .tn-text{ font-size:15.5px; line-height:1.6; white-space:pre-wrap; }
   .tn-empty{ font-size:14.5px; color:var(--ink2); font-style:italic; }
+
+  /* ---------- Patch 18: drive order — leg labels + Sort by drive / Undo buttons ---------- */
+  .drive-leg{
+    margin:10px 0 0 14px; padding:3px 0 3px 12px;
+    border-left:3px dotted var(--ink2);
+    font-size:13px; font-weight:700; letter-spacing:.03em; color:var(--ink2);
+  }
+  .day-foot .mini-btn + .mini-btn{ margin-left:8px; }
 </style>
 </head>
 <body>
@@ -1554,6 +1562,7 @@ if(!state.custom) state.custom = [];      /* user-added places */
 if(!state.schedOrder) state.schedOrder = {}; /* iso -> [entry keys] — Justin's own order within a Schedule day; key "p:<placeId>" or "t:<textId>" */
 if(!state.schedText) state.schedText = {};    /* textId -> {label, note, t, iso} — Sug'std text items placed on the Schedule */
 if(!state.suggGone) state.suggGone = {};      /* Sug'std item key -> true, once an item has been moved out of Sug'std */
+if(!state.schedUndo) state.schedUndo = {};    /* iso -> [entry keys] — the order a day had just before a drive sort, so Undo order can restore it */
 function save(){ store.set(state); }
 
 function allPlaces(){
@@ -1766,6 +1775,7 @@ function renderCalendar(){
         + '<button class="note-btn'+(state.notes[d.iso]?' has':'')+'" type="button" data-note="'+d.iso+'">'+I.note+(state.notes[d.iso]?'Note saved':'Notes')+'</button></div>';
       if(!entries.length && !meeting) html += '<div class="none">Nothing scheduled</div>';
       if(meeting) html += '<div class="day-entry meeting"><span class="nm" data-open="kingdom-hall">Congregation meeting — Kingdom Hall, Kekaha</span><span class="meet-tag">WEEKLY · '+meeting+'</span></div>';
+      var legs = driveLegs(entries);
       entries.forEach(function(en, ei){
         var idx = DAYS.indexOf(d);
         var isFirst = ei===0, isLast = ei===entries.length-1;
@@ -1773,6 +1783,7 @@ function renderCalendar(){
           + '<button type="button" data-reorder="'+en.key+'|1" '+(isLast?"disabled":"")+' aria-label="Move down within this day">&#8595;</button></span>';
         var dayShift = '<span class="nudge"><button data-nudge="'+en.key+'|-1" '+(idx<=0?"disabled":"")+' aria-label="Move a day earlier">'+I.left+'</button>'
           + '<button data-nudge="'+en.key+'|1" '+(idx>=DAYS.length-1?"disabled":"")+' aria-label="Move a day later">'+I.right+'</button></span>';
+        if(legs.before[en.key]) html += '<div class="drive-leg">'+esc(legs.before[en.key])+'</div>';
         html += '<div class="day-entry" data-entry="'+en.key+'" data-day="'+d.iso+'">'
           + '<button class="drag-handle" type="button" data-drag="1" aria-label="Press and hold, then drag to reorder" title="Press and hold, then drag to reorder">&#9776;</button>';
         if(en.kind==="place"){
@@ -1792,7 +1803,12 @@ function renderCalendar(){
         }
         html += '</div>';
       });
-      html += '<div class="day-foot"><button class="mini-btn" type="button" data-dayedit="'+d.iso+'">Edit this day — add from Sug\u2019std</button></div>';
+      if(legs.after) html += '<div class="drive-leg">'+esc(legs.after)+'</div>';
+      var movableCount = entries.filter(isMovableEntry).length;
+      html += '<div class="day-foot"><button class="mini-btn" type="button" data-dayedit="'+d.iso+'">Edit this day — add from Sug\u2019std</button>'
+        + (movableCount>=2 ? '<button class="mini-btn" type="button" data-drivesort="'+d.iso+'">Sort by drive</button>' : '')
+        + ((state.schedUndo && state.schedUndo[d.iso]) ? '<button class="mini-btn" type="button" data-driveundo="'+d.iso+'">Undo order</button>' : '')
+        + '</div>';
       var dayAnchorsCal = dayAnchors(d.iso);
       if(dayAnchorsCal.length){
         var ow = onWayFor(d.iso, dayAnchorsCal);
@@ -2306,14 +2322,14 @@ document.addEventListener("keydown", function(e){
    Affordability-cut activities (fishing charters, helicopter, luau, boat
    tours, mountain tubing) are NOT carried into these plans. */
 var DAY_PLANS = [
-{ iso:"2026-11-06", title:"Land, browse, stock up",
+{ iso:"2026-11-06", title:"Land, settle in, stock up",
   items:[
-    { t:"12:06 PM", label:"Land at Lihue (AS789)", note:"Bags, car, breathe. The day is Lihue errands, then home to Kalaheo." },
+    { t:"12:06 PM", label:"Land at Lihue (AS789)", note:"Bags, car, breathe. Home to Kalaheo first to settle in, then the Lihue errands." },
+    { label:"Settle into Becky's house", note:"Unpack, learn the house, early night." },
     { place:"konohiki", label:"Poke stop — Konohiki Seafoods", note:"Fresh fish for the house, poke for right now. The Fish Express is the other good arrival bite nearby." },
     { place:"abc-stores-rice-st", label:"Souvenir jewelry browse — ABC Stores, Rice St", note:"Browse-and-pick: about $20–$30, whatever catches your eye — it does not have to be puka. The real-shell checks are on the ABC card. Spouting Horn's vendor stalls (also in Places) are the other browse." },
     { place:"costco", label:"Costco Lihue — the big stock-up", note:"Bulk breakfast supplies, coffee, water and the week's staples." },
-    { place:"kukui-grove", label:"Kukui Grove — fresh groceries", note:"Times Supermarket inside covers the fresh run (the Lihue Foodland is closed; Times or the Lihue Safeway are the fresh answer)." },
-    { label:"Settle into Becky's house", note:"Unpack, learn the house, early night." }
+    { place:"kukui-grove", label:"Kukui Grove — fresh groceries", note:"Times Supermarket inside covers the fresh run (the Lihue Foodland is closed; Times or the Lihue Safeway are the fresh answer)." }
   ],
   planB:{ title:"Skip-the-extras arrival", place:"kauai-coffee", note:"Groceries and the drive only, with Kauai Coffee's visitor center on the way to the house if you want one stop. Takeout near Koloa, unpack slow. Arrival day works in any weather." } },
 { iso:"2026-11-07", title:"Market morning in Lihue",
@@ -2463,16 +2479,28 @@ function dayItems(iso){
       seen[hall.id] = 1;
     }
   }
+  var extraStart = items.length;
   allPlaces().forEach(function(p){
     if(state.sched[p.id]===iso && !seen[p.id]){
       seen[p.id] = 1;
-      items.push({ place:p, label:p.name, note:"Added in the Schedule tab.", time:"", source:"sched" });
+      items.push({ place:p, label:p.name, note:"Added in the Schedule tab.", time:"", source:"sched", key:"p:"+p.id });
     }
   });
   Object.keys(state.schedText||{}).forEach(function(tid){
     var tx = state.schedText[tid];
-    if(tx && tx.iso===iso) items.push({ place:null, label:tx.label, note:tx.note||"", time:tx.t||"", source:"sched" });
+    if(tx && tx.iso===iso) items.push({ place:null, label:tx.label, note:tx.note||"", time:tx.t||"", source:"sched", key:"t:"+tid });
   });
+  /* Patch 18: Today lists your added stops in the same order as the Schedule tab. */
+  var schedOrd = (state.schedOrder && state.schedOrder[iso]) || [];
+  var extras = items.slice(extraStart);
+  extras.sort(function(a,b){
+    var ia = schedOrd.indexOf(a.key), ib = schedOrd.indexOf(b.key);
+    if(ia<0 && ib<0) return 0;
+    if(ia<0) return 1;
+    if(ib<0) return -1;
+    return ia-ib;
+  });
+  items = items.slice(0, extraStart).concat(extras);
   return items;
 }
 function dayAnchors(iso){
@@ -3364,6 +3392,7 @@ function applyPicked(items, mode){
     }
   });
   setDayOrder(pickTargetIso, dayEntries(pickTargetIso).map(function(e){ return e.key; }));
+  applyDriveSort(pickTargetIso); /* Patch 18: new stops land in drive order (undo saved) */
   save();
 }
 
@@ -3432,6 +3461,81 @@ function endDrag(commit){
 document.addEventListener("pointerup", function(){ endDrag(true); });
 document.addEventListener("pointercancel", function(){ endDrag(false); });
 document.addEventListener("contextmenu", function(e){ if(e.target.closest("[data-entry]")) e.preventDefault(); });
+
+/* ================= Patch 18: drive order =================
+   When stops are added to a Schedule day (picker Submit / Choose), the
+   day's movable place stops are auto-ordered as an efficient driving loop
+   from Becky's house and back — greedy nearest-neighbor + 2-opt, on
+   haversine distances. It is a default, never a lock: drag / arrows still
+   win afterwards, and a per-day "Sort by drive" button re-runs it (with
+   "Undo order" restoring whatever order the day had just before).
+   Anchors keep their slots: text items (no coordinates) and the Kingdom
+   Hall meeting place never move; movable places sort into the rest. */
+function isMovableEntry(en){
+  return en.kind==="place" && en.place
+    && typeof en.place.lat==="number" && typeof en.place.lng==="number"
+    && en.place.id!=="kingdom-hall";
+}
+function legMinutes(a, b){
+  var d = distKm(a, b);
+  var factor = 1.3, speed = 52;
+  if(a.lat >= 22.10 || b.lat >= 22.10){ factor = 1.6; speed = 46; }
+  else if(a.lng <= -159.60 || b.lng <= -159.60){ factor = 1.35; speed = 50; }
+  var roadKm = d * factor;
+  if(factor===1.3 && roadKm < 12) speed = 42;
+  return Math.max(5, Math.round((roadKm / speed * 60)/5)*5);
+}
+function driveLegs(entries){
+  var mv = entries.filter(isMovableEntry);
+  var out = { before:{}, after:null };
+  mv.forEach(function(en, i){
+    if(i===0) out.before[en.key] = "from Becky\u2019s \u2248 " + driveMinutes(en.place) + " min";
+    else out.before[en.key] = "\u2248 " + legMinutes(mv[i-1].place, en.place) + " min drive";
+  });
+  if(mv.length) out.after = "back to Becky\u2019s \u2248 " + driveMinutes(mv[mv.length-1].place) + " min";
+  return out;
+}
+function sortPlacesByDrive(places){
+  if(places.length < 2) return places.slice();
+  var pool = places.slice(), route = [], cur = HOME_BASE;
+  while(pool.length){
+    var bi = 0, bd = Infinity;
+    pool.forEach(function(p, i){ var d = distKm(cur, p); if(d < bd){ bd = d; bi = i; } });
+    cur = pool.splice(bi,1)[0]; route.push(cur);
+  }
+  function total(r){ var t = 0, prev = HOME_BASE; r.forEach(function(p){ t += distKm(prev, p); prev = p; }); return t + distKm(prev, HOME_BASE); }
+  var improved = true, guard = 0;
+  while(improved && guard++ < 60){
+    improved = false;
+    for(var i=0; i<route.length-1 && !improved; i++){
+      for(var j=i+1; j<route.length; j++){
+        var cand = route.slice(0,i).concat(route.slice(i,j+1).reverse(), route.slice(j+1));
+        if(total(cand) < total(route) - 1e-9){ route = cand; improved = true; break; }
+      }
+    }
+  }
+  return route;
+}
+function driveSortedKeys(iso){
+  var entries = dayEntries(iso);
+  var slots = [], movable = [];
+  entries.forEach(function(en, i){ if(isMovableEntry(en)){ slots.push(i); movable.push(en); } });
+  if(movable.length < 2) return null;
+  var sorted = sortPlacesByDrive(movable.map(function(en){ return en.place; }));
+  var byId = {}; movable.forEach(function(en){ byId[en.place.id] = en; });
+  var out = entries.map(function(en){ return en.key; });
+  sorted.forEach(function(p, k){ out[slots[k]] = byId[p.id].key; });
+  return out;
+}
+function applyDriveSort(iso){
+  var keys = driveSortedKeys(iso); if(!keys) return false;
+  var cur = dayEntries(iso).map(function(e){ return e.key; });
+  if(keys.join("|") === cur.join("|")) return false;
+  if(!state.schedUndo) state.schedUndo = {};
+  state.schedUndo[iso] = cur;
+  setDayOrder(iso, keys);
+  return true;
+}
 
 /* ---- Trip Notes: one whole-trip document, built live from state.notes ---- */
 function tripNotesText(){
@@ -3532,6 +3636,23 @@ document.addEventListener("click", function(e){
       renderAll(); renderPicker();
       toast(mode==="move" ? "Moved over — and off Sug\u2019std." : "Copied over — still in Sug\u2019std too.");
     });
+    return;
+  }
+  var dsb = e.target.closest("[data-drivesort]");
+  if(dsb){
+    var diso = dsb.getAttribute("data-drivesort");
+    if(applyDriveSort(diso)){ save(); renderCalendar(); toast("Sorted by drive for " + dayLabel(diso) + " — drag any stop to change it, or tap Undo order."); }
+    else toast("That day is already in drive order.");
+    return;
+  }
+  var dub = e.target.closest("[data-driveundo]");
+  if(dub){
+    var uiso = dub.getAttribute("data-driveundo");
+    if(state.schedUndo && state.schedUndo[uiso]){
+      setDayOrder(uiso, state.schedUndo[uiso]);
+      delete state.schedUndo[uiso];
+      save(); renderCalendar(); toast("Order restored for " + dayLabel(uiso) + ".");
+    }
     return;
   }
   var tnb = e.target.closest("[data-tripnotes]");
