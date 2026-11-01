@@ -666,6 +666,81 @@
     font-size:13px; font-weight:700; letter-spacing:.03em; color:var(--ink2);
   }
   .day-foot .mini-btn + .mini-btn{ margin-left:8px; }
+
+  /* ---------- Patch 19: diary photos in notes + Make a book ---------- */
+  .note-photo-thumb{
+    display:inline-block; width:2.3em; height:1.55em; object-fit:cover;
+    border-radius:5px; vertical-align:-.38em; margin:0 2px;
+    background:#d9d2bf; border:1px solid rgba(24,20,12,.35); cursor:zoom-in;
+  }
+  .note-photo-thumb[data-photo-loaded="missing"]{ opacity:.4; }
+  .note-photo-tools{ display:flex; gap:10px; align-items:center; margin:0 0 10px; }
+  .note-photo-hint{ font-size:13px; color:var(--ink2); line-height:1.4; }
+  .note-photo-strip{ display:flex; gap:12px; flex-wrap:wrap; margin-top:12px; }
+  .note-photo-strip:empty{ margin-top:0; }
+  .note-photo-item{ position:relative; width:72px; flex:none; }
+  .note-photo-item img{
+    width:72px; height:72px; object-fit:cover; border-radius:10px; display:block;
+    background:#d9d2bf; border:1px solid var(--line); cursor:zoom-in;
+  }
+  .note-photo-x{
+    position:absolute; top:-9px; right:-9px; width:28px; height:28px; border-radius:50%;
+    border:1px solid var(--ink); background:var(--ink); color:var(--bg);
+    font:inherit; font-size:16px; font-weight:700; line-height:1; cursor:pointer;
+    display:flex; align-items:center; justify-content:center; padding:0;
+  }
+  .photo-lightbox{
+    position:fixed; inset:0; z-index:1200; display:none;
+    align-items:center; justify-content:center; background:rgba(8,6,4,.93);
+  }
+  .photo-lightbox.on{ display:flex; }
+  .photo-lightbox img{ max-width:92vw; max-height:85vh; object-fit:contain; }
+  .photo-lightbox-x{
+    position:absolute; top:calc(12px + env(safe-area-inset-top)); right:14px;
+    width:46px; height:46px; border-radius:50%; border:1px solid rgba(255,255,255,.65);
+    background:rgba(255,255,255,.12); color:#fff; font:inherit; font-size:24px; font-weight:700;
+    line-height:1; cursor:pointer; display:flex; align-items:center; justify-content:center; padding:0;
+  }
+  .tn-actions{ flex-wrap:wrap; }
+  .tn-actions .btn{ flex:1 1 100px; min-width:0; white-space:normal; text-align:center; }
+  .book-help{
+    border:1px solid var(--ink); background:var(--surface); padding:14px 16px;
+    font-size:14.5px; line-height:1.6; margin-bottom:12px;
+  }
+  .book-help p{ margin:0 0 6px; font-size:14.5px; }
+  .book-help p:last-child{ margin-bottom:0; }
+  .book-blurb{ display:block; text-align:center; margin-bottom:18px; text-decoration:none; }
+  .book-cover{
+    text-align:center; border:2px solid var(--ink); background:var(--surface);
+    padding:56px 22px 48px; margin-bottom:18px;
+  }
+  .book-cover-kicker{ font-size:12.5px; font-weight:800; letter-spacing:.22em; text-transform:uppercase; color:var(--ink2); margin-bottom:14px; }
+  .book-cover h1{ font-family:"Marcellus",Georgia,serif; font-weight:400; font-size:40px; line-height:1.2; margin:0 0 16px; }
+  .book-cover-sub{ font-size:16.5px; line-height:1.6; color:var(--ink2); margin:0 auto; max-width:420px; }
+  .book-day{ border:1px solid var(--line); background:var(--surface); padding:24px 22px; margin-bottom:16px; }
+  .book-day h2{ font-family:"Marcellus",Georgia,serif; font-weight:400; font-size:26px; margin:0 0 14px; line-height:1.25; }
+  .book-text{ font-size:16.5px; line-height:1.75; }
+  .book-text p{ margin:0 0 14px; }
+  .book-text p:last-child{ margin-bottom:0; }
+  .book-photo{
+    display:block; width:100%; max-width:100%; height:auto; max-height:70vh;
+    object-fit:contain; margin:16px auto; background:#e7e1d2;
+  }
+  @page { size: 8in 10in; margin: 0.6in; }
+  @media print{
+    header, main, .sheet-back, .toast, .dialog-back, .photo-lightbox{ display:none !important; }
+    .sheet{ display:none !important; }
+    body{ overflow:visible !important; background:#fff !important; }
+    #book-sheet{
+      display:block !important; position:static !important; inset:auto !important;
+      width:auto !important; border:none !important; background:#fff !important;
+    }
+    #book-sheet .sheet-head, #book-sheet .sheet-close, #book-sheet .book-help, #book-sheet .book-blurb{ display:none !important; }
+    #book-sheet .sheet-body{ overflow:visible !important; padding:0 !important; }
+    .book-cover{ border:none !important; margin:0 !important; padding:1.2in 0 0 !important; background:#fff !important; }
+    .book-day{ break-before:page; border:none !important; margin:0 !important; padding:0 !important; background:#fff !important; }
+    .book-photo{ max-height:8.4in; }
+  }
 </style>
 </head>
 <body>
@@ -837,6 +912,13 @@
 <div class="sheet" id="form-sheet" role="dialog" aria-modal="true"></div>
 <div class="sheet" id="picker-sheet" role="dialog" aria-modal="true"></div>
 <div class="sheet" id="tripnotes-sheet" role="dialog" aria-modal="true"></div>
+<div class="sheet" id="book-sheet" role="dialog" aria-modal="true"></div>
+
+<!-- PHOTO LIGHTBOX (Patch 19) -->
+<div class="photo-lightbox" id="photo-lightbox" aria-hidden="true">
+  <button class="photo-lightbox-x" type="button" data-photo-close="1" aria-label="Close photo">&times;</button>
+  <img id="photo-lightbox-img" alt="Diary photo">
+</div>
 
 <!-- CONFIRM DIALOG -->
 <div class="dialog-back" id="confirm-back">
@@ -1569,6 +1651,274 @@ if(!state.schedUndo) state.schedUndo = {};    /* iso -> [entry keys] — the ord
 if(!state.grindsGone) state.grindsGone = {};  /* Grinds dish name -> true, once Justin deletes a dish from his menu */
 function save(){ store.set(state); }
 
+/* ================= Patch 19: diary photos (IndexedDB) + book view =================
+   Photos live ONLY in IndexedDB (never in localStorage state). A note's text
+   carries [[photo:ID]] tokens where Justin injected a photo; renderers swap
+   each token for a small inline thumbnail (or a full-width image in the book). */
+var PHOTO_DB_NAME = "kauaiDiary";
+var PHOTO_STORE = "photos";
+var PHOTO_PLACEHOLDER = "data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///ywAAAAAAQABAAACAUwAOw==";
+var PHOTO_TOKEN_RE = /\[\[photo:([^\]]+)\]\]/g;
+var photoCache = {};
+var photoWaiters = {};
+var photoDbPromise = null;
+var photoSeq = 0;
+var noteEditIso = null;
+var noteCaret = 0;
+
+function photoDb(){
+  if(photoDbPromise) return photoDbPromise;
+  photoDbPromise = new Promise(function(resolve, reject){
+    if(!("indexedDB" in window) || !window.indexedDB){ reject(new Error("IndexedDB unavailable")); return; }
+    var req;
+    try{ req = window.indexedDB.open(PHOTO_DB_NAME, 1); }
+    catch(e){ reject(e); return; }
+    req.onupgradeneeded = function(ev){
+      var db = ev.target.result;
+      if(!db.objectStoreNames.contains(PHOTO_STORE)) db.createObjectStore(PHOTO_STORE);
+    };
+    req.onsuccess = function(){ resolve(req.result); };
+    req.onerror = function(){ reject(req.error || new Error("IndexedDB open failed")); };
+    req.onblocked = function(){ reject(new Error("IndexedDB blocked")); };
+  });
+  photoDbPromise.catch(function(){ photoDbPromise = null; });
+  return photoDbPromise;
+}
+function photoPut(id, dataUrl){
+  return photoDb().then(function(db){
+    return new Promise(function(resolve, reject){
+      var tx = db.transaction(PHOTO_STORE, "readwrite");
+      tx.objectStore(PHOTO_STORE).put(dataUrl, id);
+      tx.oncomplete = function(){ photoCache[id] = dataUrl; resolve(true); };
+      tx.onerror = function(){ reject(tx.error || new Error("Photo save failed")); };
+      tx.onabort = function(){ reject(tx.error || new Error("Photo save aborted")); };
+    });
+  });
+}
+function photoGet(id){
+  return photoDb().then(function(db){
+    return new Promise(function(resolve, reject){
+      var req = db.transaction(PHOTO_STORE, "readonly").objectStore(PHOTO_STORE).get(id);
+      req.onsuccess = function(){ resolve(req.result || null); };
+      req.onerror = function(){ reject(req.error || new Error("Photo read failed")); };
+    });
+  });
+}
+function photoDelete(id){
+  delete photoCache[id];
+  return photoDb().then(function(db){
+    return new Promise(function(resolve){
+      var tx = db.transaction(PHOTO_STORE, "readwrite");
+      tx.objectStore(PHOTO_STORE).delete(id);
+      tx.oncomplete = function(){ resolve(true); };
+      tx.onerror = function(){ resolve(false); };
+      tx.onabort = function(){ resolve(false); };
+    });
+  }).catch(function(){ return false; });
+}
+function loadPhoto(id, cb){
+  if(photoCache[id]){ cb(photoCache[id]); return; }
+  if(photoWaiters[id]){ photoWaiters[id].push(cb); return; }
+  photoWaiters[id] = [cb];
+  function done(url){
+    if(url) photoCache[id] = url;
+    var ws = photoWaiters[id] || [];
+    delete photoWaiters[id];
+    ws.forEach(function(fn){ fn(url); });
+  }
+  photoGet(id).then(done).catch(function(){ done(null); });
+}
+function hydratePhotos(root){
+  if(!root || !root.querySelectorAll) return;
+  root.querySelectorAll("img[data-photo-id]").forEach(function(img){
+    if(img.getAttribute("data-photo-loaded")) return;
+    img.setAttribute("data-photo-loaded", "loading");
+    loadPhoto(img.getAttribute("data-photo-id"), function(url){
+      if(url){ img.src = url; img.setAttribute("data-photo-loaded", "1"); }
+      else img.setAttribute("data-photo-loaded", "missing");
+    });
+  });
+}
+function photoIdsIn(text){
+  var ids = [], seen = {}, m;
+  PHOTO_TOKEN_RE.lastIndex = 0;
+  var raw = String(text || "");
+  while((m = PHOTO_TOKEN_RE.exec(raw))){
+    if(!seen[m[1]]){ seen[m[1]] = 1; ids.push(m[1]); }
+  }
+  PHOTO_TOKEN_RE.lastIndex = 0;
+  return ids;
+}
+function renderNoteHTML(text, mode){
+  var raw = String(text || ""), out = "", last = 0, m;
+  PHOTO_TOKEN_RE.lastIndex = 0;
+  while((m = PHOTO_TOKEN_RE.exec(raw))){
+    out += esc(raw.slice(last, m.index));
+    if(mode === "book") out += '<img class="book-photo" data-photo-id="'+esc(m[1])+'" src="'+PHOTO_PLACEHOLDER+'" alt="Diary photo">';
+    else out += '<img class="note-photo-thumb" data-photo-id="'+esc(m[1])+'" src="'+PHOTO_PLACEHOLDER+'" alt="Photo — tap to enlarge" title="Tap to enlarge">';
+    last = m.index + m[0].length;
+  }
+  PHOTO_TOKEN_RE.lastIndex = 0;
+  out += esc(raw.slice(last));
+  return out;
+}
+function renderBookNoteHTML(text){
+  var paras = String(text || "").split(/\n\s*\n/);
+  return paras.map(function(p){
+    if(!p.trim()) return "";
+    return '<p>' + renderNoteHTML(p, "book").replace(/\n/g, "<br>") + '</p>';
+  }).join("");
+}
+function openPhotoLightbox(id){
+  loadPhoto(id, function(url){
+    if(!url){ toast("That photo could not be loaded."); return; }
+    var lb = document.getElementById("photo-lightbox"), im = document.getElementById("photo-lightbox-img");
+    if(!lb || !im) return;
+    im.src = url;
+    lb.classList.add("on");
+    lb.setAttribute("aria-hidden", "false");
+  });
+}
+function closePhotoLightbox(){
+  var lb = document.getElementById("photo-lightbox"), im = document.getElementById("photo-lightbox-img");
+  if(lb){ lb.classList.remove("on"); lb.setAttribute("aria-hidden", "true"); }
+  if(im) im.removeAttribute("src");
+}
+
+/* ---- note editor: caret tracking, photo strip, detach ---- */
+function updateNoteCaret(){
+  var ta = document.getElementById("note-ta");
+  if(ta && typeof ta.selectionStart === "number") noteCaret = ta.selectionStart;
+}
+["keyup","click","touchend","input"].forEach(function(evt){
+  document.addEventListener(evt, function(e){
+    if(e.target && e.target.id === "note-ta") updateNoteCaret();
+  }, true);
+});
+function notePhotoStripHTML(text){
+  return photoIdsIn(text).map(function(id){
+    return '<div class="note-photo-item"><img data-photo-id="'+esc(id)+'" src="'+PHOTO_PLACEHOLDER+'" alt="Attached photo">'
+      + '<button class="note-photo-x" type="button" data-photo-detach="'+esc(id)+'" aria-label="Remove this photo from the note">&times;</button></div>';
+  }).join("");
+}
+function refreshNotePhotoStrip(){
+  var strip = document.getElementById("note-photo-strip"), ta = document.getElementById("note-ta");
+  if(!strip || !ta) return;
+  strip.innerHTML = notePhotoStripHTML(ta.value);
+  hydratePhotos(strip);
+}
+function insertTextAtCaret(ta, textToInsert){
+  var start = (typeof ta.selectionStart === "number") ? ta.selectionStart : ta.value.length;
+  var end = (typeof ta.selectionEnd === "number") ? ta.selectionEnd : start;
+  ta.value = ta.value.slice(0, start) + textToInsert + ta.value.slice(end);
+  var pos = start + textToInsert.length;
+  ta.focus();
+  try{ ta.setSelectionRange(pos, pos); }catch(e){}
+  noteCaret = pos;
+}
+function detachPhoto(id){
+  var ta = document.getElementById("note-ta"); if(!ta) return;
+  var token = "[[photo:" + id + "]]";
+  if(ta.value.indexOf(token) >= 0) ta.value = ta.value.split(token).join("");
+  refreshNotePhotoStrip();
+  ta.focus();
+  toast("Photo taken out of this note — tap Save note to make it stick.");
+}
+
+/* ---- photo picking: downscale on canvas, store in IndexedDB, insert token ---- */
+function processPhotoFile(file){
+  return new Promise(function(resolve, reject){
+    if(!file || (file.type && file.type.indexOf("image/") !== 0)){ reject(new Error("not an image")); return; }
+    var url = URL.createObjectURL(file);
+    var img = new Image();
+    img.onload = function(){
+      try{
+        var w = img.naturalWidth || img.width, h = img.naturalHeight || img.height;
+        if(!w || !h) throw new Error("bad image");
+        var scale = Math.min(1, 1600 / Math.max(w, h));
+        var cw = Math.max(1, Math.round(w * scale)), ch = Math.max(1, Math.round(h * scale));
+        var cv = document.createElement("canvas");
+        cv.width = cw; cv.height = ch;
+        var cx = cv.getContext("2d");
+        if(!cx) throw new Error("no canvas");
+        cx.drawImage(img, 0, 0, cw, ch);
+        URL.revokeObjectURL(url);
+        resolve(cv.toDataURL("image/jpeg", 0.82));
+      }catch(e){ URL.revokeObjectURL(url); reject(e); }
+    };
+    img.onerror = function(){ URL.revokeObjectURL(url); reject(new Error("image load failed")); };
+    img.src = url;
+  });
+}
+function newPhotoId(){
+  photoSeq += 1;
+  return "p" + Date.now() + "-" + photoSeq;
+}
+function pickPhotosForNote(){
+  var ta = document.getElementById("note-ta"); if(!ta) return;
+  updateNoteCaret();
+  photoDb().then(function(){
+    var input = document.createElement("input");
+    input.type = "file";
+    input.accept = "image/*";
+    input.multiple = true;
+    input.style.display = "none";
+    document.body.appendChild(input);
+    input.addEventListener("change", function(){
+      var files = Array.prototype.slice.call(input.files || []);
+      if(input.parentNode) input.parentNode.removeChild(input);
+      if(!files.length) return;
+      var chain = Promise.resolve(), inserted = 0, failed = 0;
+      files.forEach(function(file){
+        chain = chain.then(function(){
+          return processPhotoFile(file).then(function(dataUrl){
+            var id = newPhotoId();
+            return photoPut(id, dataUrl).then(function(){
+              var ta2 = document.getElementById("note-ta");
+              if(ta2){ insertTextAtCaret(ta2, "[[photo:" + id + "]]"); inserted++; }
+            });
+          }).catch(function(){ failed++; });
+        });
+      });
+      chain.then(function(){
+        refreshNotePhotoStrip();
+        if(inserted && failed) toast(inserted + (inserted === 1 ? " photo" : " photos") + " added; " + failed + " could not be added.");
+        else if(inserted) toast(inserted === 1 ? "Photo added — tap Save note to keep it in the day." : inserted + " photos added — tap Save note to keep them in the day.");
+        else toast("Those photos could not be added.");
+      });
+    });
+    input.click();
+  }).catch(function(){
+    toast("Photos are not available in this browser, so this note stays text-only.");
+  });
+}
+
+/* ---- Make a book: the whole diary laid out for PDF -> Blurb ---- */
+function openBook(){
+  var sh = document.getElementById("book-sheet"); if(!sh) return;
+  var html = '<div class="sheet-head"><div class="inner"><h2>Make a book</h2><div class="meta">Your whole trip diary, laid out like a book — ready to turn into one PDF.</div></div></div>'
+    + '<button class="sheet-close" type="button" data-close="1" aria-label="Close">'+I.x+'</button>'
+    + '<div class="sheet-body">'
+    + '<div class="book-help"><p><strong>1)</strong> Tap Share → Print, pinch out on the preview, Share → Save to Files — that\u2019s your PDF.</p>'
+    + '<p><strong>2)</strong> Upload that one file at Blurb (PDF to Book): page 1 becomes the front cover.</p>'
+    + '<p><strong>3)</strong> Pick hardcover, pay, they mail it.</p></div>'
+    + '<a class="btn book-blurb" href="https://support.blurb.com/hc/en-us/articles/207792796-How-to-upload-a-PDF-to-Blurb-through-PDF-to-Book" target="_blank" rel="noopener">Open Blurb — PDF to Book</a>'
+    + '<section class="book-cover"><div class="book-cover-kicker">Trip diary</div><h1>Kauai — November 6–24, 2026</h1>'
+    + '<p class="book-cover-sub">Written day by day — the plans that changed, the good stuff worth remembering, and the photos right where they happened.</p></section>';
+  var any = false;
+  DAYS.forEach(function(d){
+    var n = (state.notes[d.iso] || "").trim();
+    if(!n) return;
+    any = true;
+    html += '<section class="book-day"><h2>'+esc(d.label)+'</h2><div class="book-text">'+renderBookNoteHTML(n)+'</div></section>';
+  });
+  if(!any) html += '<section class="book-day"><h2>No diary pages yet</h2><div class="book-text"><p>Write a day note first — it will show up here as a book page, photos and all.</p></div></section>';
+  html += '</div>';
+  sh.innerHTML = html;
+  hydratePhotos(sh);
+  openSheet("book-sheet");
+}
+
 function allPlaces(){
   var out = [];
   SEED.forEach(function(p){
@@ -1822,12 +2172,13 @@ function renderCalendar(){
           html += '</div>';
         }
       }
-      if(state.notes[d.iso]) html += '<div class="note-preview">'+esc(state.notes[d.iso])+'</div>';
+      if(state.notes[d.iso]) html += '<div class="note-preview">'+renderNoteHTML(state.notes[d.iso], "inline")+'</div>';
       html += '</div></div>';
     });
     html += '</div>';
   });
   wrap.innerHTML = html;
+  hydratePhotos(wrap);
 }
 
 /* ================= detail sheet ================= */
@@ -2847,33 +3198,54 @@ function startSchedule(id){
 function openNote(iso){
   var sh=document.getElementById("detail-sheet");
   var cur=state.notes[iso]||"";
+  noteEditIso = iso;
+  noteCaret = cur.length;
   sh.innerHTML='<div class="sheet-inner"><button class="close-x" type="button" data-close="1" aria-label="Close">'+I.x+'</button>'
     + '<h3 style="margin-right:40px">'+esc(dayLabel(iso))+' — day notes</h3>'
     + '<p>What actually happened: plans that changed, a migraine day, the good stuff worth remembering. Saved on this device.</p>'
     + '<div class="chip-row"><button class="btn" type="button" data-chip="Kim migraine — plans changed. ">Migraine day</button>'
     + '<button class="btn" type="button" data-chip="Rain — went to Plan B. ">Rain / Plan B</button>'
     + '<button class="btn" type="button" data-chip="Went as planned. ">As planned</button></div>'
+    + '<div class="note-photo-tools"><button class="btn" type="button" data-note-photo-add="1">+ Photo</button><span class="note-photo-hint">Puts a photo right where your cursor is — keep typing after it.</span></div>'
     + '<textarea class="note-ta" id="note-ta" placeholder="Write the day as it really went…">'+esc(cur)+'</textarea>'
+    + '<div class="note-photo-strip" id="note-photo-strip"></div>'
     + '<div class="danger-zone"><button class="btn" type="button" data-close="1">Cancel</button>'
     + '<button class="btn primary" type="button" data-savenote="'+iso+'">Save note</button></div></div>';
   openSheet("detail-sheet");
+  refreshNotePhotoStrip();
   setTimeout(function(){ var t=document.getElementById("note-ta"); if(t) t.focus(); },80);
 }
 document.addEventListener("click", function(e){
   var cl=e.target.closest("[data-close]"); if(cl){ closeSheets(); return; }
+  var pclose=e.target.closest("[data-photo-close]");
+  if(pclose || e.target.id==="photo-lightbox"){ closePhotoLightbox(); return; }
+  var pho=e.target.closest("img[data-photo-id]");
+  if(pho){ openPhotoLightbox(pho.getAttribute("data-photo-id")); return; }
+  var padd=e.target.closest("[data-note-photo-add]");
+  if(padd){ pickPhotosForNote(); return; }
+  var pdet=e.target.closest("[data-photo-detach]");
+  if(pdet){ detachPhoto(pdet.getAttribute("data-photo-detach")); return; }
   var chip=e.target.closest("[data-chip]");
   if(chip){ var ta=document.getElementById("note-ta"); if(ta){ ta.value = chip.getAttribute("data-chip") + ta.value; ta.focus(); } return; }
   var sv=e.target.closest("[data-savenote]");
   if(sv){
     var iso=sv.getAttribute("data-savenote"), t2=document.getElementById("note-ta"), v=t2?t2.value.trim():"";
+    var oldIds=photoIdsIn(state.notes[iso]||"");
     if(v) state.notes[iso]=v; else delete state.notes[iso];
+    var newIds=photoIdsIn(v);
+    oldIds.forEach(function(id){
+      if(newIds.indexOf(id)>=0) return;
+      var used=false;
+      Object.keys(state.notes).forEach(function(k){ if(String(state.notes[k]).indexOf("[[photo:"+id+"]]")>=0) used=true; });
+      if(!used) photoDelete(id);
+    });
     save(); renderCalendar(); closeSheets(); toast(v?"Day note saved.":"Day note cleared."); return;
   }
   var nt=e.target.closest("[data-note]"); if(nt){ openNote(nt.getAttribute("data-note")); return; }
   var wx=e.target.closest("[data-wxday]"); if(wx){ openWxDay(wx.getAttribute("data-wxday")); return; }
   var cp=e.target.closest("[data-cancelpend]"); if(cp){ pendSched=null; renderCalendar(); return; }
   var pk=e.target.closest("[data-pickday]");
-  if(pk && pendSched && !e.target.closest("[data-note],[data-nudge],[data-move],[data-unsched],[data-cancelpend],[data-open],[data-planb],[data-dayedit],[data-reorder],[data-untext],[data-drag],[data-tripnotes]")){
+  if(pk && pendSched && !e.target.closest("[data-note],[data-nudge],[data-move],[data-unsched],[data-cancelpend],[data-open],[data-planb],[data-dayedit],[data-reorder],[data-untext],[data-drag],[data-tripnotes],[data-photo-id]")){
     var iso2=pk.getAttribute("data-pickday"), p2=getPlace(pendSched);
     state.sched[pendSched]=iso2; save(); pendSched=null; renderAll();
     toast((p2?p2.name:"Place")+" — "+dayLabel(iso2)+"."); return;
@@ -3567,7 +3939,8 @@ function tripNotesText(){
     var n = (state.notes[d.iso]||"").trim();
     if(!n) return;
     any = true;
-    lines.push("## " + d.label, n, "");
+    var exportNote = n.replace(/\[\[photo:[^\]]+\]\]/g, "\n[Photo]\n").replace(/\n{3,}/g, "\n\n").trim();
+    lines.push("## " + d.label, exportNote, "");
   });
   if(!any) lines.push("No day notes written yet. Tap Notes on any day in the Schedule to start one.");
   return lines.join("\n");
@@ -3580,10 +3953,11 @@ function openTripNotes(){
   DAYS.forEach(function(d){
     var n = (state.notes[d.iso]||"").trim();
     html += '<div class="tn-day"><div class="tn-day-head"><strong>'+esc(d.label)+'</strong><button class="mini-btn" type="button" data-note="'+d.iso+'">'+(n?"Edit note":"Add note")+'</button></div>'
-      + (n ? '<div class="tn-text">'+esc(n)+'</div>' : '<div class="tn-empty">Nothing written yet.</div>') + '</div>';
+      + (n ? '<div class="tn-text">'+renderNoteHTML(n, "inline")+'</div>' : '<div class="tn-empty">Nothing written yet.</div>') + '</div>';
   });
-  html += '<div class="form-actions"><button class="btn" type="button" data-close="1">Close</button><button class="btn primary" type="button" data-tripnotes-save="1">Save / Download the whole file</button></div></div>';
+  html += '<div class="form-actions tn-actions"><button class="btn" type="button" data-close="1">Close</button><button class="btn" type="button" data-book="1">Make a book</button><button class="btn primary" type="button" data-tripnotes-save="1">Save / Download the whole file</button></div></div>';
   sh.innerHTML = html;
+  hydratePhotos(sh);
   openSheet("tripnotes-sheet");
 }
 function saveTripNotes(){
@@ -3682,6 +4056,8 @@ document.addEventListener("click", function(e){
   if(tnb){ openTripNotes(); return; }
   var tsb = e.target.closest("[data-tripnotes-save]");
   if(tsb){ saveTripNotes(); return; }
+  var bk = e.target.closest("[data-book]");
+  if(bk){ openBook(); return; }
 });
 
 /* Patch 16: the app opens on Today. */
