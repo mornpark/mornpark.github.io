@@ -361,9 +361,9 @@
   /* ---------- auto near rows ---------- */
   .near-block{ margin-top:10px; border-top:1px dashed var(--line); padding-top:8px; }
   .near-head{ font-size:11.5px; letter-spacing:.06em; text-transform:uppercase; color:var(--ink2); font-weight:700; }
-  .near-row{ display:flex; gap:8px; font-size:14px; margin-top:5px; align-items:baseline; }
-  .near-row .nm{ font-weight:600; cursor:pointer; flex:none; }
-  .near-meta{ color:var(--ink2); }
+  .near-row{ display:block; font-size:14px; margin-top:9px; }
+  .near-row .nm{ display:block; font-weight:600; cursor:pointer; font-size:15px; line-height:1.35; }
+  .near-meta{ display:block; color:var(--ink2); margin-top:1px; line-height:1.45; }
   .sugg-near{ margin:10px 0 2px; font-size:13.5px; color:var(--ink2); border-top:1px dashed var(--line); padding-top:9px; }
   .sugg-near .nm{ font-weight:700; color:var(--ink); cursor:pointer; }
 
@@ -570,6 +570,91 @@
   .sugg-item span{ color:var(--ink2); }
   .planb-select, .planb-text{ width:100%; border:1px solid var(--line); background:var(--surface); padding:11px 12px; font-size:16px; margin-top:6px; }
   .planb-text{ min-height:74px; resize:vertical; }
+
+  /* ================= Patch 17: breathing room (Scandinavian-minimal spacing pass) ================= */
+  main{ padding:22px 18px calc(52px + env(safe-area-inset-bottom)); }
+  .card{ margin-bottom:16px; }
+  .card .body{ padding:20px 20px 18px; }
+  .card .fact{ margin-top:10px; }
+  .card .actions{ margin-top:16px; }
+  .badges{ margin-top:12px; }
+  .day{ margin-bottom:12px; }
+  .day .inner{ padding:16px 18px 18px; }
+  .day-entry{ margin-top:12px; padding-top:12px; gap:10px; }
+  .phase-band{ margin-bottom:28px; }
+  .phase-band-head{ margin-bottom:12px; }
+  .phase-band-head .inner{ padding:16px 18px; }
+  .phase-band-head p{ margin-top:5px; line-height:1.5; }
+  .sugg-day{ margin-bottom:16px; }
+  .sugg-day .body{ padding:20px 20px 18px; }
+  .sugg-item{ padding:12px 0; line-height:1.6; }
+  .sheet-body{ padding:22px 20px 28px; }
+  .sheet-head .inner{ padding:18px 20px; }
+  .sheet-body p{ line-height:1.6; }
+  .today-hero{ padding:22px; margin-bottom:16px; }
+  .today-item{ padding:19px; margin-bottom:12px; }
+  .today-note{ line-height:1.55; }
+  .near-block{ margin-top:14px; padding-top:12px; }
+  .near-row{ margin-top:12px; }
+  .wx-box{ padding:18px; }
+  .rent-box, .cmp-vs{ padding:20px; }
+  .planb-box{ padding:16px 18px; }
+  .note-preview{ margin-top:12px; padding-top:12px; line-height:1.6; }
+  .dialog{ padding:26px; }
+  .foot-note{ line-height:1.65; }
+  h2.section{ margin:30px 0 12px; }
+  .menu-head{ margin:26px 0 12px; }
+
+  /* ---------- Patch 17: Grinds dish cards — stacked, no overlap, red WATCH ON YT ---------- */
+  .card.dish{ display:block; padding:22px 22px 20px; cursor:default; }
+  .dish h4{ font-family:"Marcellus",Georgia,serif; font-weight:400; font-size:21px; margin:0 0 8px; line-height:1.3; }
+  .dish p{ margin:0 0 16px; font-size:15.5px; line-height:1.6; color:var(--ink2); }
+  .dish .yt-btn{ color:#d21034; font-weight:800; letter-spacing:.07em; }
+
+  /* ---------- Patch 17: Schedule editing — drag handle, reorder, Edit picker ---------- */
+  .cal-tools{ display:flex; gap:8px; margin-bottom:14px; }
+  .cal-tools .btn{ flex:1; }
+  .drag-handle{
+    flex:none; width:42px; height:46px; display:flex; align-items:center; justify-content:center;
+    font-size:19px; line-height:1; color:var(--ink2); cursor:grab;
+    border:1px solid var(--line); border-radius:8px; background:var(--surface2);
+    touch-action:none; -webkit-user-select:none; user-select:none; -webkit-touch-callout:none;
+  }
+  .drag-handle:active{ cursor:grabbing; color:var(--ink); border-color:var(--ink); }
+  .day-entry.lifted{ outline:2px solid var(--ink); outline-offset:2px; box-shadow:0 16px 34px rgba(10,25,32,.28); background:var(--surface); position:relative; z-index:5; }
+  .nudge.vert{ flex-direction:column; gap:3px; }
+  .nudge.vert button{ width:34px; height:27px; font-size:13px; }
+  .entry-tools-line{ flex-basis:100%; display:flex; align-items:center; justify-content:space-between; gap:8px; }
+  .edit-btn{ border-color:var(--ink); color:var(--ink); }
+  .day-foot{ margin-top:14px; }
+  .day-foot .mini-btn{ padding:8px 12px; font-size:13.5px; }
+  .text-nm{ cursor:default; }
+
+  /* ---------- Patch 17: Edit pop-up (picker) ---------- */
+  .pick-tabs{ display:flex; gap:8px; margin-bottom:16px; }
+  .pick-tab{ flex:1; padding:12px 8px; border:1px solid var(--line); border-radius:10px; font-weight:700; font-size:14.5px; background:var(--surface); color:var(--ink2); }
+  .pick-tab[aria-selected="true"]{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  .pick-list{ border:1px solid var(--line); border-radius:12px; padding:4px 16px 8px; background:var(--surface); }
+  .pick-day{ border:1px solid var(--line); border-radius:12px; padding:16px 16px 14px; margin-bottom:14px; background:var(--surface); }
+  .pick-day-head{ display:flex; flex-direction:column; gap:1px; margin-bottom:4px; }
+  .pick-day-head strong{ font-size:16.5px; }
+  .pick-day-head span{ font-size:12.5px; color:var(--ink2); font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+  .pick-row{ display:flex; gap:12px; align-items:flex-start; padding:12px 2px; border-top:1px solid var(--line); cursor:pointer; }
+  .pick-row input{ width:22px; height:22px; flex:none; margin:1px 0 0; accent-color:#17323b; }
+  .pick-row.done{ opacity:.55; }
+  .pick-main{ flex:1; min-width:0; }
+  .pick-name{ display:block; font-weight:600; font-size:15.5px; line-height:1.35; }
+  .pick-sub{ display:block; font-size:13.5px; color:var(--ink2); margin-top:2px; line-height:1.45; }
+  .pick-choose-row{ margin-top:14px; }
+  .pick-choose-row .btn{ width:100%; }
+  .pick-empty{ color:var(--ink2); font-size:14.5px; line-height:1.55; padding:10px 0; margin:0; }
+
+  /* ---------- Patch 17: Trip Notes ---------- */
+  .tn-day{ border:1px solid var(--line); border-radius:12px; background:var(--surface); padding:16px 18px; margin-bottom:12px; }
+  .tn-day-head{ display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:6px; }
+  .tn-day-head strong{ font-size:16.5px; }
+  .tn-text{ font-size:15.5px; line-height:1.6; white-space:pre-wrap; }
+  .tn-empty{ font-size:14.5px; color:var(--ink2); font-style:italic; }
 </style>
 </head>
 <body>
@@ -697,6 +782,7 @@
 
   <!-- CALENDAR -->
   <section class="view" id="view-calendar">
+    <div class="cal-tools"><button class="btn" type="button" data-tripnotes="1">Trip Notes — the whole trip in one file</button></div>
     <div id="cal-wrap"></div>
     <p class="foot-note">Move things freely: arrows shift a place one day, Move jumps it to any day you tap, and × takes it off the calendar. The map follows whatever the calendar says. Tap a name to open the full card.</p>
   </section>
@@ -738,6 +824,8 @@
 <div class="sheet-back" id="sheet-back"></div>
 <div class="sheet" id="detail-sheet" role="dialog" aria-modal="true"></div>
 <div class="sheet" id="form-sheet" role="dialog" aria-modal="true"></div>
+<div class="sheet" id="picker-sheet" role="dialog" aria-modal="true"></div>
+<div class="sheet" id="tripnotes-sheet" role="dialog" aria-modal="true"></div>
 
 <!-- CONFIRM DIALOG -->
 <div class="dialog-back" id="confirm-back">
@@ -747,6 +835,21 @@
     <div class="row">
       <button class="btn" id="confirm-no" type="button">Keep it</button>
       <button class="btn primary" id="confirm-yes" type="button">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOVE-OR-COPY QUESTION (Patch 17) -->
+<div class="dialog-back" id="ask-back">
+  <div class="dialog">
+    <h3>Move it over, or copy it over?</h3>
+    <p id="ask-text"></p>
+    <div class="row">
+      <button class="btn" id="ask-move" type="button">Move it over</button>
+      <button class="btn primary" id="ask-copy" type="button">Copy it over</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button class="btn" id="ask-cancel" type="button">Cancel</button>
     </div>
   </div>
 </div>
@@ -1448,6 +1551,9 @@ if(!state.notes) state.notes = {};       /* "2026-11-13" -> diary text */
 if(!state.deleted) state.deleted = {};    /* seed id -> true */
 if(!state.edits) state.edits = {};        /* seed id -> full edited place */
 if(!state.custom) state.custom = [];      /* user-added places */
+if(!state.schedOrder) state.schedOrder = {}; /* iso -> [entry keys] — Justin's own order within a Schedule day; key "p:<placeId>" or "t:<textId>" */
+if(!state.schedText) state.schedText = {};    /* textId -> {label, note, t, iso} — Sug'std text items placed on the Schedule */
+if(!state.suggGone) state.suggGone = {};      /* Sug'std item key -> true, once an item has been moved out of Sug'std */
 function save(){ store.set(state); }
 
 function allPlaces(){
@@ -1652,22 +1758,41 @@ function renderCalendar(){
               : ph==="explore" ? "Second week: exploring — North Shore, big scenery, the far drives."
               : "Third week: resting and relaxing — beaches, slow mornings, early nights.")+'</p></div></div>';
     DAYS.filter(function(d){ return d.phase===ph; }).forEach(function(d){
-      var here = allPlaces().filter(function(p){ return state.sched[p.id]===d.iso; });
+      var entries = dayEntries(d.iso);
       var wd = weekdayOf(d.iso);
       var meeting = (wd===0) ? "10:00 AM" : (wd===3 ? "7:00 PM" : null);
       html += '<div class="day'+(pend?' pickable':'')+'"'+(pend?' data-pickday="'+d.iso+'"':'')+'><div class="strip '+ph+'"></div><div class="inner">'
         + '<div class="dlabel"><span>'+d.label+'</span>'+(todayIso===d.iso?'<span class="today-tag">TODAY</span>':"")
         + '<button class="note-btn'+(state.notes[d.iso]?' has':'')+'" type="button" data-note="'+d.iso+'">'+I.note+(state.notes[d.iso]?'Note saved':'Notes')+'</button></div>';
-      if(!here.length && !meeting) html += '<div class="none">Nothing scheduled</div>';
+      if(!entries.length && !meeting) html += '<div class="none">Nothing scheduled</div>';
       if(meeting) html += '<div class="day-entry meeting"><span class="nm" data-open="kingdom-hall">Congregation meeting — Kingdom Hall, Kekaha</span><span class="meet-tag">WEEKLY · '+meeting+'</span></div>';
-      here.sort(function(a,b){ return a.name.localeCompare(b.name); }).forEach(function(p){
+      entries.forEach(function(en, ei){
         var idx = DAYS.indexOf(d);
-        html += '<div class="day-entry"><span class="cdot '+ph+'"></span><span class="nm" data-open="'+p.id+'">'+esc(p.name)+'</span>'
-          + '<span class="entry-tools"><button class="mini-btn" type="button" data-planb="'+p.id+'">Plan B</button><button class="mini-btn" type="button" data-move="'+p.id+'">Move</button><button class="mini-btn" type="button" data-unsched="'+p.id+'" aria-label="Remove from calendar">&times;</button></span>'
-          + '<span class="nudge"><button data-nudge="'+p.id+'|-1" '+(idx<=0?"disabled":"")+' aria-label="Move a day earlier">'+I.left+'</button>'
-          + '<button data-nudge="'+p.id+'|1" '+(idx>=DAYS.length-1?"disabled":"")+' aria-label="Move a day later">'+I.right+'</button></span>'
-          + '<span class="entry-planb">'+planBLineHTML(p.id)+'</span></div>';
+        var isFirst = ei===0, isLast = ei===entries.length-1;
+        var vert = '<span class="nudge vert"><button type="button" data-reorder="'+en.key+'|-1" '+(isFirst?"disabled":"")+' aria-label="Move up within this day">&#8593;</button>'
+          + '<button type="button" data-reorder="'+en.key+'|1" '+(isLast?"disabled":"")+' aria-label="Move down within this day">&#8595;</button></span>';
+        var dayShift = '<span class="nudge"><button data-nudge="'+en.key+'|-1" '+(idx<=0?"disabled":"")+' aria-label="Move a day earlier">'+I.left+'</button>'
+          + '<button data-nudge="'+en.key+'|1" '+(idx>=DAYS.length-1?"disabled":"")+' aria-label="Move a day later">'+I.right+'</button></span>';
+        html += '<div class="day-entry" data-entry="'+en.key+'" data-day="'+d.iso+'">'
+          + '<button class="drag-handle" type="button" data-drag="1" aria-label="Press and hold, then drag to reorder" title="Press and hold, then drag to reorder">&#9776;</button>';
+        if(en.kind==="place"){
+          var p = en.place;
+          html += '<span class="cdot '+ph+'"></span><span class="nm" data-open="'+p.id+'">'+esc(p.name)+'</span>'
+            + vert
+            + '<span class="entry-tools-line"><span class="entry-tools"><button class="mini-btn" type="button" data-planb="'+p.id+'">Plan B</button><button class="mini-btn" type="button" data-move="'+p.id+'">Move</button><button class="mini-btn edit-btn" type="button" data-dayedit="'+d.iso+'">Edit</button><button class="mini-btn" type="button" data-unsched="'+p.id+'" aria-label="Remove from calendar">&times;</button></span>'
+            + dayShift + '</span>'
+            + '<span class="entry-planb">'+planBLineHTML(p.id)+'</span>';
+        } else {
+          var tx = en.text;
+          html += '<span class="cdot '+ph+'"></span><span class="nm text-nm">'+(tx.t ? esc(tx.t)+' · ' : '')+esc(tx.label)+'</span>'
+            + vert
+            + '<span class="entry-tools-line"><span class="entry-tools"><button class="mini-btn edit-btn" type="button" data-dayedit="'+d.iso+'">Edit</button><button class="mini-btn" type="button" data-untext="'+en.key.slice(2)+'" aria-label="Remove from calendar">&times;</button></span>'
+            + dayShift + '</span>'
+            + (tx.note ? '<span class="entry-planb"><div class="planb-line">'+esc(tx.note)+'</div></span>' : '');
+        }
+        html += '</div>';
       });
+      html += '<div class="day-foot"><button class="mini-btn" type="button" data-dayedit="'+d.iso+'">Edit this day — add from Sug\u2019std</button></div>';
       var dayAnchorsCal = dayAnchors(d.iso);
       if(dayAnchorsCal.length){
         var ow = onWayFor(d.iso, dayAnchorsCal);
@@ -2015,7 +2140,11 @@ var GRINDS = {
     { name:"Ginger Fish Jook", desc:"Cozy rice porridge with cooked fish and fresh ginger — the comfort breakfast, gentle on everybody.", yt:"fish congee jook recipe ginger" },
     { name:"Garlic Shrimp & Grits", desc:"Shrimp-truck garlic shrimp over creamy corn grits. Breakfast that eats like dinner, in a good way.", yt:"garlic shrimp and grits recipe" },
     { name:"Banana–Coconut Oatmeal", desc:"Gluten-free oats simmered in coconut milk with banana and a little brown sugar.", yt:"coconut banana oatmeal recipe" },
-    { name:"Tropical Smoothie Bowl", desc:"Thick-blended mango, banana, and coconut, topped with fresh fruit and gluten-free granola.", yt:"tropical smoothie bowl recipe" }
+    { name:"Tropical Smoothie Bowl", desc:"Thick-blended mango, banana, and coconut, topped with fresh fruit and gluten-free granola.", yt:"tropical smoothie bowl recipe" },
+    { name:"Seared Mahi & Sweet Potato Hash", desc:"Cooked mahi over crispy sweet potato hash with peppers and onion — the hearty morning plate.", yt:"mahi mahi sweet potato hash recipe" },
+    { name:"Coconut Rice & Mango Bowl", desc:"Warm coconut rice with fresh mango, toasted coconut, and crushed macadamia nuts.", yt:"coconut rice mango breakfast bowl" },
+    { name:"Lamb & Potato Breakfast Skillet", desc:"Diced lamb crisped up with potatoes, onion, and sweet peppers — no eggs, all flavor.", yt:"lamb potato breakfast skillet" },
+    { name:"Crispy Banana Rice-Paper Rolls", desc:"Banana and coconut wrapped in rice paper and crisped in the pan, honey over the top.", yt:"fried banana rice paper rolls" }
   ],
   dinners: [
     { name:"Garlic Butter Lobster Tails", desc:"Broiled lobster tails brushed with garlic butter — the fancy night. Costco sells the tails.", yt:"broiled lobster tails garlic butter recipe" },
@@ -2024,13 +2153,17 @@ var GRINDS = {
     { name:"Tamari-Ginger Ahi Steak", desc:"Ahi cooked all the way through with tamari and ginger — all the island flavors, none of the raw.", yt:"cooked ahi tuna steak tamari ginger" },
     { name:"Grilled Lamb Chops", desc:"Lamb chops with garlic and rosemary, grilled hot and fast — pineapple salsa on the side if you're feeling fancy.", yt:"grilled lamb chops garlic rosemary recipe" },
     { name:"Coconut Curry Fish", desc:"Mahi simmered in coconut curry with whatever vegetables looked good at the market. Serve over rice.", yt:"coconut curry fish recipe mahi" },
-    { name:"Island Fish Tacos", desc:"Grilled mahi on warm corn tortillas with cabbage slaw and a squeeze of lime.", yt:"grilled mahi fish tacos corn tortillas" }
+    { name:"Island Fish Tacos", desc:"Grilled mahi on warm corn tortillas with cabbage slaw and a squeeze of lime.", yt:"grilled mahi fish tacos corn tortillas" },
+    { name:"Blackened Mahi with Pineapple Salsa", desc:"Mahi with a blackened spice crust and fresh pineapple salsa over the top, rice on the side.", yt:"blackened mahi mahi pineapple salsa recipe" },
+    { name:"Grilled Lamb Kebab Plate", desc:"Lamb skewers fresh off the grill with rice and a cool cucumber salad.", yt:"grilled lamb kebabs rice plate recipe" },
+    { name:"Island Seafood Coconut Soup", desc:"Shrimp and fish simmered in a coconut broth with ginger and lemongrass — Tom Kha, beach-house style.", yt:"tom kha seafood soup shrimp fish recipe" },
+    { name:"Tamari Teriyaki Salmon", desc:"Salmon glazed with gluten-free tamari teriyaki, grilled vegetables alongside.", yt:"teriyaki salmon tamari grilled vegetables recipe" }
   ]
 };
 function ytHref(q){ return "https://www.youtube.com/results?search_query=" + encodeURIComponent(q); }
 function dishCard(d){
   return '<article class="card dish"><h4>'+esc(d.name)+'</h4><p>'+esc(d.desc)+'</p>'
-    + '<a class="btn" href="'+ytHref(d.yt)+'" target="_blank" rel="noopener">YouTube it</a></article>';
+    + '<a class="btn yt-btn" href="'+ytHref(d.yt)+'" target="_blank" rel="noopener">WATCH ON YT</a></article>';
 }
 function renderGrinds(){
   var w = document.getElementById("grinds-wrap");
@@ -2310,7 +2443,8 @@ function dayPlanFor(iso){
 function dayItems(iso){
   var items = [], seen = {};
   var plan = dayPlanFor(iso);
-  if(plan) plan.items.forEach(function(it){
+  if(plan) plan.items.forEach(function(it, idx){
+    if(state.suggGone && state.suggGone[iso+"#"+idx]) return;
     if(it.place){
       var p = getPlace(it.place); if(!p) return;
       if(state.sched[p.id] && state.sched[p.id]!==iso) return;
@@ -2334,6 +2468,10 @@ function dayItems(iso){
       seen[p.id] = 1;
       items.push({ place:p, label:p.name, note:"Added in the Schedule tab.", time:"", source:"sched" });
     }
+  });
+  Object.keys(state.schedText||{}).forEach(function(tid){
+    var tx = state.schedText[tid];
+    if(tx && tx.iso===iso) items.push({ place:null, label:tx.label, note:tx.note||"", time:tx.t||"", source:"sched" });
   });
   return items;
 }
@@ -2494,7 +2632,8 @@ function renderSuggested(){
     html += '<article class="sugg-day"><div class="strip '+ph+'"></div><div class="body">'
       + '<h3>'+esc(day ? day.label : dp.iso)+'<span class="phase-name">'+esc(dp.title)+'</span></h3>'
       + '<div class="sugg-items">'
-      + dp.items.map(function(it){
+      + dp.items.map(function(it, idx){
+          if(state.suggGone && state.suggGone[dp.iso+"#"+idx]) return "";
           var nm;
           if(it.place){
             var p = getPlace(it.place);
@@ -2506,7 +2645,7 @@ function renderSuggested(){
       + '<div class="plan b"><div class="tag">Plan B</div><div class="txt"><strong>'
       + (dp.planB.place ? '<span class="nm" data-open="'+dp.planB.place+'">'+esc(dp.planB.title)+'</span>' : esc(dp.planB.title))
       + '</strong><span>'+esc(dp.planB.note)+'</span></div></div>';
-    var ow = onWayFor(dp.iso, dayAnchors(dp.iso));
+    var ow = onWayFor(dp.iso, dayAnchors(dp.iso)).filter(function(x){ return !(state.suggGone && state.suggGone["ow#"+dp.iso+"#"+x.p.id]); });
     if(ow.length){
       html += '<p class="sugg-near"><strong>On the way:</strong> ' + ow.map(function(x){ return '<span class="nm" data-open="'+x.p.id+'">'+esc(x.p.name)+'</span> '+esc(x.p.cat)+' · '+x.mi+' mi'; }).join(" &middot; ") + '</p>';
     }
@@ -2683,7 +2822,7 @@ document.addEventListener("click", function(e){
   var wx=e.target.closest("[data-wxday]"); if(wx){ openWxDay(wx.getAttribute("data-wxday")); return; }
   var cp=e.target.closest("[data-cancelpend]"); if(cp){ pendSched=null; renderCalendar(); return; }
   var pk=e.target.closest("[data-pickday]");
-  if(pk && pendSched && !e.target.closest("[data-note],[data-nudge],[data-move],[data-unsched],[data-cancelpend],[data-open],[data-planb]")){
+  if(pk && pendSched && !e.target.closest("[data-note],[data-nudge],[data-move],[data-unsched],[data-cancelpend],[data-open],[data-planb],[data-dayedit],[data-reorder],[data-untext],[data-drag],[data-tripnotes]")){
     var iso2=pk.getAttribute("data-pickday"), p2=getPlace(pendSched);
     state.sched[pendSched]=iso2; save(); pendSched=null; renderAll();
     toast((p2?p2.name:"Place")+" — "+dayLabel(iso2)+"."); return;
@@ -3107,6 +3246,299 @@ document.addEventListener("click", function(e){
   }
   renderBeaches(); renderVs();
 })();
+
+/* ================= Patch 17: Schedule editing system =================
+   - Every Schedule item carries a ☰ handle: press-and-hold (~1s) lifts it,
+     then drag to reorder within the day. Up/down arrows do the same job.
+   - Every item has its own Edit button (and every day a day-level Edit
+     button) opening the picker: "From Sug'std" (this day, Submit) and
+     "Whole Sug'std" (all days, per-day Choose -> "Move it over" /
+     "Copy it over" question; the picker stays open; X saves).
+   - Move = lands on the target Schedule day AND leaves Sug'std.
+     Copy = lands on the target day and stays in Sug'std too. */
+function dayEntries(iso){
+  var entries = [];
+  allPlaces().forEach(function(p){ if(state.sched[p.id]===iso) entries.push({ kind:"place", key:"p:"+p.id, place:p }); });
+  Object.keys(state.schedText||{}).forEach(function(tid){
+    var tx = state.schedText[tid];
+    if(tx && tx.iso===iso) entries.push({ kind:"text", key:"t:"+tid, text:tx });
+  });
+  var order = (state.schedOrder && state.schedOrder[iso]) || [];
+  function nm(e){ return e.kind==="place" ? e.place.name : e.text.label; }
+  entries.sort(function(a,b){
+    var ia = order.indexOf(a.key), ib = order.indexOf(b.key);
+    if(ia<0 && ib<0) return nm(a).localeCompare(nm(b));
+    if(ia<0) return 1;
+    if(ib<0) return -1;
+    return ia-ib;
+  });
+  return entries;
+}
+function setDayOrder(iso, keys){ if(!state.schedOrder) state.schedOrder = {}; state.schedOrder[iso] = keys; }
+
+/* The selectable Sug'std items for one day: the day's plan items (place and
+   text), plus that day's On the way stops — minus anything already moved out. */
+function suggItemsFor(iso){
+  var out = [];
+  var plan = dayPlanFor(iso);
+  if(plan) plan.items.forEach(function(it, idx){
+    var key = iso+"#"+idx;
+    if(state.suggGone && state.suggGone[key]) return;
+    if(it.place){
+      var p = getPlace(it.place); if(!p) return;
+      out.push({ key:key, kind:"place", placeId:p.id, label:it.label||p.name, sub:(it.t?it.t+" · ":"")+(it.note||""), note:it.note||"", t:it.t||"" });
+    } else {
+      out.push({ key:key, kind:"text", label:it.label||"", sub:(it.t?it.t+" · ":"")+(it.note||""), note:it.note||"", t:it.t||"" });
+    }
+  });
+  onWayFor(iso, dayAnchors(iso)).forEach(function(x){
+    var key = "ow#"+iso+"#"+x.p.id;
+    if(state.suggGone && state.suggGone[key]) return;
+    out.push({ key:key, kind:"ow", placeId:x.p.id, label:x.p.name, sub:"On the way · "+x.p.cat+" · "+x.p.area+" · "+x.mi+" mi from the day\u2019s stops", note:"On the way stop, added from Sug\u2019std.", t:"" });
+  });
+  return out;
+}
+
+var pickTargetIso = null, pickTab = "same", pickLookup = {};
+function openDayEditor(iso){
+  pickTargetIso = iso; pickTab = "same";
+  renderPicker();
+  openSheet("picker-sheet");
+}
+function pickRowHTML(si, groupIso){
+  pickLookup[si.key] = si;
+  var already = !!si.placeId && state.sched[si.placeId]===pickTargetIso;
+  return '<label class="pick-row'+(already?" done":"")+'"><input type="checkbox" data-pick="'+esc(si.key)+'" data-group="'+groupIso+'"'+(already?" disabled":"")+' />'
+    + '<span class="pick-main"><span class="pick-name">'+esc(si.label)+'</span>'
+    + (si.sub ? '<span class="pick-sub">'+esc(si.sub)+'</span>' : '')
+    + (already ? '<span class="pick-sub"><strong>Already on this day</strong></span>' : '')
+    + '</span></label>';
+}
+function renderPicker(){
+  var sh = document.getElementById("picker-sheet"); if(!sh || !pickTargetIso) return;
+  pickLookup = {};
+  var tgt = dayLabel(pickTargetIso);
+  var html = '<div class="sheet-head"><div class="inner"><h2>Edit — '+esc(tgt)+'</h2><div class="meta">Add stops to this day from Sug\u2019std. Sug\u2019std itself only changes when you pick \u201CMove it over.\u201D</div></div></div>'
+    + '<button class="sheet-close" data-close="1" aria-label="Close">'+I.x+'</button>'
+    + '<div class="sheet-body">'
+    + '<div class="pick-tabs" role="tablist"><button type="button" class="pick-tab" data-picktab="same" aria-selected="'+(pickTab==="same")+'">From Sug\u2019std</button>'
+    + '<button type="button" class="pick-tab" data-picktab="whole" aria-selected="'+(pickTab==="whole")+'">Whole Sug\u2019std</button></div>';
+  if(pickTab==="same"){
+    var items = suggItemsFor(pickTargetIso);
+    html += '<div class="pick-list">'
+      + (items.length ? items.map(function(si){ return pickRowHTML(si, pickTargetIso); }).join("")
+         : '<p class="pick-empty">Nothing left on this day in Sug\u2019std — everything has been moved out already. The Whole Sug\u2019std tab still has every other day.</p>')
+      + '</div><div class="form-actions"><button class="btn" type="button" data-close="1">Cancel</button><button class="btn primary" type="button" data-picksubmit="1">Submit — add selected</button></div>';
+  } else {
+    DAY_PLANS.forEach(function(dp){
+      var items = suggItemsFor(dp.iso);
+      var day = null; DAYS.forEach(function(d){ if(d.iso===dp.iso) day = d; });
+      html += '<div class="pick-day"><div class="pick-day-head"><strong>'+esc(day?day.label:dp.iso)+'</strong><span>'+esc(dp.title)+'</span></div>'
+        + (items.length ? items.map(function(si){ return pickRowHTML(si, dp.iso); }).join("")
+           : '<p class="pick-empty">Nothing left on this day in Sug\u2019std.</p>')
+        + '<div class="pick-choose-row"><button class="btn" type="button" data-pickchoose="'+dp.iso+'">Choose — send selected to '+esc(tgt)+'</button></div></div>';
+    });
+    html += '<div class="form-actions"><button class="btn primary" type="button" data-close="1">Done — everything chosen is saved</button></div>';
+  }
+  html += '</div>';
+  sh.innerHTML = html;
+}
+function gatherPicked(groupIso){
+  var out = [];
+  document.querySelectorAll('#picker-sheet input[data-pick]:checked').forEach(function(b){
+    if(groupIso && b.getAttribute("data-group")!==groupIso) return;
+    var si = pickLookup[b.getAttribute("data-pick")];
+    if(si) out.push(si);
+  });
+  return out;
+}
+function applyPicked(items, mode){
+  items.forEach(function(si){
+    if(mode==="move"){ if(!state.suggGone) state.suggGone = {}; state.suggGone[si.key] = true; }
+    if(si.placeId){
+      if(state.sched[si.placeId]!==pickTargetIso) state.sched[si.placeId] = pickTargetIso;
+    } else {
+      var tid = "x"+Date.now().toString(36)+Math.random().toString(36).slice(2,8);
+      if(!state.schedText) state.schedText = {};
+      state.schedText[tid] = { label:si.label, note:si.note||"", t:si.t||"", iso:pickTargetIso };
+    }
+  });
+  setDayOrder(pickTargetIso, dayEntries(pickTargetIso).map(function(e){ return e.key; }));
+  save();
+}
+
+/* "Move it over" / "Copy it over" question pop-up */
+var askMoveCb = null;
+function askMoveCopy(count, cb){
+  document.getElementById("ask-text").textContent = count + (count===1 ? " item" : " items")
+    + " picked. \u201CMove it over\u201D puts them on the day AND takes them off Sug\u2019std. \u201CCopy it over\u201D puts them on the day and leaves them in Sug\u2019std too.";
+  askMoveCb = cb;
+  document.getElementById("ask-back").classList.add("on");
+}
+function closeAsk(){ document.getElementById("ask-back").classList.remove("on"); askMoveCb = null; }
+document.getElementById("ask-move").addEventListener("click", function(){ var cb = askMoveCb; closeAsk(); if(cb) cb("move"); });
+document.getElementById("ask-copy").addEventListener("click", function(){ var cb = askMoveCb; closeAsk(); if(cb) cb("copy"); });
+document.getElementById("ask-cancel").addEventListener("click", closeAsk);
+document.addEventListener("keydown", function(e){ if(e.key==="Escape") closeAsk(); });
+
+/* ---- press-and-hold drag reorder (pointer events) ---- */
+var dragState = null;
+document.addEventListener("pointerdown", function(e){
+  var h = e.target.closest("[data-drag]");
+  if(!h) return;
+  var entry = h.closest("[data-entry]"); if(!entry) return;
+  dragState = { entry:entry, iso:entry.getAttribute("data-day"), startX:e.clientX, startY:e.clientY, lifted:false, timer:null };
+  dragState.timer = setTimeout(function(){
+    if(!dragState) return;
+    dragState.lifted = true;
+    dragState.entry.classList.add("lifted");
+    if(navigator.vibrate){ try{ navigator.vibrate(15); }catch(err){} }
+  }, 900);
+});
+document.addEventListener("pointermove", function(e){
+  if(!dragState) return;
+  if(!dragState.lifted){
+    if(Math.abs(e.clientY-dragState.startY)>10 || Math.abs(e.clientX-dragState.startX)>10){
+      clearTimeout(dragState.timer); dragState = null;
+    }
+    return;
+  }
+  e.preventDefault();
+  var entry = dragState.entry, parent = entry.parentNode;
+  var sibs = Array.prototype.slice.call(parent.querySelectorAll(".day-entry[data-entry]"));
+  var after = null;
+  sibs.forEach(function(s){
+    if(s===entry) return;
+    var r = s.getBoundingClientRect();
+    if(e.clientY > r.top + r.height/2) after = s;
+  });
+  if(after){ if(after.nextSibling !== entry) parent.insertBefore(entry, after.nextSibling); }
+  else {
+    var first = sibs[0]===entry ? sibs[1] : sibs[0];
+    if(first && first!==entry) parent.insertBefore(entry, first);
+  }
+}, { passive:false });
+function endDrag(commit){
+  if(!dragState) return;
+  clearTimeout(dragState.timer);
+  var ds = dragState; dragState = null;
+  ds.entry.classList.remove("lifted");
+  if(commit && ds.lifted){
+    var keys = Array.prototype.map.call(ds.entry.parentNode.querySelectorAll(".day-entry[data-entry]"), function(el){ return el.getAttribute("data-entry"); });
+    setDayOrder(ds.iso, keys); save(); renderCalendar();
+    toast("Order saved for " + dayLabel(ds.iso) + ".");
+  }
+}
+document.addEventListener("pointerup", function(){ endDrag(true); });
+document.addEventListener("pointercancel", function(){ endDrag(false); });
+document.addEventListener("contextmenu", function(e){ if(e.target.closest("[data-entry]")) e.preventDefault(); });
+
+/* ---- Trip Notes: one whole-trip document, built live from state.notes ---- */
+function tripNotesText(){
+  var lines = ["Kauai Trip Notes — Nov 6–24, 2026", ""], any = false;
+  DAYS.forEach(function(d){
+    var n = (state.notes[d.iso]||"").trim();
+    if(!n) return;
+    any = true;
+    lines.push("## " + d.label, n, "");
+  });
+  if(!any) lines.push("No day notes written yet. Tap Notes on any day in the Schedule to start one.");
+  return lines.join("\n");
+}
+function openTripNotes(){
+  var sh = document.getElementById("tripnotes-sheet"); if(!sh) return;
+  var html = '<div class="sheet-head"><div class="inner"><h2>Trip Notes</h2><div class="meta">One document for the whole trip, built live from your per-day notes — edit or delete a day\u2019s note and this file updates itself. Nothing is copied or synced.</div></div></div>'
+    + '<button class="sheet-close" data-close="1" aria-label="Close">'+I.x+'</button>'
+    + '<div class="sheet-body">';
+  DAYS.forEach(function(d){
+    var n = (state.notes[d.iso]||"").trim();
+    html += '<div class="tn-day"><div class="tn-day-head"><strong>'+esc(d.label)+'</strong><button class="mini-btn" type="button" data-note="'+d.iso+'">'+(n?"Edit note":"Add note")+'</button></div>'
+      + (n ? '<div class="tn-text">'+esc(n)+'</div>' : '<div class="tn-empty">Nothing written yet.</div>') + '</div>';
+  });
+  html += '<div class="form-actions"><button class="btn" type="button" data-close="1">Close</button><button class="btn primary" type="button" data-tripnotes-save="1">Save / Download the whole file</button></div></div>';
+  sh.innerHTML = html;
+  openSheet("tripnotes-sheet");
+}
+function saveTripNotes(){
+  var blob = new Blob([tripNotesText()], { type:"text/markdown" });
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement("a");
+  a.href = url; a.download = "kauai-trip-notes.md";
+  document.body.appendChild(a); a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); if(a.parentNode) a.parentNode.removeChild(a); }, 400);
+  toast("Trip Notes saved as one file — check your downloads.");
+}
+
+/* ---- Patch 17 click handling ---- */
+document.addEventListener("click", function(e){
+  var de = e.target.closest("[data-dayedit]");
+  if(de){ openDayEditor(de.getAttribute("data-dayedit")); return; }
+  var ro = e.target.closest("[data-reorder]");
+  if(ro){
+    var rp = ro.getAttribute("data-reorder").split("|"), rkey = rp[0], rdelta = parseInt(rp[1],10);
+    var rel = ro.closest("[data-entry]"); if(!rel) return;
+    var riso = rel.getAttribute("data-day");
+    var keys = dayEntries(riso).map(function(x){ return x.key; });
+    var ri = keys.indexOf(rkey), rj = ri + rdelta;
+    if(ri>=0 && rj>=0 && rj<keys.length){
+      var tmp = keys[ri]; keys[ri] = keys[rj]; keys[rj] = tmp;
+      setDayOrder(riso, keys); save(); renderCalendar();
+    }
+    return;
+  }
+  var ut = e.target.closest("[data-untext]");
+  if(ut){
+    delete state.schedText[ut.getAttribute("data-untext")];
+    save(); renderAll(); toast("Taken off the Schedule.");
+    return;
+  }
+  var ng = e.target.closest("[data-nudge]");
+  if(ng){
+    var np = ng.getAttribute("data-nudge").split("|"), nkey = np[0], ndelta = parseInt(np[1],10);
+    if(nkey.indexOf("t:")===0){
+      var tx2 = state.schedText[nkey.slice(2)]; if(!tx2) return;
+      var ti = -1; DAYS.forEach(function(d,i){ if(d.iso===tx2.iso) ti = i; });
+      var tn2 = ti + ndelta;
+      if(tn2>=0 && tn2<DAYS.length){ tx2.iso = DAYS[tn2].iso; save(); renderAll(); }
+      return;
+    }
+    if(nkey.indexOf("p:")===0){
+      var pid2 = nkey.slice(2), cur2 = state.sched[pid2]; if(!cur2) return;
+      var pi = -1; DAYS.forEach(function(d,i){ if(d.iso===cur2) pi = i; });
+      var pn = pi + ndelta;
+      if(pn>=0 && pn<DAYS.length){ state.sched[pid2] = DAYS[pn].iso; save(); renderAll(); }
+      return;
+    }
+    return;
+  }
+  var pt = e.target.closest("[data-picktab]");
+  if(pt){ pickTab = pt.getAttribute("data-picktab"); renderPicker(); return; }
+  var ps = e.target.closest("[data-picksubmit]");
+  if(ps){
+    var items = gatherPicked(pickTargetIso);
+    if(!items.length){ toast("Tick at least one item first."); return; }
+    applyPicked(items, "copy");
+    closeSheets(); renderAll();
+    toast(items.length + (items.length===1 ? " stop" : " stops") + " added to " + dayLabel(pickTargetIso) + ".");
+    return;
+  }
+  var pc = e.target.closest("[data-pickchoose]");
+  if(pc){
+    var gIso = pc.getAttribute("data-pickchoose");
+    var items2 = gatherPicked(gIso);
+    if(!items2.length){ toast("Tick at least one item from that day first."); return; }
+    askMoveCopy(items2.length, function(mode){
+      applyPicked(items2, mode);
+      renderAll(); renderPicker();
+      toast(mode==="move" ? "Moved over — and off Sug\u2019std." : "Copied over — still in Sug\u2019std too.");
+    });
+    return;
+  }
+  var tnb = e.target.closest("[data-tripnotes]");
+  if(tnb){ openTripNotes(); return; }
+  var tsb = e.target.closest("[data-tripnotes-save]");
+  if(tsb){ saveTripNotes(); return; }
+});
 
 /* Patch 16: the app opens on Today. */
 showView("today");
