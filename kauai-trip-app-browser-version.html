@@ -457,10 +457,17 @@
   .day-entry.meeting{ border-top:1px dashed var(--line); }
   .meet-tag{ flex:none; font-size:11px; font-weight:700; letter-spacing:.05em; border:1px solid var(--line); padding:2px 7px; color:var(--ink2); border-radius:6px; white-space:nowrap; }
 
-  /* ---------- tab bar fit + active-state fix ---------- */
-  nav.tabs button{ min-width:0; font-size:10.5px; letter-spacing:.02em; gap:3px; padding:11px 1px 9px; }
-  nav.tabs svg{ width:15px; height:15px; }
+  /* ---------- tab bar: two rows, easy to read ---------- */
+  nav.tabs{ flex-wrap:wrap; }
+  nav.tabs button{ flex:1 1 25%; min-width:0; font-size:12.5px; letter-spacing:.03em; gap:5px; padding:11px 1px 9px; white-space:nowrap; }
+  nav.tabs svg{ width:16px; height:16px; }
   nav.tabs button[aria-selected="true"]{ background:transparent; color:var(--ink); font-weight:700; border-bottom:3px solid; border-image:linear-gradient(90deg,#57c7b8,#8fb8ec,#e0a8d8) 1; }
+
+  /* ---------- killa grinds menu ---------- */
+  .menu-head{ font-family:"Marcellus",Georgia,serif; font-weight:400; font-size:23px; letter-spacing:.02em; margin:20px 0 10px; }
+  .dish{ padding:14px; margin-bottom:12px; }
+  .dish h4{ margin:0 0 4px; font-size:18px; }
+  .dish p{ margin:0 0 10px; color:var(--ink2); }
 
   /* ---------- map search-add + under-map list ---------- */
   .map-results{ display:none; margin-top:8px; border:1px solid var(--line); border-radius:12px; overflow:hidden; background:var(--surface); }
@@ -584,6 +591,9 @@
     <button role="tab" id="tab-places" aria-selected="false" data-view="places">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Places
     </button>
+    <button role="tab" id="tab-grinds" aria-selected="false" data-view="grinds">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 19h18M5 19a7 7 0 0 1 14 0M12 10V8M9.5 8h5"/></svg>Grinds
+    </button>
     <button role="tab" id="tab-beaches" aria-selected="false" data-view="beaches">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 15c2.5 0 2.5 2 5 2s2.5-2 5-2 2.5 2 5 2 2.5-2 5-2M2 9c2.5 0 2.5 2 5 2s2.5-2 5-2 2.5 2 5 2 2.5-2 5-2"/></svg>Beaches
     </button>
@@ -637,6 +647,12 @@
     <div id="fav-wrap"></div>
     <div id="all-wrap"></div>
     <p class="foot-note">Prices and hours are snapshots from each place's own listing — re-confirm at booking. Your stars, edits, added places and scheduled dates are saved on this device, in this browser.</p>
+  </section>
+
+  <!-- GRINDS -->
+  <section class="view" id="view-grinds">
+    <div id="grinds-wrap"></div>
+    <p class="foot-note">Everything on this menu is gluten-free, with cooked seafood and lamb only — no eggs, no beef, nothing raw. Built from the Costco and Times/Safeway grocery runs. No recipes on purpose: tap “YouTube it” on any dish and watch someone make it first.</p>
   </section>
 
   <!-- BEACHES -->
@@ -1991,11 +2007,49 @@ document.getElementById("locate-btn").addEventListener("click", function(){
   { enableHighAccuracy:true, timeout:10000 });
 });
 
+/* ================= killa grinds menu ================= */
+var GRINDS = {
+  breakfasts: [
+    { name:"Papaya Sunrise Bowl", desc:"Fresh papaya filled with yogurt, gluten-free granola, and a drizzle of honey. No cooking at all.", yt:"papaya yogurt breakfast bowl" },
+    { name:"Salmon & Rice Breakfast Bowl", desc:"Flaked cooked salmon over warm rice with tamari and green onion — last night's fish, reborn.", yt:"salmon rice bowl breakfast tamari" },
+    { name:"Ginger Fish Jook", desc:"Cozy rice porridge with cooked fish and fresh ginger — the comfort breakfast, gentle on everybody.", yt:"fish congee jook recipe ginger" },
+    { name:"Garlic Shrimp & Grits", desc:"Shrimp-truck garlic shrimp over creamy corn grits. Breakfast that eats like dinner, in a good way.", yt:"garlic shrimp and grits recipe" },
+    { name:"Banana–Coconut Oatmeal", desc:"Gluten-free oats simmered in coconut milk with banana and a little brown sugar.", yt:"coconut banana oatmeal recipe" },
+    { name:"Tropical Smoothie Bowl", desc:"Thick-blended mango, banana, and coconut, topped with fresh fruit and gluten-free granola.", yt:"tropical smoothie bowl recipe" }
+  ],
+  dinners: [
+    { name:"Garlic Butter Lobster Tails", desc:"Broiled lobster tails brushed with garlic butter — the fancy night. Costco sells the tails.", yt:"broiled lobster tails garlic butter recipe" },
+    { name:"Miso-Glazed Mahi", desc:"Cooked mahi with a sweet miso glaze — like the famous miso butterfish, but with the fish you can actually buy.", yt:"miso glazed mahi mahi recipe" },
+    { name:"North Shore Garlic Shrimp", desc:"Shrimp-truck style: shrimp sizzled in garlic butter over rice, sauce poured over the top.", yt:"hawaiian garlic shrimp recipe" },
+    { name:"Tamari-Ginger Ahi Steak", desc:"Ahi cooked all the way through with tamari and ginger — all the island flavors, none of the raw.", yt:"cooked ahi tuna steak tamari ginger" },
+    { name:"Grilled Lamb Chops", desc:"Lamb chops with garlic and rosemary, grilled hot and fast — pineapple salsa on the side if you're feeling fancy.", yt:"grilled lamb chops garlic rosemary recipe" },
+    { name:"Coconut Curry Fish", desc:"Mahi simmered in coconut curry with whatever vegetables looked good at the market. Serve over rice.", yt:"coconut curry fish recipe mahi" },
+    { name:"Island Fish Tacos", desc:"Grilled mahi on warm corn tortillas with cabbage slaw and a squeeze of lime.", yt:"grilled mahi fish tacos corn tortillas" }
+  ]
+};
+function ytHref(q){ return "https://www.youtube.com/results?search_query=" + encodeURIComponent(q); }
+function dishCard(d){
+  return '<article class="card dish"><h4>'+esc(d.name)+'</h4><p>'+esc(d.desc)+'</p>'
+    + '<a class="btn" href="'+ytHref(d.yt)+'" target="_blank" rel="noopener">YouTube it</a></article>';
+}
+function renderGrinds(){
+  var w = document.getElementById("grinds-wrap");
+  if(!w || w.dataset.done) return;
+  w.dataset.done = "1";
+  var html = '<p class="cmp-intro">Cook-at-the-house favorites, built from the grocery runs — <strong>all gluten-free, cooked seafood and lamb only, no eggs and no beef.</strong> No recipes here on purpose: pick a dish, tap “YouTube it,” watch it made once, then cook it your way.</p>';
+  html += '<h3 class="menu-head">Morning Grinds — Breakfast</h3>';
+  html += GRINDS.breakfasts.map(dishCard).join("");
+  html += '<h3 class="menu-head">Evening Grinds — Dinner</h3>';
+  html += GRINDS.dinners.map(dishCard).join("");
+  w.innerHTML = html;
+}
+
 /* ================= tabs & global events ================= */
 function showView(v){
   document.querySelectorAll("nav.tabs button").forEach(function(b){ b.setAttribute("aria-selected", b.dataset.view===v ? "true":"false"); });
   document.querySelectorAll(".view").forEach(function(s){ s.classList.toggle("on", s.id==="view-"+v); });
   if(v==="today"){ renderToday(); initTodayMap(); }
+  if(v==="grinds"){ renderGrinds(); }
   if(v==="map"){ initMap(); invalidateMap(); refreshMarkers(); }
   window.scrollTo(0,0);
 }
