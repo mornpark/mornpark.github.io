@@ -182,6 +182,7 @@
   .pin svg{ width:12px; height:12px; }
   .pin.active{ background:var(--active); } .pin.explore{ background:var(--explore); } .pin.relax{ background:var(--relax); }
   .pin.daynum{ width:26px; height:26px; font-size:13.5px; }
+  .my-note{ width:100%; min-height:74px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); font:inherit; font-size:15px; margin:2px 0 10px; }
   #map-card{
     position:absolute; left:10px; right:10px; bottom:10px; z-index:500; display:none;
     background:var(--surface); border:1px solid var(--line); box-shadow:0 8px 28px rgba(0,0,0,.25);
@@ -1755,7 +1756,8 @@ if(!state.schedUndo) state.schedUndo = {};    /* iso -> [entry keys] — the ord
 if(!state.grindsGone) state.grindsGone = {};  /* Grinds dish name -> true, once Justin deletes a dish from his menu */
 if(!state.bookStyle) state.bookStyle = "clean";   /* Make-a-book style: "clean" | "photo" | "journal" */
 if(state.bookCover === undefined) state.bookCover = null; /* diary photo id for the book cover, or null = title only */
-if(!state.beckyList) state.beckyList = [];  /* [{t, done}] — running "used up at Becky's, replenish" list on the Today view (Patch 20) */
+if(!state.beckyList) state.beckyList = [];
+if(!state.myNotes) state.myNotes = {};    /* place id -> Justin's own notes on that place (Patch 25) */  /* [{t, done}] — running "used up at Becky's, replenish" list on the Today view (Patch 20) */
 function save(){ store.set(state); }
 
 /* ================= Patch 19: diary photos (IndexedDB) + book view =================
@@ -2574,6 +2576,9 @@ function detailHTML(p){
     + section("Dietary options", p.dietary)
     + section("What to expect", p.expect)
     + (links ? '<h4>On their website</h4><div class="link-row">'+links+'</div>' : '')
+    + '<h4>My notes</h4>'
+    + '<textarea id="my-note-text" class="my-note" placeholder="Your own notes — what you verified when you called: hours, gluten-free and vegan options, who you talked to.">' + esc(myNote(p.id)) + '</textarea>'
+    + '<div class="detail-actions"><button class="btn primary" type="button" data-mynote-save="' + p.id + '">Save my notes</button></div>'
     + '<h4>Schedule it</h4><div class="date-row">'
     + '<input type="date" id="sched-date" min="2026-11-06" max="2026-11-24" value="'+esc(sched)+'" />'
     + '<button class="btn primary" data-setsched="'+p.id+'">Set date</button>'
@@ -2585,6 +2590,29 @@ function detailHTML(p){
     + '<button class="btn danger" data-del="'+p.id+'">Delete place</button></div>'
     + '</div>';
 }
+/* ================= Patch 25: my notes on every place =================
+   Justin's own field notes on a place card — what he verifies himself
+   when he calls (hours, gluten-free and vegan, who he talked to). Kept
+   in state.myNotes per place id, separate from the place data, so his
+   notes never rewrite the researched card. */
+function myNote(id){ return (state.myNotes && state.myNotes[id]) || ""; }
+function setMyNote(id, txt){
+  if(!state.myNotes) state.myNotes = {};
+  txt = String(txt || "").trim();
+  if(txt) state.myNotes[id] = txt; else delete state.myNotes[id];
+  save();
+}
+document.addEventListener("click", function(e){
+  var sv = e.target.closest("[data-mynote-save]");
+  if(sv){
+    var pid = sv.getAttribute("data-mynote-save");
+    var ta = document.getElementById("my-note-text");
+    setMyNote(pid, ta ? ta.value : "");
+    var pl = getPlace(pid);
+    toast("Your notes saved" + (pl ? " for " + pl.name : "") + ".");
+    return;
+  }
+});
 function openDetail(id){
   var p = getPlace(id); if(!p) return;
   var sh = document.getElementById("detail-sheet");
