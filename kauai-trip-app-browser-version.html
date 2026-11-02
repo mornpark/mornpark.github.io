@@ -478,6 +478,14 @@
   .mr-name{ font-weight:600; font-size:15px; }
   .mr-sub{ font-size:12.5px; color:var(--ink2); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
   .mr-note{ padding:11px 12px; font-size:13.5px; color:var(--ink2); }
+  .mr-card{ padding:12px; }
+  .sum-line{ font-size:13.5px; color:var(--ink2); margin-top:5px; line-height:1.45; }
+  .sum-line strong{ color:var(--ink); }
+  .mr-actions{ display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+  .mr-actions .btn{ flex:1 1 auto; justify-content:center; white-space:nowrap; }
+  .mr-back{ background:none; border:0; color:#7fd1bd; font:inherit; font-weight:700; font-size:13.5px; padding:2px 0 8px; cursor:pointer; }
+  .pick-search{ display:flex; gap:8px; margin:4px 0 10px; }
+  .pick-search input{ flex:1; min-width:0; padding:11px 12px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); font:inherit; font-size:15px; }
   .map-list-head{ display:flex; align-items:baseline; gap:8px; margin:18px 2px 2px; }
   .map-list-head h3{ margin:0; font-size:17px; }
   .map-list-head span{ font-size:12.5px; color:var(--ink2); }
@@ -3836,7 +3844,7 @@ if(mapSearchEl) mapSearchEl.addEventListener("input", function(){ mapQuery = map
 var mapListEl = document.getElementById("map-list");
 var mapResEl = document.getElementById("map-results");
 var mapResToken = 0;
-function hideMapResults(){ if(mapResEl){ mapResEl.innerHTML=""; mapResEl.classList.remove("on"); } }
+function hideMapResults(){ clearTempPin(); if(mapResEl){ mapResEl.innerHTML=""; mapResEl.classList.remove("on"); } }
 function savedMatches(q){
   q = (q||"").trim().toLowerCase(); if(q.length<2) return [];
   return allPlaces().filter(function(p){
@@ -3865,6 +3873,7 @@ function focusPlace(id){
 }
 function renderMapResults(){
   if(!mapResEl || !mapSearchEl) return;
+  mapResToken++; clearTempPin();
   var q = mapSearchEl.value.trim();
   if(q.length<2){ hideMapResults(); return; }
   var hits = savedMatches(q);
@@ -3873,53 +3882,256 @@ function renderMapResults(){
     html += '<button type="button" class="mr-row" data-mr-saved="'+p.id+'"><span class="cdot '+effPhase(p)+'"></span><span class="mr-main"><span class="mr-name">'+esc(p.name)+'</span><span class="mr-sub">Already on your map \u00b7 '+esc(p.cat)+' \u00b7 '+esc(p.area)+'</span></span></button>';
   });
   if(q.length>=3){
-    html += '<button type="button" class="mr-row" id="mr-online"><span class="mr-main"><span class="mr-name">Search online for \u201c'+esc(q)+'\u201d</span><span class="mr-sub">Finds it and adds a pin that stays on your map</span></span></button>';
+    html += '<button type="button" class="mr-row" id="mr-online"><span class="mr-main"><span class="mr-name">Search online for \u201c'+esc(q)+'\u201d</span><span class="mr-sub">Live results — browse them, see a summary, then add</span></span></button>';
   }
   if(!html){ hideMapResults(); return; }
   mapResEl.innerHTML = html; mapResEl.classList.add("on");
   var ob = document.getElementById("mr-online");
   if(ob) ob.addEventListener("click", function(){ searchOnlineAdd(q); });
 }
+/* ================= Patch 22: live online search — browse, summary, then add =================
+   One engine, two doors: the Map tab search and the Schedule day editor's
+   "Search online" tab. Results are places NOT already saved in the app.
+   Sources: Nominatim (named places) plus Overpass (real shops and POIs
+   near a named area, for category searches like "puka bracelet Poipu").
+   Tapping a result shows a summary FIRST; nothing is saved until the
+   Add button is tapped. Hours appear when the open map data lists them.
+   Google stars and reviews cannot be pulled into the app (Google only
+   licenses them through a paid key that would sit exposed on this public
+   page), so each summary carries a one-tap "See on Google" button. */
+var tempPin = null;
+function clearTempPin(){ if(tempPin && map){ try{ map.removeLayer(tempPin); }catch(e){} } tempPin = null; }
+function showTempPin(it){
+  clearTempPin();
+  if(!mapReady || typeof L === "undefined") return;
+  tempPin = L.marker([it.lat, it.lng], { icon: L.divIcon({ className:"", html:'<div class="pin hl explore">★</div>', iconSize:[30,30], iconAnchor:[15,15] }) }).addTo(map);
+  map.flyTo([it.lat, it.lng], Math.max(map.getZoom(), 14), { duration:0.7 });
+}
+function findSavedByName(name){
+  var n = String(name || "").trim().toLowerCase(); if(!n) return null;
+  var found = null;
+  allPlaces().forEach(function(p){ if(!found && String(p.name || "").trim().toLowerCase() === n) found = p; });
+  return found;
+}
+var KAUAI_TOWNS = ["poipu","koloa","kalaheo","lihue","kapaa","wailua","hanalei","princeville","kilauea","hanapepe","eleele","waimea","kekaha","lawai","omao","anahola","kealia"];
+function capWord(s){ s = String(s || ""); return s ? s.charAt(0).toUpperCase() + s.slice(1) : s; }
+function parseOnlineQuery(q){
+  var s = " " + String(q || "").toLowerCase().replace(/[’‘]/g, "'") + " ";
+  if(s.indexOf("kapa'a") >= 0) s += " kapaa ";
+  var cats = [];
+  function has(){ for(var i = 0; i < arguments.length; i++){ if(s.indexOf(arguments[i]) >= 0) return true; } return false; }
+  if(has("jewel", "bracelet", "necklace", "puka", "souvenir", "gift")) cats.push({ shop:"jewelry|gift|souvenir|clothes|art|craft" });
+  else if(has("shopping", " shop", "store", " mall")) cats.push({ shop:"*" });
+  if(has("market")) cats.push({ amenity:"marketplace" });
+  if(has("restaurant", "food", "eat", "dinner", "lunch", "poke", "coffee", "cafe")) cats.push({ amenity:"restaurant|cafe|fast_food" });
+  if(has("grocer", "supermarket")) cats.push({ shop:"supermarket|convenience" });
+  if(has("gas", "fuel")) cats.push({ amenity:"fuel" });
+  if(has("beach") && !cats.length) cats.push({ natural:"beach" });
+  var area = "";
+  KAUAI_TOWNS.forEach(function(t){ if(s.indexOf(" " + t) >= 0 || s.indexOf(t + " ") >= 0) area = t; });
+  return { cats:cats, area:area };
+}
+var SHOP_CATS = { jewelry:"Jewelry shop", gift:"Gift shop", souvenir:"Souvenir shop", clothes:"Clothing shop", supermarket:"Supermarket", convenience:"Convenience store", art:"Art shop", craft:"Craft shop", bakery:"Bakery", seafood:"Seafood market", florist:"Florist", books:"Bookstore", pharmacy:"Pharmacy", hardware:"Hardware store", outdoor:"Outdoor shop", toys:"Toy shop", charity:"Thrift shop" };
+function normNominatim(r0){
+  var ad = r0.address || {}, ex = r0.extratags || {};
+  var type = String(r0.type || "").replace(/_/g, " ");
+  var cat = capWord(type);
+  if(r0.class === "shop") cat = SHOP_CATS[type] || (type ? capWord(type) + " shop" : "Shop");
+  if(r0.class === "amenity" && type === "marketplace") cat = "Market";
+  if(!cat) cat = "Place";
+  return {
+    name: (r0.namedetails && r0.namedetails.name) || String(r0.display_name || "").split(",")[0] || "",
+    cat: cat,
+    area: ad.city || ad.town || ad.village || ad.suburb || "",
+    address: String(r0.display_name || "").replace(/, United States$/, ""),
+    phone: ex.phone || ex["contact:phone"] || "",
+    hours: ex.opening_hours || "",
+    website: ex.website || ex["contact:website"] || "",
+    lat: parseFloat(r0.lat), lng: parseFloat(r0.lon)
+  };
+}
+function normOverpass(el, areaName){
+  var t = el.tags || {};
+  if(!t.name) return null;
+  var lat = (typeof el.lat === "number") ? el.lat : (el.center ? el.center.lat : NaN);
+  var lng = (typeof el.lon === "number") ? el.lon : (el.center ? el.center.lon : NaN);
+  if(isNaN(lat) || isNaN(lng)) return null;
+  var cat = "Place";
+  if(t.shop) cat = SHOP_CATS[t.shop] || (capWord(String(t.shop).replace(/_/g, " ")) + " shop");
+  else if(t.amenity) cat = ({ restaurant:"Restaurant", cafe:"Café", fast_food:"Fast food", marketplace:"Market", fuel:"Gas station", pharmacy:"Pharmacy" })[t.amenity] || capWord(String(t.amenity).replace(/_/g, " "));
+  else if(t.natural === "beach") cat = "Beach";
+  else if(t.tourism) cat = capWord(String(t.tourism).replace(/_/g, " "));
+  var street = ((t["addr:housenumber"] || "") + " " + (t["addr:street"] || "")).trim();
+  var city = t["addr:city"] || capWord(areaName || "");
+  var addr = [street, city].filter(Boolean).join(", ");
+  if(addr && street) addr += ", HI";
+  return { name:t.name, cat:cat, area:city, address: addr || (t.name + (city ? ", " + city : "") + ", Kauai, HI"),
+    phone: t["contact:phone"] || t.phone || "", hours: t.opening_hours || "",
+    website: t.website || t["contact:website"] || "", lat:lat, lng:lng };
+}
+function overpassSearch(pq){
+  var geoUrl = "https://nominatim.openstreetmap.org/search?format=json&limit=1&q=" + encodeURIComponent(capWord(pq.area) + ", Kauai, Hawaii");
+  return fetch(geoUrl, { headers:{ "Accept":"application/json" } }).then(function(r){ return r.json(); }).then(function(rows){
+    if(!rows || !rows.length) return [];
+    var cLat = parseFloat(rows[0].lat), cLng = parseFloat(rows[0].lon);
+    var clauses = [];
+    pq.cats.forEach(function(c){
+      if(c.shop) clauses.push('nwr["shop"' + (c.shop === "*" ? "" : '~"^(' + c.shop + ')$"') + "](around:4500," + cLat + "," + cLng + ");");
+      if(c.amenity) clauses.push('nwr["amenity"~"^(' + c.amenity + ')$"](around:4500,' + cLat + "," + cLng + ");");
+      if(c.natural) clauses.push('nwr["natural"="' + c.natural + '"](around:4500,' + cLat + "," + cLng + ");");
+    });
+    if(!clauses.length) return [];
+    var ql = "[out:json][timeout:18];(" + clauses.join("") + ");out center 25;";
+    var call = fetch("https://overpass-api.de/api/interpreter", { method:"POST", headers:{ "Content-Type":"application/x-www-form-urlencoded" }, body:"data=" + encodeURIComponent(ql) }).then(function(r){ return r.json(); });
+    var slow = new Promise(function(res){ setTimeout(function(){ res(null); }, 20000); });
+    return Promise.race([call, slow]).then(function(j){
+      if(!j || !j.elements) return [];
+      return j.elements.map(function(el){ return normOverpass(el, pq.area); }).filter(Boolean);
+    });
+  }).catch(function(){ return []; });
+}
+function onlineSearchPlaces(q){
+  var pq = parseOnlineQuery(q);
+  var nomUrl = "https://nominatim.openstreetmap.org/search?format=json&limit=5&addressdetails=1&extratags=1&namedetails=1&viewbox=-159.85,22.30,-159.25,21.80&bounded=0&q=" + encodeURIComponent(q + ", Kauai, Hawaii");
+  var nomP = fetch(nomUrl, { headers:{ "Accept":"application/json" } }).then(function(r){ return r.json(); }).then(function(rows){
+    return (rows || []).map(normNominatim).filter(function(x){ return x.name && !isNaN(x.lat) && !isNaN(x.lng); });
+  }).catch(function(){ return []; });
+  var overP = (pq.cats.length && pq.area) ? overpassSearch(pq) : Promise.resolve([]);
+  return Promise.all([nomP, overP]).then(function(res){
+    var lists = pq.cats.length ? [res[1], res[0]] : [res[0], res[1]];
+    var seen = {}, out = [];
+    lists.forEach(function(list){ list.forEach(function(it){
+      var key = it.name.toLowerCase() + "@" + Math.round(it.lat * 400) + "," + Math.round(it.lng * 400);
+      if(seen[key]) return; seen[key] = true;
+      if(findSavedByName(it.name)) return;
+      out.push(it);
+    }); });
+    return out.slice(0, 5);
+  });
+}
+function placeFromOnline(it){
+  var links = [];
+  if(it.website) links.push(["Website", it.website]);
+  return { id:"custom-" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6),
+    name:it.name, cat:it.cat || "Added by you", area:it.area || "", address:it.address || "",
+    phone:it.phone || "", cost:"", hours:it.hours || "", about:"Added from a live search in the app.",
+    menu:"", dietary:"", expect:"", phase:"explore", bookEarly:false, lat:it.lat, lng:it.lng, links:links };
+}
+function onlineRowHTML(it, i, attr){
+  var meta = [it.cat, it.area].filter(Boolean).join(" · ");
+  if(it.hours) meta += (meta ? " · " : "") + "Hours listed";
+  return '<button type="button" class="mr-row" ' + attr + '="' + i + '"><span class="mr-main"><span class="mr-name">' + esc(it.name) + "</span>"
+    + (meta ? '<span class="mr-sub">' + esc(meta) + "</span>" : "")
+    + (it.address ? '<span class="mr-sub">' + esc(it.address) + "</span>" : "")
+    + "</span></button>";
+}
+function onlineSummaryHTML(it, addId, addLabel){
+  var gUrl = "https://www.google.com/maps/search/?api=1&query=" + encodeURIComponent(it.name + " " + (it.address || "") + " Kauai Hawaii");
+  var h = '<div class="mr-name" style="font-size:17px">' + esc(it.name) + "</div>";
+  var meta = [it.cat, it.area].filter(Boolean).join(" · ");
+  if(meta) h += '<div class="sum-line">' + esc(meta) + "</div>";
+  if(it.address) h += '<div class="sum-line">' + esc(it.address) + "</div>";
+  var dl = driveLabel(it); if(dl) h += '<div class="sum-line">' + esc(dl) + "</div>";
+  if(it.hours) h += '<div class="sum-line"><strong>Hours:</strong> ' + esc(it.hours) + "</div>";
+  if(it.phone) h += '<div class="sum-line"><strong>Phone:</strong> ' + esc(it.phone) + "</div>";
+  h += '<div class="sum-line">Stars, reviews and full weekly hours are on its Google listing — one tap below.</div>';
+  h += '<div class="mr-actions"><button type="button" class="btn primary" id="' + addId + '">' + esc(addLabel) + "</button>"
+    + '<a class="btn" href="' + dirHref(it) + '" target="_blank" rel="noopener">Navigate</a>'
+    + '<a class="btn" href="' + gUrl + '" target="_blank" rel="noopener">See on Google</a></div>';
+  return h;
+}
+var onlineItems = [];
+function renderOnlineRows(){
+  if(!mapResEl) return;
+  mapResEl.innerHTML = '<div class="mr-note">Not in the app yet — tap one to see a summary before adding:</div>'
+    + onlineItems.map(function(it, i){ return onlineRowHTML(it, i, "data-mr-online"); }).join("");
+  mapResEl.classList.add("on");
+  mapResEl.querySelectorAll("[data-mr-online]").forEach(function(b){
+    b.addEventListener("click", function(){ showOnlineSummary(parseInt(b.getAttribute("data-mr-online"), 10)); });
+  });
+}
+function showOnlineSummary(i){
+  var it = onlineItems[i]; if(!it || !mapResEl) return;
+  showTempPin(it);
+  mapResEl.innerHTML = '<div class="mr-card"><button type="button" class="mr-back" id="mr-back">← All results</button>'
+    + onlineSummaryHTML(it, "mr-add", "Add to my places") + "</div>";
+  mapResEl.classList.add("on");
+  var bk = document.getElementById("mr-back");
+  if(bk) bk.addEventListener("click", function(){ clearTempPin(); renderOnlineRows(); });
+  var ad = document.getElementById("mr-add");
+  if(ad) ad.addEventListener("click", function(){
+    var saved = findSavedByName(it.name);
+    var p = saved || placeFromOnline(it);
+    if(!saved) putPlace(p);
+    renderAll(); hideMapResults();
+    if(mapSearchEl) mapSearchEl.value = ""; mapQuery = "";
+    refreshMarkers(); focusPlace(p.id);
+    toast("Added — " + p.name + " now lives on your map.");
+  });
+}
 function searchOnlineAdd(q){
   var token = ++mapResToken;
   if(!mapResEl) return;
-  mapResEl.innerHTML = '<div class="mr-note">Searching online for \u201c'+esc(q)+'\u201d\u2026</div>';
+  clearTempPin();
+  mapResEl.innerHTML = '<div class="mr-note">Searching online for “' + esc(q) + '”…</div>';
   mapResEl.classList.add("on");
-  var url = "https://nominatim.openstreetmap.org/search?format=json&limit=5&addressdetails=1&viewbox=-159.85,22.30,-159.25,21.80&bounded=0&q=" + encodeURIComponent(q + ", Kauai, Hawaii");
-  fetch(url, { headers:{ "Accept":"application/json" } })
-    .then(function(r){ return r.json(); })
-    .then(function(rows){
-      if(token!==mapResToken) return;
-      if(!rows || !rows.length){ mapResEl.innerHTML = '<div class="mr-note">No match found online for \u201c'+esc(q)+'\u201d. Check the spelling, or add it from the Places tab.</div>'; return; }
-      var html = '<div class="mr-note">Tap the right one \u2014 it gets added to your map and stays there:</div>';
-      rows.forEach(function(r0, i){
-        var nm = String(r0.display_name||"").split(",")[0] || q;
-        var sub = String(r0.display_name||"").replace(/, United States$/, "");
-        html += '<button type="button" class="mr-row" data-mr-add="'+i+'"><span class="mr-main"><span class="mr-name">'+esc(nm)+'</span><span class="mr-sub">'+esc(sub)+'</span></span></button>';
-      });
-      mapResEl.innerHTML = html; mapResEl.classList.add("on");
-      mapResEl.querySelectorAll("[data-mr-add]").forEach(function(b){
-        b.addEventListener("click", function(){
-          var r0 = rows[parseInt(b.getAttribute("data-mr-add"),10)];
-          var ad = r0.addressdetails || {};
-          var nm = String(r0.display_name||"").split(",")[0] || q;
-          var p = {
-            id: "custom-" + Date.now().toString(36),
-            name: nm, cat: "Added by you",
-            area: ad.city || ad.town || ad.village || ad.county || "",
-            address: String(r0.display_name||"").replace(/, United States$/, ""),
-            phone:"", cost:"", hours:"", about:"Added from the map search.", menu:"", dietary:"", expect:"",
-            phase: "explore", bookEarly:false,
-            lat: parseFloat(r0.lat), lng: parseFloat(r0.lon), links: []
-          };
-          putPlace(p); renderAll(); hideMapResults();
-          if(mapSearchEl) mapSearchEl.value=""; mapQuery="";
-          refreshMarkers(); focusPlace(p.id);
-          toast("Added \u2014 " + nm + " now lives on your map.");
-        });
-      });
-    })
-    .catch(function(){ if(token===mapResToken && mapResEl) mapResEl.innerHTML = '<div class="mr-note">Online search failed (no connection?) \u2014 try again in a bit.</div>'; });
+  onlineSearchPlaces(q).then(function(items){
+    if(token !== mapResToken) return;
+    onlineItems = items;
+    if(!items.length){ mapResEl.innerHTML = '<div class="mr-note">No match found online for “' + esc(q) + '”. Check the spelling, or add it from the Places tab.</div>'; return; }
+    renderOnlineRows();
+  }).catch(function(){
+    if(token === mapResToken && mapResEl) mapResEl.innerHTML = '<div class="mr-note">Online search failed (no connection?) — try again in a bit.</div>';
+  });
+}
+/* ---- the same live search inside the Schedule day editor (third tab) ---- */
+var pickOnlineMsg = "", pickOnlineItems = [];
+function wirePickerOnline(){
+  var inp = document.getElementById("pick-q"), go = document.getElementById("pick-go"), res = document.getElementById("pick-results");
+  if(!inp || !go || !res) return;
+  function run(){
+    var q = inp.value.trim();
+    if(q.length < 3){ res.innerHTML = '<div class="mr-note">Type at least 3 letters, then tap Search.</div>'; return; }
+    pickOnlineMsg = "";
+    res.innerHTML = '<div class="mr-note">Searching online for “' + esc(q) + '”…</div>';
+    onlineSearchPlaces(q).then(function(items){
+      pickOnlineItems = items;
+      if(!document.getElementById("pick-results")) return;
+      if(!items.length){ res.innerHTML = '<div class="mr-note">No match found online for “' + esc(q) + '”. Check the spelling and try again.</div>'; return; }
+      renderPickOnlineRows();
+    }).catch(function(){
+      var r2 = document.getElementById("pick-results");
+      if(r2) r2.innerHTML = '<div class="mr-note">Online search failed (no connection?) — try again in a bit.</div>';
+    });
+  }
+  go.addEventListener("click", run);
+  inp.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); run(); } });
+}
+function renderPickOnlineRows(){
+  var res = document.getElementById("pick-results"); if(!res) return;
+  res.innerHTML = '<div class="mr-note">Not in the app yet — tap one to see its summary:</div>'
+    + pickOnlineItems.map(function(it, i){ return onlineRowHTML(it, i, "data-pick-online"); }).join("");
+  res.querySelectorAll("[data-pick-online]").forEach(function(b){
+    b.addEventListener("click", function(){ showPickOnlineSummary(parseInt(b.getAttribute("data-pick-online"), 10)); });
+  });
+}
+function showPickOnlineSummary(i){
+  var res = document.getElementById("pick-results"); var it = pickOnlineItems[i];
+  if(!res || !it) return;
+  res.innerHTML = '<div class="mr-card"><button type="button" class="mr-back" id="pick-back">← All results</button>'
+    + onlineSummaryHTML(it, "pick-add", "Add to " + dayLabel(pickTargetIso)) + "</div>";
+  var bk = document.getElementById("pick-back");
+  if(bk) bk.addEventListener("click", renderPickOnlineRows);
+  var ad = document.getElementById("pick-add");
+  if(ad) ad.addEventListener("click", function(){
+    var saved = findSavedByName(it.name);
+    var p = saved || placeFromOnline(it);
+    if(!saved) putPlace(p);
+    applyPicked([{ key:"on#" + p.id, kind:"place", placeId:p.id }], "copy");
+    pickOnlineMsg = p.name + " is on " + dayLabel(pickTargetIso) + ". Search again to add another.";
+    renderAll(); renderPicker();
+    toast("Added — " + p.name + " is on " + dayLabel(pickTargetIso) + ".");
+  });
 }
 function renderMapList(list){
   if(!mapListEl) return;
@@ -4113,7 +4325,7 @@ function suggItemsFor(iso){
 
 var pickTargetIso = null, pickTab = "same", pickLookup = {};
 function openDayEditor(iso){
-  pickTargetIso = iso; pickTab = "same";
+  pickTargetIso = iso; pickTab = "same"; pickOnlineMsg = "";
   renderPicker();
   openSheet("picker-sheet");
 }
@@ -4130,18 +4342,18 @@ function renderPicker(){
   var sh = document.getElementById("picker-sheet"); if(!sh || !pickTargetIso) return;
   pickLookup = {};
   var tgt = dayLabel(pickTargetIso);
-  var html = '<div class="sheet-head"><div class="inner"><h2>Edit — '+esc(tgt)+'</h2><div class="meta">Add stops to this day from Sug\u2019std. Sug\u2019std itself only changes when you pick \u201CMove it over.\u201D</div></div></div>'
+  var html = '<div class="sheet-head"><div class="inner"><h2>Edit — '+esc(tgt)+'</h2><div class="meta">Add stops to this day — from Sug\u2019std, or use Search online for somewhere new. Sug\u2019std itself only changes when you pick \u201CMove it over.\u201D</div></div></div>'
     + '<button class="sheet-close" data-close="1" aria-label="Close">'+I.x+'</button>'
     + '<div class="sheet-body">'
     + '<div class="pick-tabs" role="tablist"><button type="button" class="pick-tab" data-picktab="same" aria-selected="'+(pickTab==="same")+'">Day Sug\u2019std</button>'
-    + '<button type="button" class="pick-tab" data-picktab="whole" aria-selected="'+(pickTab==="whole")+'">Whole Sug\u2019std</button></div>';
+    + '<button type="button" class="pick-tab" data-picktab="whole" aria-selected="'+(pickTab==="whole")+'">Whole Sug\u2019std</button>' + '<button type="button" class="pick-tab" data-picktab="online" aria-selected="'+(pickTab==="online")+'">Search online</button></div>';
   if(pickTab==="same"){
     var items = suggItemsFor(pickTargetIso);
     html += '<div class="pick-list">'
       + (items.length ? items.map(function(si){ return pickRowHTML(si, pickTargetIso); }).join("")
          : '<p class="pick-empty">Nothing left on this day in Sug\u2019std — everything has been moved out already. The Whole Sug\u2019std tab still has every other day.</p>')
       + '</div><div class="form-actions"><button class="btn" type="button" data-close="1">Cancel</button><button class="btn primary" type="button" data-picksubmit="1">Submit — add selected</button></div>';
-  } else {
+  } else if(pickTab==="whole") {
     DAY_PLANS.forEach(function(dp){
       var items = suggItemsFor(dp.iso);
       var day = null; DAYS.forEach(function(d){ if(d.iso===dp.iso) day = d; });
@@ -4151,9 +4363,15 @@ function renderPicker(){
         + '<div class="pick-choose-row"><button class="btn" type="button" data-pickchoose="'+dp.iso+'">Choose — send selected to '+esc(tgt)+'</button></div></div>';
     });
     html += '<div class="form-actions"><button class="btn primary" type="button" data-close="1">Done — everything chosen is saved</button></div>';
-  }
-  html += '</div>';
+  } else if(pickTab==="online") {
+    html += '<p class="pick-empty" style="text-align:left">Search live for a place that is not in the app yet — try “puka bracelet Poipu”, or a shop name. Tap a result to see its summary, then add it straight to this day.</p>'
+      + (pickOnlineMsg ? '<div class="mr-note">' + esc(pickOnlineMsg) + '</div>' : '')
+      + '<div class="pick-search"><input type="text" id="pick-q" placeholder="Search for a place…" autocomplete="off" /><button class="btn primary" type="button" id="pick-go">Search</button></div>'
+      + '<div id="pick-results"></div>'
+      + '<div class="form-actions"><button class="btn primary" type="button" data-close="1">Done</button></div>';
+  }  html += '</div>';
   sh.innerHTML = html;
+  if(pickTab==="online") wirePickerOnline();
 }
 function gatherPicked(groupIso){
   var out = [];
