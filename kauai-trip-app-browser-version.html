@@ -3170,8 +3170,10 @@ function dayPlanFor(iso){
    Schedule tab shows — so editing the Schedule is what Today shows the
    next time it renders; there is no second list left to drift. A Sug'std
    plan item only lends its label/note/time to a place Justin actually
-   scheduled. The fixed weekly meeting row (which the Schedule tab also
-   shows) is the one thing added on top. */
+   scheduled (the place's own description is the note fallback, so every
+   card still reads as complete as the old plan cards did). The fixed
+   weekly meeting row (which the Schedule tab also shows) is the one
+   thing added on top. */
 function dayItems(iso){
   var items = [], seen = {};
   var plan = dayPlanFor(iso);
@@ -3181,7 +3183,7 @@ function dayItems(iso){
     if(en.kind==="place"){
       var p = en.place, pit = planByPlace[p.id];
       seen[p.id] = 1;
-      items.push({ place:p, label:(pit && pit.label) || p.name, note:(pit && pit.note) || "", time:(pit && pit.t) || "", source:"sched", key:en.key });
+      items.push({ place:p, label:(pit && pit.label) || p.name, note:(pit && pit.note) || p.about || "", time:(pit && pit.t) || "", source:"sched", key:en.key });
     } else {
       items.push({ place:null, label:en.text.label||"", note:en.text.note||"", time:en.text.t||"", source:"sched", key:en.key });
     }
