@@ -181,6 +181,7 @@
   }
   .pin svg{ width:12px; height:12px; }
   .pin.active{ background:var(--active); } .pin.explore{ background:var(--explore); } .pin.relax{ background:var(--relax); }
+  .pin.daynum{ width:26px; height:26px; font-size:13.5px; }
   #map-card{
     position:absolute; left:10px; right:10px; bottom:10px; z-index:500; display:none;
     background:var(--surface); border:1px solid var(--line); box-shadow:0 8px 28px rgba(0,0,0,.25);
@@ -2775,6 +2776,11 @@ function pinIconHL(p){
   var ep = effPhase(p);
   return L.divIcon({ className:"", html:'<div class="pin hl '+ep+'">'+(PHASES[ep]?PHASES[ep].num:"")+'</div>', iconSize:[30,30], iconAnchor:[15,15] });
 }
+/* Patch 24: Today mini-map pins carry the day's own stop numbers — the
+   same numbers as "The day, in order" cards — in the day's phase color. */
+function dayNumIcon(phase, n){
+  return L.divIcon({ className:"", html:'<div class="pin '+phase+' daynum">'+n+'</div>', iconSize:[26,26], iconAnchor:[13,13] });
+}
 function initMap(){
   if(mapReady || typeof L==="undefined") return;
   map = L.map("map", { zoomControl:true }).setView([22.05,-159.50], 10);
@@ -3392,9 +3398,11 @@ function initTodayMap(){
   var hm = L.marker([HOME_BASE.lat, HOME_BASE.lng], { icon: L.divIcon({ className:"", html:'<div class="home-pin">H</div>', iconSize:[30,30], iconAnchor:[15,15] }) }).addTo(todayLayer);
   hm.bindTooltip("Becky's house — home base", { permanent:true, direction:"top", offset:[0,-16], className:"beach-label" });
   hm.on("click", function(){ toast("Becky's house — 3984 Papalina Rd, Kalaheo."); });
+  var dayNum = {}, dayPhase = phaseOfIso(iso) || "explore";
+  dayItems(iso).forEach(function(it, i){ if(it.place && !dayNum[it.place.id]) dayNum[it.place.id] = i + 1; });
   dayAnchors(iso).forEach(function(p){
     pts.push([p.lat, p.lng]);
-    var m = L.marker([p.lat, p.lng], { icon: pinIcon(p, false) }).addTo(todayLayer);
+    var m = L.marker([p.lat, p.lng], { icon: dayNumIcon(dayPhase, dayNum[p.id] || "") }).addTo(todayLayer);
     m.bindTooltip(p.name, { direction:"top", offset:[0,-13], className:"beach-label" });
     m.on("click", function(){ openDetail(p.id); });
   });
