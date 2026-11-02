@@ -74,6 +74,9 @@
 
   main{ max-width:860px; margin:0 auto; padding:16px 16px calc(40px + env(safe-area-inset-bottom)); }
   .view{ display:none; } .view.on{ display:block; }
+  .qscroll{ position:fixed; right:2px; top:136px; bottom:30px; width:22px; z-index:35; touch-action:none; }
+  .qscroll-thumb{ position:absolute; right:5px; top:0; width:7px; height:56px; border-radius:99px; background:rgba(226,240,236,.45); box-shadow:0 1px 4px rgba(0,0,0,.4); }
+  .qscroll.drag .qscroll-thumb{ background:rgba(127,209,189,.95); width:10px; right:4px; }
 
   /* ---------- controls ---------- */
   .toolbar{ display:flex; flex-direction:column; gap:10px; margin-bottom:16px; }
@@ -969,6 +972,7 @@
     <div class="cal-tools"><button class="btn" type="button" data-tripnotes="1">Trip Notes — the whole trip in one file</button></div>
     <div id="cal-wrap"></div>
     <p class="foot-note">Move things freely: arrows shift a place one day, Move jumps it to any day you tap, and × takes it off the calendar. The map follows whatever the calendar says. Tap a name to open the full card.</p>
+    <div class="qscroll" data-qscroll><div class="qscroll-thumb"></div></div>
   </section>
 
   <!-- MAP -->
@@ -1001,6 +1005,7 @@
   <section class="view" id="view-suggested">
     <div id="sugg-wrap"></div>
     <p class="foot-note">Plan A is the day as planned. Plan B is the swap if it rains or you would rather take the second option — most Plan Bs are indoors or close to the house. Anchors (weaving, meetings, the spearfishing lesson) stay put; the flexible pieces move around them. Anything you schedule yourself in the Schedule tab also carries its own Plan B there and on Today.</p>
+    <div class="qscroll" data-qscroll><div class="qscroll-thumb"></div></div>
   </section>
 </main>
 
@@ -2914,17 +2919,56 @@ function renderGrinds(force){
 }
 
 /* ================= tabs & global events ================= */
+var curView = "today", viewScroll = {};
 function showView(v){
+  viewScroll[curView] = window.scrollY || window.pageYOffset || 0;
+  curView = v;
   document.querySelectorAll("nav.tabs button").forEach(function(b){ b.setAttribute("aria-selected", b.dataset.view===v ? "true":"false"); });
   document.querySelectorAll(".view").forEach(function(s){ s.classList.toggle("on", s.id==="view-"+v); });
   if(v==="today"){ renderToday(); initTodayMap(); }
   if(v==="grinds"){ renderGrinds(); }
   if(v==="map"){ initMap(); invalidateMap(); refreshMarkers(); }
-  window.scrollTo(0,0);
+  window.scrollTo(0, viewScroll[v] || 0);
+  requestAnimationFrame(function(){ window.scrollTo(0, viewScroll[v] || 0); updateQScroll(); });
 }
 document.querySelectorAll("nav.tabs button").forEach(function(b){
   b.addEventListener("click", function(){ showView(b.dataset.view); });
 });
+
+/* ================= Patch 23: per-tab scroll memory + quick-scroll rail =================
+   Leaving a tab remembers where you were scrolled to; coming back lands
+   you in the same spot (showView above). The thin rail on the right edge
+   of the Schedule and Sug'std tabs is a quick-scroll: touch it, hold and
+   drag to fly up or down the whole list. */
+function qscrollRatio(){
+  var max = document.documentElement.scrollHeight - window.innerHeight;
+  return max > 0 ? Math.min(1, Math.max(0, (window.scrollY || window.pageYOffset || 0) / max)) : 0;
+}
+function updateQScroll(){
+  var r = qscrollRatio();
+  document.querySelectorAll("[data-qscroll]").forEach(function(rail){
+    var thumb = rail.firstElementChild; if(!thumb) return;
+    var travel = rail.clientHeight - thumb.offsetHeight;
+    thumb.style.top = Math.round(r * Math.max(0, travel)) + "px";
+  });
+}
+window.addEventListener("scroll", function(){ updateQScroll(); }, { passive:true });
+window.addEventListener("resize", function(){ updateQScroll(); });
+document.querySelectorAll("[data-qscroll]").forEach(function(rail){
+  var drag = false;
+  function jump(e){
+    var rect = rail.getBoundingClientRect();
+    var ratio = Math.min(1, Math.max(0, (e.clientY - rect.top) / Math.max(1, rect.height)));
+    var max = document.documentElement.scrollHeight - window.innerHeight;
+    window.scrollTo(0, Math.round(ratio * Math.max(0, max)));
+    updateQScroll();
+  }
+  rail.addEventListener("pointerdown", function(e){ drag = true; rail.classList.add("drag"); try{ rail.setPointerCapture(e.pointerId); }catch(err){} jump(e); e.preventDefault(); });
+  rail.addEventListener("pointermove", function(e){ if(drag) jump(e); });
+  rail.addEventListener("pointerup", function(){ drag = false; rail.classList.remove("drag"); });
+  rail.addEventListener("pointercancel", function(){ drag = false; rail.classList.remove("drag"); });
+});
+updateQScroll();
 /* Search: live card filtering plus a title autocomplete dropdown.
    Suggestions are built from the titles (names) of ALL cards currently
    in the app — seed places, edited places, and user-added places. */
