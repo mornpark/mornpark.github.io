@@ -548,6 +548,29 @@
   .today-note{ font-size:15.5px; color:var(--ink2); margin-top:3px; }
   .today-actions{ display:flex; gap:8px; flex-wrap:wrap; margin-top:10px; }
   .today-actions .btn{ min-height:44px; padding:9px 13px; font-size:14.5px; }
+  .becky-card{
+    background:var(--surface); border:1px solid var(--line); border-radius:14px;
+    box-shadow:var(--shadow); padding:15px; margin:16px 0 10px;
+  }
+  .becky-card .section{ margin-top:0; }
+  .becky-row{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed var(--line); }
+  .becky-row:last-of-type{ border-bottom:none; }
+  .becky-check{
+    flex:none; width:30px; height:30px; border-radius:8px; border:1.5px solid var(--ink2);
+    background:transparent; color:var(--ink); font-size:17px; line-height:1; cursor:pointer;
+  }
+  .becky-row.done .becky-text{ text-decoration:line-through; color:var(--ink2); }
+  .becky-text{ flex:1; min-width:0; font-size:16.5px; }
+  .becky-del{
+    flex:none; width:30px; height:30px; border:none; border-radius:8px; background:transparent;
+    color:var(--ink2); font-size:19px; line-height:1; cursor:pointer;
+  }
+  .becky-add{ display:flex; gap:8px; margin-top:12px; }
+  .becky-add input{
+    flex:1; min-width:0; min-height:44px; padding:9px 12px; font-size:16px; border-radius:10px;
+    border:1px solid var(--line); background:var(--surface2); color:var(--ink);
+  }
+  .becky-add .btn{ min-height:44px; }
   .planb-box{
     border:1.5px solid var(--ink); border-radius:12px; padding:13px 14px; margin:12px 0 16px; background:var(--surface);
   }
@@ -1718,6 +1741,7 @@ if(!state.schedUndo) state.schedUndo = {};    /* iso -> [entry keys] — the ord
 if(!state.grindsGone) state.grindsGone = {};  /* Grinds dish name -> true, once Justin deletes a dish from his menu */
 if(!state.bookStyle) state.bookStyle = "clean";   /* Make-a-book style: "clean" | "photo" | "journal" */
 if(state.bookCover === undefined) state.bookCover = null; /* diary photo id for the book cover, or null = title only */
+if(!state.beckyList) state.beckyList = [];  /* [{t, done}] — running "used up at Becky's, replenish" list on the Today view (Patch 20) */
 function save(){ store.set(state); }
 
 /* ================= Patch 19: diary photos (IndexedDB) + book view =================
@@ -3141,21 +3165,25 @@ function dayPlanFor(iso){
   for(var i=0;i<DAY_PLANS.length;i++) if(DAY_PLANS[i].iso===iso) return DAY_PLANS[i];
   return null;
 }
-/* The unified item list for a day: structured plan items (minus any place the
-   Schedule has moved to another day), the weekly meeting, then anything the
-   Schedule put on this day that the plan did not already name. */
+/* Patch 20: Today mirrors the Schedule tab. dayItems now builds from
+   dayEntries(iso) — the exact entries, in the exact order, that the
+   Schedule tab shows — so editing the Schedule is what Today shows the
+   next time it renders; there is no second list left to drift. A Sug'std
+   plan item only lends its label/note/time to a place Justin actually
+   scheduled. The fixed weekly meeting row (which the Schedule tab also
+   shows) is the one thing added on top. */
 function dayItems(iso){
   var items = [], seen = {};
   var plan = dayPlanFor(iso);
-  if(plan) plan.items.forEach(function(it, idx){
-    if(state.suggGone && state.suggGone[iso+"#"+idx]) return;
-    if(it.place){
-      var p = getPlace(it.place); if(!p) return;
-      if(state.sched[p.id] && state.sched[p.id]!==iso) return;
+  var planByPlace = {};
+  if(plan) plan.items.forEach(function(it){ if(it.place && !planByPlace[it.place]) planByPlace[it.place] = it; });
+  dayEntries(iso).forEach(function(en){
+    if(en.kind==="place"){
+      var p = en.place, pit = planByPlace[p.id];
       seen[p.id] = 1;
-      items.push({ place:p, label:it.label||p.name, note:it.note||"", time:it.t||"", source:"plan" });
+      items.push({ place:p, label:(pit && pit.label) || p.name, note:(pit && pit.note) || "", time:(pit && pit.t) || "", source:"sched", key:en.key });
     } else {
-      items.push({ place:null, label:it.label||"", note:it.note||"", time:it.t||"", source:"plan" });
+      items.push({ place:null, label:en.text.label||"", note:en.text.note||"", time:en.text.t||"", source:"sched", key:en.key });
     }
   });
   var wd = weekdayOf(iso);
@@ -3167,28 +3195,6 @@ function dayItems(iso){
       seen[hall.id] = 1;
     }
   }
-  var extraStart = items.length;
-  allPlaces().forEach(function(p){
-    if(state.sched[p.id]===iso && !seen[p.id]){
-      seen[p.id] = 1;
-      items.push({ place:p, label:p.name, note:"Added in the Schedule tab.", time:"", source:"sched", key:"p:"+p.id });
-    }
-  });
-  Object.keys(state.schedText||{}).forEach(function(tid){
-    var tx = state.schedText[tid];
-    if(tx && tx.iso===iso) items.push({ place:null, label:tx.label, note:tx.note||"", time:tx.t||"", source:"sched", key:"t:"+tid });
-  });
-  /* Patch 18: Today lists your added stops in the same order as the Schedule tab. */
-  var schedOrd = (state.schedOrder && state.schedOrder[iso]) || [];
-  var extras = items.slice(extraStart);
-  extras.sort(function(a,b){
-    var ia = schedOrd.indexOf(a.key), ib = schedOrd.indexOf(b.key);
-    if(ia<0 && ib<0) return 0;
-    if(ia<0) return 1;
-    if(ib<0) return -1;
-    return ia-ib;
-  });
-  items = items.slice(0, extraStart).concat(extras);
   return items;
 }
 function dayAnchors(iso){
@@ -3253,7 +3259,7 @@ function renderToday(){
     html += '<div class="today-item"><div class="today-num">'+(i+1)+'</div><div class="today-main">';
     if(it.place){
       html += '<h3><span class="nm" data-open="'+it.place.id+'">'+esc(it.label)+'</span></h3>'
-        + '<div class="meta">'+esc(it.place.cat)+' · '+esc(it.place.area)+(it.time ? ' · '+esc(it.time) : '')+(it.source==="sched" ? ' · added in Schedule' : '')+'</div>'
+        + '<div class="meta">'+esc(it.place.cat)+' · '+esc(it.place.area)+(it.time ? ' · '+esc(it.time) : '')+'</div>'
         + (driveLabel(it.place) ? '<div class="today-note">'+esc(driveLabel(it.place))+'</div>' : '')
         + (it.note ? '<div class="today-note">'+esc(it.note)+'</div>' : '')
         + (forKimLine(it.place) ? '<div class="for-kim"><strong>For Kim</strong>'+esc(forKimLine(it.place))+'</div>' : '')
@@ -3286,6 +3292,7 @@ function renderToday(){
     });
   }
   html += '<div class="today-daynav"><button class="btn" type="button" data-goschedule="1">Open the Schedule</button><button class="btn" type="button" data-gomap="1">Open the full Map</button></div>';
+  html += beckyListHTML();
   rest.innerHTML = html;
   if(document.getElementById("view-today").classList.contains("on")) initTodayMap();
 }
@@ -3332,6 +3339,45 @@ document.addEventListener("click", function(e){
   if(gs){ showView("calendar"); return; }
   var gm = e.target.closest("[data-gomap]");
   if(gm){ showView("map"); return; }
+});
+
+/* Patch 20: Becky replenish list — the running "used up at Becky's" list at
+   the bottom of the Today view. Lives in state.beckyList [{t, done}]; every
+   add, check-off, or delete saves immediately, so it stays current as
+   Justin edits it. Check off = replaced; × = remove the line. */
+function beckyListHTML(){
+  var list = state.beckyList || [];
+  var html = '<div class="becky-card"><h2 class="section">For Becky — used up, replenish</h2>';
+  if(!list.length) html += '<div class="empty">Nothing yet. Use up her oil, rice, coffee, anything — jot it here so it gets replaced.</div>';
+  list.forEach(function(it, i){
+    html += '<div class="becky-row'+(it.done ? ' done' : '')+'"><button type="button" class="becky-check" data-becky-toggle="'+i+'" aria-label="Mark as replaced">'+(it.done ? '&#10003;' : '')+'</button>'
+      + '<span class="becky-text">'+esc(it.t)+'</span>'
+      + '<button type="button" class="becky-del" data-becky-del="'+i+'" aria-label="Remove from list">&times;</button></div>';
+  });
+  html += '<div class="becky-add"><input id="becky-add-input" type="text" placeholder="Used up… e.g. olive oil" autocomplete="off"><button class="btn" type="button" data-becky-add="1">Add</button></div></div>';
+  return html;
+}
+function beckyAddFromInput(){
+  var inp = document.getElementById("becky-add-input");
+  if(!inp) return;
+  var v = inp.value.trim();
+  if(!v) return;
+  if(!state.beckyList) state.beckyList = [];
+  state.beckyList.push({ t:v, done:false });
+  save(); renderToday();
+  var inp2 = document.getElementById("becky-add-input");
+  if(inp2) inp2.focus();
+}
+document.addEventListener("click", function(e){
+  var tg = e.target.closest("[data-becky-toggle]");
+  if(tg){ var i = parseInt(tg.getAttribute("data-becky-toggle"), 10); if(state.beckyList && state.beckyList[i]){ state.beckyList[i].done = !state.beckyList[i].done; save(); renderToday(); } return; }
+  var del = e.target.closest("[data-becky-del]");
+  if(del){ var j = parseInt(del.getAttribute("data-becky-del"), 10); if(state.beckyList && state.beckyList[j]){ state.beckyList.splice(j, 1); save(); renderToday(); } return; }
+  var ad = e.target.closest("[data-becky-add]");
+  if(ad){ beckyAddFromInput(); return; }
+});
+document.addEventListener("keydown", function(e){
+  if(e.key === "Enter" && e.target && e.target.id === "becky-add-input"){ e.preventDefault(); beckyAddFromInput(); }
 });
 
 function renderSuggested(){
