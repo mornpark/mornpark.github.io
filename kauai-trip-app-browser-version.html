@@ -3206,11 +3206,34 @@ function dayAnchors(iso){
   });
   return out;
 }
-/* Restaurants and places sitting on the day's route/area — near the day's own stops. */
-function onWayFor(iso, anchors){
+/* Patch 21: the Sug'std day's OWN stops. Sug'std and the day picker must
+   anchor their "On the way" rows on the suggested day — dayAnchors above
+   follows Justin's Schedule (right for Today / Schedule / Map), which
+   left Sug'std's on-the-way rows anchored on the wrong day's stops. */
+function planAnchors(iso){
+  var out = [], seen = {};
+  var plan = dayPlanFor(iso);
+  if(!plan) return out;
+  plan.items.forEach(function(it, idx){
+    if(!it.place) return;
+    if(state.suggGone && state.suggGone[iso+"#"+idx]) return;
+    var p = getPlace(it.place);
+    if(p && typeof p.lat==="number" && !seen[p.id]){ seen[p.id] = 1; out.push(p); }
+  });
+  return out;
+}
+/* Restaurants and places sitting on the day's route/area — near the day's own stops.
+   planBased=true: "the day" means the Sug'std plan (Sug'std view + picker);
+   otherwise it means Justin's Schedule, via dayItems. */
+function onWayFor(iso, anchors, planBased){
   if(!anchors || !anchors.length) return [];
   var inDay = {};
-  dayItems(iso).forEach(function(it){ if(it.place) inDay[it.place.id] = 1; });
+  if(planBased){
+    var plan = dayPlanFor(iso);
+    if(plan) plan.items.forEach(function(it){ if(it.place) inDay[it.place] = 1; });
+  } else {
+    dayItems(iso).forEach(function(it){ if(it.place) inDay[it.place.id] = 1; });
+  }
   var out = [];
   allPlaces().forEach(function(p){
     if(typeof p.lat!=="number" || inDay[p.id]) return;
@@ -3409,7 +3432,7 @@ function renderSuggested(){
       + '<div class="plan b"><div class="tag">Plan B</div><div class="txt"><strong>'
       + (dp.planB.place ? '<span class="nm" data-open="'+dp.planB.place+'">'+esc(dp.planB.title)+'</span>' : esc(dp.planB.title))
       + '</strong><span>'+esc(dp.planB.note)+'</span></div></div>';
-    var ow = onWayFor(dp.iso, dayAnchors(dp.iso)).filter(function(x){ return !(state.suggGone && state.suggGone["ow#"+dp.iso+"#"+x.p.id]); });
+    var ow = onWayFor(dp.iso, planAnchors(dp.iso), true).filter(function(x){ return !(state.suggGone && state.suggGone["ow#"+dp.iso+"#"+x.p.id]); });
     if(ow.length){
       html += '<p class="sugg-near"><strong>On the way:</strong> ' + ow.map(function(x){ return '<span class="nm" data-open="'+x.p.id+'">'+esc(x.p.name)+'</span> '+esc(x.p.cat)+' · '+x.mi+' mi'; }).join(" &middot; ") + '</p>';
     }
@@ -4080,7 +4103,7 @@ function suggItemsFor(iso){
       out.push({ key:key, kind:"text", label:it.label||"", sub:(it.t?it.t+" · ":"")+(it.note||""), note:it.note||"", t:it.t||"" });
     }
   });
-  onWayFor(iso, dayAnchors(iso)).forEach(function(x){
+  onWayFor(iso, planAnchors(iso), true).forEach(function(x){
     var key = "ow#"+iso+"#"+x.p.id;
     if(state.suggGone && state.suggGone[key]) return;
     out.push({ key:key, kind:"ow", placeId:x.p.id, label:x.p.name, sub:"On the way · "+x.p.cat+" · "+x.p.area+" · "+x.mi+" mi from the day\u2019s stops", note:"On the way stop, added from Sug\u2019std.", t:"" });
