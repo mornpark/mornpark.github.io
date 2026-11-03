@@ -64,6 +64,24 @@
   .phase-chip .sw.active{ background:var(--active); } .phase-chip .sw.explore{ background:var(--explore); } .phase-chip .sw.relax{ background:var(--relax); }
   .phase-chip.solid{ color:#fff; border-color:transparent; }
   .phase-chip.solid.active{ background:var(--active); } .phase-chip.solid.explore{ background:var(--explore); } .phase-chip.solid.relax{ background:var(--relax); }
+  /* Flight details button (Patch 27): same shape as the phase chips, styled as a real pressable button */
+  button.phase-chip{ font:inherit; cursor:pointer; }
+  .flight-chip{
+    margin-left:auto; color:var(--ink);
+    background:linear-gradient(180deg, var(--surface), var(--surface2));
+    border:1px solid var(--ink2);
+    box-shadow:0 1px 2px rgba(20,16,8,.22), inset 0 1px 0 rgba(255,255,255,.45);
+    transition:transform .07s ease, box-shadow .07s ease, filter .15s ease;
+    -webkit-tap-highlight-color:transparent; touch-action:manipulation;
+  }
+  .flight-chip .sw{ background:var(--ink); }
+  .flight-chip .sw svg{ width:12px; height:12px; }
+  .flight-chip:hover{ filter:brightness(1.04); }
+  .flight-chip:active{ transform:translateY(1px); box-shadow:0 0 1px rgba(20,16,8,.2), inset 0 2px 4px rgba(20,16,8,.18); }
+  .flight-chip:focus-visible{ outline:2px solid var(--relax); outline-offset:2px; }
+  .flight-leg{ border:1px solid var(--line); background:var(--surface); padding:13px 14px; margin:0 0 12px; }
+  .flight-route{ font-size:20px; font-weight:800; letter-spacing:.01em; margin:0 0 2px; }
+  .flight-leg p{ margin:0 0 4px; }
   nav.tabs{ display:flex; gap:2px; }
   nav.tabs button{
     flex:1; padding:12px 4px 10px; font-size:15px; font-weight:600; color:var(--ink2);
@@ -857,6 +875,7 @@
     <span class="phase-chip"><span class="sw active">1</span>Active · Nov 6–11</span>
     <span class="phase-chip"><span class="sw explore">2</span>Explore · Nov 12–17</span>
     <span class="phase-chip"><span class="sw relax">3</span>Relax · Nov 18–24</span>
+    <button class="phase-chip flight-chip" id="flight-details-btn" type="button" aria-haspopup="dialog"><span class="sw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4 20-7z"/></svg></span>Flight details</button>
   </div>
   <nav class="tabs" role="tablist" aria-label="App sections">
     <button role="tab" id="tab-today" aria-selected="true" data-view="today">
@@ -1018,6 +1037,7 @@
 <div class="sheet" id="picker-sheet" role="dialog" aria-modal="true"></div>
 <div class="sheet" id="tripnotes-sheet" role="dialog" aria-modal="true"></div>
 <div class="sheet" id="book-sheet" role="dialog" aria-modal="true"></div>
+<div class="sheet" id="flight-sheet" role="dialog" aria-modal="true"></div>
 
 <!-- PHOTO LIGHTBOX (Patch 19) -->
 <div class="photo-lightbox" id="photo-lightbox" aria-hidden="true">
@@ -2543,6 +2563,35 @@ function closeSheets(){
   sheetBack.classList.remove("on"); document.body.style.overflow="";
 }
 sheetBack.addEventListener("click", closeSheets);
+
+/* ================= flight details (Patch 27) ================= */
+function openFlightDetails(){
+  var sh = document.getElementById("flight-sheet"); if(!sh) return;
+  sh.innerHTML = '<div class="sheet-head"><div class="inner">'
+    + '<h2>Flight details</h2><div class="meta">Alaska Airlines · Saver · Nonstop both ways</div>'
+    + '</div></div>'
+    + '<button class="sheet-close" data-close="1" aria-label="Close">'+I.x+'</button>'
+    + '<div class="sheet-body">'
+    + '<h4>Outbound — Friday, Nov 6, 2026</h4>'
+    + '<div class="flight-leg"><p class="flight-route">SFO → LIH</p>'
+    + '<p class="big-fact">Alaska Airlines AS789</p>'
+    + '<p>Departs San Francisco (SFO) at 8:20 AM PT<br>Arrives Lihue (LIH) at 12:06 PM HST<br>Nonstop · 5h 46m</p></div>'
+    + '<h4>Arrival pickup — tentative</h4>'
+    + '<p><strong>Jeremy</strong> — Justin&rsquo;s childhood friend and Becky&rsquo;s son — may pick us up at Lihue Airport and take us to Becky&rsquo;s house in Kalaheo. Then we unpack and settle in before any errands.</p>'
+    + '<p>Not confirmed yet — this section gets updated when Jeremy confirms.</p>'
+    + '<h4>Return — Tuesday, Nov 24, 2026</h4>'
+    + '<div class="flight-leg"><p class="flight-route">LIH → SFO</p>'
+    + '<p class="big-fact">Alaska Airlines AS788</p>'
+    + '<p>Departs Lihue (LIH) at 4:45 PM HST<br>Arrives San Francisco (SFO) at 11:57 PM PT<br>Nonstop · 5h 12m</p></div>'
+    + '<h4>Getting home from SFO</h4>'
+    + '<p>The return lands close to midnight, so the pickup driver is a younger person still to be named — not Mom and Dad.</p>'
+    + '<h4>Booking notes</h4>'
+    + '<p>Passengers: Justin Pell &amp; Kimberly Pell, on the same reservation. Saver fare: seats are assigned at check-in, and the ticket can&rsquo;t be changed. Total paid: $888.42.</p>'
+    + '</div>';
+  openSheet("flight-sheet");
+}
+var flightBtn = document.getElementById("flight-details-btn");
+if(flightBtn) flightBtn.addEventListener("click", openFlightDetails);
 
 function section(title, body){ return body ? '<h4>'+title+'</h4><p>'+esc(body)+'</p>' : ''; }
 function detailHTML(p){
