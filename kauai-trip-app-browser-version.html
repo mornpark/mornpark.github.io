@@ -216,14 +216,18 @@
 
   /* ---------- sheets / forms ---------- */
   .sheet-back{
-    position:fixed; inset:0; background:rgba(18,15,10,.55); z-index:900; display:none;
+    position:fixed; inset:0; background:rgba(18,15,10,.55); z-index:1500; display:none;
   }
   .sheet-back.on{ display:block; }
   .sheet{
-    position:fixed; z-index:950; background:var(--bg); display:none; flex-direction:column;
+    position:fixed; z-index:1600; background:var(--bg); display:none; flex-direction:column;
     inset:auto 0 0 0; top:4dvh; border-top:2px solid var(--ink);
   }
   .sheet.on{ display:flex; }
+  /* Patch 30: while a sheet is open, hide the Leaflet maps behind it — their zoom controls
+     otherwise float over the sheet while it scrolls (Leaflet controls sit at z-index 1000
+     and iOS Safari repaints transformed panes above fixed overlays). */
+  body.sheet-open .today-map, body.sheet-open #map-wrap{ visibility:hidden; }
   @media (min-width:760px){
     .sheet{ inset:0; top:0; left:auto; width:560px; border-top:none; border-left:2px solid var(--ink); }
   }
@@ -269,7 +273,7 @@
   .form-actions{ display:flex; gap:8px; margin-top:22px; }
   .form-actions .btn{ flex:1; }
 
-  .dialog-back{ position:fixed; inset:0; background:rgba(18,15,10,.55); z-index:990; display:none; align-items:center; justify-content:center; padding:20px; }
+  .dialog-back{ position:fixed; inset:0; background:rgba(18,15,10,.55); z-index:1700; display:none; align-items:center; justify-content:center; padding:20px; }
   .dialog-back.on{ display:flex; }
   .dialog{ background:var(--surface); border:2px solid var(--ink); max-width:420px; width:100%; padding:20px; }
   .dialog h3{ margin:0 0 8px; font-size:19px; }
@@ -278,7 +282,7 @@
 
   .toast{
     position:fixed; left:50%; transform:translateX(-50%); bottom:calc(18px + env(safe-area-inset-bottom));
-    background:var(--ink); color:var(--bg); padding:11px 18px; font-weight:600; font-size:14.5px; z-index:999;
+    background:var(--ink); color:var(--bg); padding:11px 18px; font-weight:600; font-size:14.5px; z-index:2100;
     display:none; max-width:calc(100vw - 32px); text-align:center;
   }
   .toast.on{ display:block; }
@@ -754,7 +758,7 @@
   }
   .note-ed .note-photo-thumb{ cursor:default; }
   .photo-lightbox{
-    position:fixed; inset:0; z-index:1200; display:none;
+    position:fixed; inset:0; z-index:2000; display:none;
     align-items:center; justify-content:center; background:rgba(8,6,4,.93);
   }
   .photo-lightbox.on{ display:flex; }
@@ -2557,10 +2561,10 @@ function renderCalendar(){
 
 /* ================= detail sheet ================= */
 var sheetBack = document.getElementById("sheet-back");
-function openSheet(id){ document.getElementById(id).classList.add("on"); sheetBack.classList.add("on"); document.body.style.overflow="hidden"; }
+function openSheet(id){ document.getElementById(id).classList.add("on"); sheetBack.classList.add("on"); document.body.style.overflow="hidden"; document.body.classList.add("sheet-open"); }
 function closeSheets(){
   document.querySelectorAll(".sheet").forEach(function(s){ s.classList.remove("on"); });
-  sheetBack.classList.remove("on"); document.body.style.overflow="";
+  sheetBack.classList.remove("on"); document.body.style.overflow=""; document.body.classList.remove("sheet-open");
 }
 sheetBack.addEventListener("click", closeSheets);
 
