@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>HB Trees — Great Work Deserves to Be Seen</title>
+<style>
+  :root{ --ink:#1c2a1e; --pine:#2e5e3a; --moss:#e9f2e7; --gold:#c9a227; --paper:#fbfaf6; --mut:#5c6b5e; }
+  *{margin:0;padding:0;box-sizing:border-box}
+  html,body{height:100%}
+  body{font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;background:#12241a;color:var(--ink)}
+  .deck{position:fixed;inset:0}
+  .slide{position:absolute;inset:0;display:none;flex-direction:column;justify-content:center;align-items:center;text-align:center;padding:6vh 7vw;background:var(--paper)}
+  .slide.active{display:flex}
+  .kicker{font-size:clamp(12px,1.6vw,17px);letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-weight:700;margin-bottom:2.2vh}
+  h1{font-size:clamp(30px,5.4vw,64px);line-height:1.08;color:var(--ink);max-width:20ch}
+  h1 .accent{color:var(--pine)}
+  .sub{margin-top:2.6vh;font-size:clamp(17px,2.3vw,27px);color:var(--mut);max-width:56ch;line-height:1.45}
+  .row{display:flex;gap:2.2vw;flex-wrap:wrap;justify-content:center;margin-top:4.5vh;width:100%}
+  .card{background:#fff;border:1px solid #dfe7dc;border-top:6px solid var(--pine);border-radius:14px;padding:3vh 2.4vw;min-width:min(300px,80vw);max-width:400px;flex:1;text-align:left;box-shadow:0 6px 24px rgba(20,40,25,.07)}
+  .card h3{font-size:clamp(19px,2.2vw,26px);color:var(--pine);margin-bottom:1.2vh}
+  .card p{font-size:clamp(15px,1.8vw,20px);line-height:1.5;color:#33402f}
+  .card .big{font-size:clamp(30px,4vw,46px);font-weight:800;color:var(--ink)}
+  .card ul{margin-left:1.1em;font-size:clamp(15px,1.8vw,20px);line-height:1.55;color:#33402f}
+  .stat{font-size:clamp(52px,9vw,120px);font-weight:800;color:var(--pine);line-height:1}
+  .pill{display:inline-block;background:var(--moss);color:var(--pine);border-radius:999px;padding:.7em 1.3em;font-weight:700;font-size:clamp(15px,2vw,22px);margin-top:3vh}
+  .platforms{display:flex;gap:1.4vw;flex-wrap:wrap;justify-content:center;margin-top:4.5vh}
+  .platforms span{background:var(--pine);color:#fff;border-radius:12px;padding:1.6vh 2vw;font-size:clamp(17px,2.4vw,28px);font-weight:700}
+  .timeline{display:flex;gap:0;flex-wrap:wrap;justify-content:center;margin-top:5vh;width:100%}
+  .tstep{flex:1;min-width:150px;padding:0 1vw}
+  .tstep .dot{width:20px;height:20px;border-radius:50%;background:var(--gold);margin:0 auto 1.4vh}
+  .tstep b{display:block;font-size:clamp(15px,1.9vw,21px);color:var(--ink)}
+  .tstep small{font-size:clamp(13px,1.6vw,17px);color:var(--mut);line-height:1.4;display:block;margin-top:.5vh}
+  .check{text-align:left;font-size:clamp(18px,2.4vw,28px);line-height:1.9;color:#33402f}
+  .check b{color:var(--pine)}
+  .qr{width:min(210px,40vw);height:min(210px,40vw);border:6px solid var(--ink);border-radius:12px;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:clamp(20px,3vw,30px);color:var(--ink);background:repeating-conic-gradient(#1c2a1e 0% 25%, #fff 0% 50%) 0 0/34px 34px;position:relative}
+  .qr span{background:#fff;padding:.3em .6em;border-radius:8px}
+  .price{font-size:clamp(28px,3.6vw,44px);font-weight:800;color:var(--ink)}
+  .fine{font-size:clamp(14px,1.7vw,19px);color:var(--mut);line-height:1.55}
+  .nav{position:fixed;bottom:18px;right:22px;display:flex;gap:10px;align-items:center;z-index:10}
+  .nav button{background:var(--pine);color:#fff;border:none;border-radius:999px;width:46px;height:46px;font-size:20px;cursor:pointer}
+  .count{position:fixed;bottom:26px;left:22px;color:#cfe0cb;font-size:15px;z-index:10;font-weight:600;letter-spacing:.08em}
+  .brand{position:fixed;top:18px;left:22px;color:#cfe0cb;font-size:14px;z-index:10;letter-spacing:.14em;text-transform:uppercase;font-weight:700}
+  .title-slide{background:linear-gradient(160deg,#1d3a26,#12241a);color:#fff}
+  .title-slide h1{color:#fff}
+  .title-slide .sub{color:#cfe0cb}
+  .close-slide{background:linear-gradient(160deg,#1d3a26,#12241a);color:#fff}
+  .close-slide h1{color:#fff}
+  .close-slide .sub{color:#e8f2e4}
+</style>
+</head>
+<body>
+<div class="brand">HB Trees · Morning Park</div>
+<div class="deck" id="deck">
+
+  <section class="slide title-slide">
+    <div class="kicker">Morning Park · Prepared for HB Trees</div>
+    <h1>Great Work Deserves<br>to Be <span style="color:var(--gold)">Seen</span></h1>
+    <p class="sub">The work you already do — put where people can see it.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Your customers</div>
+    <div class="stat">5.0 ★</div>
+    <h1 style="margin-top:2vh">Every Review, Five Stars</h1>
+    <p class="sub">16 Google reviews — all five stars. When people hire HB Trees, they're glad they did. The work is not the problem.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The problem</div>
+    <h1>Great Work, <span class="accent">Almost Invisible</span></h1>
+    <div class="row">
+      <div class="card"><div class="big">16</div><p>Your Google reviews today</p></div>
+      <div class="card"><div class="big">323</div><p>Reviews on a competitor in the same search</p></div>
+      <div class="card"><div class="big">0</div><p>Social media presence</p></div>
+    </div>
+    <p class="sub">Homeowners pick the company that looks established — before price is ever discussed.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The shift</div>
+    <h1>People Ask <span class="accent">AI First</span> Now</h1>
+    <p class="sub">"Who's a good tree service near Grass Valley?" — the AI answers with a short list, built from businesses with a real website, a complete Google profile, recent reviews, and recent posts.</p>
+    <div class="pill">The game: be one of the names it can find</div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Step one</div>
+    <h1>Built Once, <span class="accent">Built Right</span></h1>
+    <div class="row">
+      <div class="card"><h3>Your Website</h3><p>The new site, finished and pointed to from everywhere.</p></div>
+      <div class="card"><h3>Your Google Profile</h3><p>Services, photos, hours, areas — complete, and linked to the new site.</p></div>
+      <div class="card"><h3>Reviews After Every Job</h3><p>Every customer gets the same ask. Unhappy? They hear from Tyler personally — not a form.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The crew's part</div>
+    <h1>Every Guy Gets <span class="accent">His Own QR Code</span></h1>
+    <div class="row" style="align-items:center">
+      <div class="qr"><span>YOUR CODE</span></div>
+      <div class="card" style="max-width:520px"><h3>A stake in every review</h3><p>Each crew member carries his own code. A review comes in through it, he gets a bonus — your money, to your guys, at the amount you choose. He's standing in a clean yard in front of a happy homeowner: the perfect person, at the perfect moment, to ask.</p></div>
+    </div>
+    <p class="fine" style="margin-top:3vh">Paid for getting the review in — whatever the stars. The customer is never paid or rewarded.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The system</div>
+    <h1>Your Work, <span class="accent">Posting Itself</span></h1>
+    <div class="platforms"><span>Facebook</span><span>Instagram</span><span>TikTok</span><span>YouTube</span><span>Google</span></div>
+    <p class="sub">Crew clips from real jobs become posts on their own schedule — five short videos a week, up to daily when the footage flows, plus two longer YouTube videos a month. No software to buy. Nothing new to learn. It runs in the cloud.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The content</div>
+    <h1>From the <span class="accent">Homeowner's Side</span> of the Fence</h1>
+    <div class="row">
+      <div class="card"><h3>Walk Your Tree With Me</h3><p>A plain-language walk of the tree — what I see, what it means for your house.</p></div>
+      <div class="card"><h3>Save It or Send It?</h3><p>Can this tree be saved — or does it have to go? Almost nobody films the saving.</p></div>
+      <div class="card"><h3>The Porch Shot</h3><p>The finished yard, from the homeowner's porch. The view they actually care about.</p></div>
+    </div>
+    <p class="sub">The most-watched tree videos online are tree guys talking to tree guys. The homeowner's view is wide open. Crew leads get one short idea text per job — a spark, not a boss.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">For Haley</div>
+    <h1>Haley Gets <span class="accent">Time Back</span> — Free</h1>
+    <p class="sub">Included in the build, at no extra charge: a Time-Back Assessment. We go through how the office runs, set up AI tools for the repetitive work, and train her on them. Optional — it's there to make her day easier.</p>
+    <div class="pill">Included · Optional · No extra charge</div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Ownership</div>
+    <h1>All of It <span class="accent">Stays Yours</span></h1>
+    <div class="check">
+      ✓ <b>Website</b> — yours<br>
+      ✓ <b>Google profile</b> — yours<br>
+      ✓ <b>Social accounts, reviews, photos &amp; videos</b> — yours<br>
+      ✓ <b>Customer list &amp; texting number</b> — yours
+    </div>
+    <p class="sub">I'm an admin — removable any time. Leave, and everything transfers within 14 days, at no charge.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Your math, Tyler</div>
+    <div class="stat">$3,500</div>
+    <h1 style="margin-top:2vh">One Closed Job Covers the Month</h1>
+    <p class="sub">Your words. Everything past the first job is the return.</p>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">Honest timeline</div>
+    <h1>What Happens <span class="accent">When</span></h1>
+    <div class="timeline">
+      <div class="tstep"><div class="dot"></div><b>Months 1–2</b><small>The build. No monthly fee.</small></div>
+      <div class="tstep"><div class="dot"></div><b>Month 3</b><small>Service live.</small></div>
+      <div class="tstep"><div class="dot"></div><b>Weeks</b><small>Reviews start moving.</small></div>
+      <div class="tstep"><div class="dot"></div><b>3–6 months</b><small>Real momentum.</small></div>
+      <div class="tstep"><div class="dot"></div><b>6–12 months</b><small>It compounds.</small></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="kicker">The offer</div>
+    <h1>Two Ways to Start</h1>
+    <div class="row">
+      <div class="card"><h3>Option A — Monthly</h3><div class="price">$2,500 today</div><p style="margin-top:1vh">Build fee. Nothing monthly during the 2 build months.<br><b>$2,997/mo</b> from month 3<br><b>$2,847/mo</b> after 6 service months<br><b>$2,697/mo</b> after 12 — and it stays there</p></div>
+      <div class="card"><h3>Option B — Prepay &amp; Save 15%</h3><div class="price">$10,142 today</div><p style="margin-top:1vh">Build fee + first 3 service months at 15% off.<br>Next charge: service month 4 at <b>$2,997</b><br>Same drops: <b>$2,847</b>, then <b>$2,697</b></p></div>
+    </div>
+    <p class="fine" style="margin-top:3vh">Both: month to month · cancel with 30 days' notice · no cancel fee · you keep everything</p>
+  </section>
+
+  <section class="slide close-slide">
+    <div class="kicker">Next step</div>
+    <h1>We Start This Week</h1>
+    <p class="sub">Pick an option → the agreement page, card in, five minutes → the build begins.</p>
+    <p class="sub" style="color:#fff;font-weight:600;margin-top:4vh">Everything's identical either way — the only difference is how the first three months get paid.<br>Which option fits you better: monthly, or prepay and save the 15%?</p>
+  </section>
+
+</div>
+<div class="count" id="count"></div>
+<div class="nav"><button id="prev" aria-label="Previous slide">‹</button><button id="next" aria-label="Next slide">›</button></div>
+<script>
+  const slides=[...document.querySelectorAll('.slide')];let i=0;
+  function show(n){i=Math.max(0,Math.min(slides.length-1,n));slides.forEach((s,k)=>s.classList.toggle('active',k===i));document.getElementById('count').textContent=(i+1)+' / '+slides.length;}
+  document.getElementById('next').onclick=e=>{e.stopPropagation();show(i+1)};
+  document.getElementById('prev').onclick=e=>{e.stopPropagation();show(i-1)};
+  document.addEventListener('keydown',e=>{if(e.key==='ArrowRight'||e.key===' ')show(i+1);if(e.key==='ArrowLeft')show(i-1);});
+  document.addEventListener('click',e=>{if(e.clientX>window.innerWidth/2)show(i+1);else show(i-1);});
+  show(0);
+</script>
+</body>
+</html>
