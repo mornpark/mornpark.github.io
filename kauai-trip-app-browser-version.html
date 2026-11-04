@@ -695,6 +695,7 @@
   .pick-tabs{ display:flex; gap:8px; margin-bottom:16px; }
   .pick-tab{ flex:1; padding:12px 8px; border:1px solid var(--line); border-radius:10px; font-weight:700; font-size:14.5px; background:var(--surface); color:var(--ink2); }
   .pick-tab[aria-selected="true"]{ background:var(--ink); color:var(--bg); border-color:var(--ink); }
+  .pick-tabs.four .pick-tab{ font-size:12.5px; padding:11px 3px; }
   .pick-list{ border:1px solid var(--line); border-radius:12px; padding:4px 16px 8px; background:var(--surface); }
   .pick-day{ border:1px solid var(--line); border-radius:12px; padding:16px 16px 14px; margin-bottom:14px; background:var(--surface); }
   .pick-day-head{ display:flex; flex-direction:column; gap:1px; margin-bottom:4px; }
@@ -3977,7 +3978,7 @@ if(mapSearchEl) mapSearchEl.addEventListener("input", function(){ mapQuery = map
 var mapListEl = document.getElementById("map-list");
 var mapResEl = document.getElementById("map-results");
 var mapResToken = 0;
-function hideMapResults(){ clearTempPin(); if(mapResEl){ mapResEl.innerHTML=""; mapResEl.classList.remove("on"); } }
+function hideMapResults(){ clearTempPin(); mapOnlinePhase = "idle"; if(mapResEl){ mapResEl.innerHTML=""; mapResEl.classList.remove("on"); } }
 function savedMatches(q){
   q = (q||"").trim().toLowerCase(); if(q.length<2) return [];
   return allPlaces().filter(function(p){
@@ -4123,23 +4124,46 @@ function overpassSearch(pq){
     });
   }).catch(function(){ return []; });
 }
-function onlineSearchPlaces(q){
+/* Patch 31: the fast named-place results no longer wait on the slow
+   Overpass call — onPartial fires as soon as Nominatim lands, and the
+   returned promise resolves with the full merged list. Saved places are
+   KEPT in the list (flagged via savedId) so each door decides: the Map
+   door hides them, the day editor offers "add it to this day". A
+   fallback query (raw words, island box enforced) covers names the
+   ", Kauai, Hawaii" suffix buries, and anything outside Kauai is dropped. */
+function inKauaiBox(x){ return x.lat >= 21.80 && x.lat <= 22.30 && x.lng >= -159.86 && x.lng <= -159.25; }
+function nomFetch(url){
+  return fetch(url, { headers:{ "Accept":"application/json" } }).then(function(r){ return r.json(); }).catch(function(){ return null; });
+}
+function mergeOnlineLists(nomList, overList, catsFirst){
+  var lists = catsFirst ? [overList, nomList] : [nomList, overList];
+  var seen = {}, out = [];
+  lists.forEach(function(list){ (list || []).forEach(function(it){
+    var key = it.name.toLowerCase() + "@" + Math.round(it.lat * 400) + "," + Math.round(it.lng * 400);
+    if(seen[key]) return; seen[key] = true;
+    var sv = findSavedByName(it.name);
+    it.savedId = sv ? sv.id : "";
+    out.push(it);
+  }); });
+  return out;
+}
+function onlineSearchPlaces(q, onPartial){
   var pq = parseOnlineQuery(q);
-  var nomUrl = "https://nominatim.openstreetmap.org/search?format=json&limit=5&addressdetails=1&extratags=1&namedetails=1&viewbox=-159.85,22.30,-159.25,21.80&bounded=0&q=" + encodeURIComponent(q + ", Kauai, Hawaii");
-  var nomP = fetch(nomUrl, { headers:{ "Accept":"application/json" } }).then(function(r){ return r.json(); }).then(function(rows){
-    return (rows || []).map(normNominatim).filter(function(x){ return x.name && !isNaN(x.lat) && !isNaN(x.lng); });
+  var base = "https://nominatim.openstreetmap.org/search?format=json&limit=10&addressdetails=1&extratags=1&namedetails=1&viewbox=-159.85,22.30,-159.25,21.80&bounded=0&q=";
+  var nomP = nomFetch(base + encodeURIComponent(q + ", Kauai, Hawaii")).then(function(rows){
+    if(rows && rows.length) return rows;
+    return nomFetch(base.replace("bounded=0", "bounded=1") + encodeURIComponent(q)).then(function(r2){ return r2 || []; });
+  }).then(function(rows){
+    return (rows || []).map(normNominatim).filter(function(x){ return x.name && !isNaN(x.lat) && !isNaN(x.lng) && inKauaiBox(x); });
   }).catch(function(){ return []; });
   var overP = (pq.cats.length && pq.area) ? overpassSearch(pq) : Promise.resolve([]);
-  return Promise.all([nomP, overP]).then(function(res){
-    var lists = pq.cats.length ? [res[1], res[0]] : [res[0], res[1]];
-    var seen = {}, out = [];
-    lists.forEach(function(list){ list.forEach(function(it){
-      var key = it.name.toLowerCase() + "@" + Math.round(it.lat * 400) + "," + Math.round(it.lng * 400);
-      if(seen[key]) return; seen[key] = true;
-      if(findSavedByName(it.name)) return;
-      out.push(it);
-    }); });
-    return out.slice(0, 5);
+  var partialSent = false;
+  var nomTracked = nomP.then(function(nomList){
+    if(onPartial && !partialSent){ partialSent = true; onPartial(mergeOnlineLists(nomList, [], pq.cats.length)); }
+    return nomList;
+  });
+  return Promise.all([nomTracked, overP]).then(function(res){
+    return mergeOnlineLists(res[0], res[1], pq.cats.length);
   });
 }
 function placeFromOnline(it){
@@ -4150,12 +4174,13 @@ function placeFromOnline(it){
     phone:it.phone || "", cost:"", hours:it.hours || "", about:"Added from a live search in the app.",
     menu:"", dietary:"", expect:"", phase:"explore", bookEarly:false, lat:it.lat, lng:it.lng, links:links };
 }
-function onlineRowHTML(it, i, attr){
+function onlineRowHTML(it, i, attr, badge){
   var meta = [it.cat, it.area].filter(Boolean).join(" · ");
   if(it.hours) meta += (meta ? " · " : "") + "Hours listed";
   return '<button type="button" class="mr-row" ' + attr + '="' + i + '"><span class="mr-main"><span class="mr-name">' + esc(it.name) + "</span>"
     + (meta ? '<span class="mr-sub">' + esc(meta) + "</span>" : "")
     + (it.address ? '<span class="mr-sub">' + esc(it.address) + "</span>" : "")
+    + (badge ? '<span class="mr-sub"><strong>' + esc(badge) + "</strong></span>" : "")
     + "</span></button>";
 }
 function onlineSummaryHTML(it, addId, addLabel){
@@ -4173,9 +4198,10 @@ function onlineSummaryHTML(it, addId, addLabel){
     + '<a class="btn" href="' + gUrl + '" target="_blank" rel="noopener">See on Google</a></div>';
   return h;
 }
-var onlineItems = [];
+var onlineItems = [], mapOnlinePhase = "idle";
 function renderOnlineRows(){
   if(!mapResEl) return;
+  mapOnlinePhase = "list";
   mapResEl.innerHTML = '<div class="mr-note">Not in the app yet — tap one to see a summary before adding:</div>'
     + onlineItems.map(function(it, i){ return onlineRowHTML(it, i, "data-mr-online"); }).join("");
   mapResEl.classList.add("on");
@@ -4185,6 +4211,7 @@ function renderOnlineRows(){
 }
 function showOnlineSummary(i){
   var it = onlineItems[i]; if(!it || !mapResEl) return;
+  mapOnlinePhase = "summary";
   showTempPin(it);
   mapResEl.innerHTML = '<div class="mr-card"><button type="button" class="mr-back" id="mr-back">← All results</button>'
     + onlineSummaryHTML(it, "mr-add", "Add to my places") + "</div>";
@@ -4206,44 +4233,65 @@ function searchOnlineAdd(q){
   var token = ++mapResToken;
   if(!mapResEl) return;
   clearTempPin();
+  mapOnlinePhase = "searching";
   mapResEl.innerHTML = '<div class="mr-note">Searching online for “' + esc(q) + '”…</div>';
   mapResEl.classList.add("on");
-  onlineSearchPlaces(q).then(function(items){
+  function take(items){ return items.filter(function(it){ return !it.savedId; }).slice(0, 8); }
+  onlineSearchPlaces(q, function(partial){
+    if(token !== mapResToken || mapOnlinePhase !== "searching") return;
+    var list = take(partial);
+    if(list.length){ onlineItems = list; renderOnlineRows(); }
+  }).then(function(items){
     if(token !== mapResToken) return;
-    onlineItems = items;
-    if(!items.length){ mapResEl.innerHTML = '<div class="mr-note">No match found online for “' + esc(q) + '”. Check the spelling, or add it from the Places tab.</div>'; return; }
+    onlineItems = take(items);
+    if(mapOnlinePhase === "summary" || mapOnlinePhase === "list") return;
+    if(!onlineItems.length){ mapOnlinePhase = "idle"; mapResEl.innerHTML = '<div class="mr-note">No match found online for “' + esc(q) + '” anywhere on Kauai. Check the spelling, or add it from the Places tab.</div>'; return; }
     renderOnlineRows();
   }).catch(function(){
-    if(token === mapResToken && mapResEl) mapResEl.innerHTML = '<div class="mr-note">Online search failed (no connection?) — try again in a bit.</div>';
+    if(token === mapResToken && mapResEl && mapOnlinePhase !== "summary") mapResEl.innerHTML = '<div class="mr-note">Online search failed (no connection?) — try again in a bit.</div>';
   });
 }
 /* ---- the same live search inside the Schedule day editor (third tab) ---- */
-var pickOnlineMsg = "", pickOnlineItems = [];
+var pickOnlineMsg = "", pickOnlineItems = [], pickOnlinePhase = "idle", pickOnlineToken = 0;
 function wirePickerOnline(){
   var inp = document.getElementById("pick-q"), go = document.getElementById("pick-go"), res = document.getElementById("pick-results");
   if(!inp || !go || !res) return;
   function run(){
     var q = inp.value.trim();
     if(q.length < 3){ res.innerHTML = '<div class="mr-note">Type at least 3 letters, then tap Search.</div>'; return; }
-    pickOnlineMsg = "";
+    var token = ++pickOnlineToken;
+    pickOnlineMsg = ""; pickOnlinePhase = "searching";
     res.innerHTML = '<div class="mr-note">Searching online for “' + esc(q) + '”…</div>';
-    onlineSearchPlaces(q).then(function(items){
-      pickOnlineItems = items;
-      if(!document.getElementById("pick-results")) return;
-      if(!items.length){ res.innerHTML = '<div class="mr-note">No match found online for “' + esc(q) + '”. Check the spelling and try again.</div>'; return; }
-      renderPickOnlineRows();
+    onlineSearchPlaces(q, function(partial){
+      if(token !== pickOnlineToken || pickOnlinePhase !== "searching") return;
+      var list = partial.slice(0, 8);
+      if(list.length){ pickOnlineItems = list; renderPickOnlineRows(); scrollPickResults(); }
+    }).then(function(items){
+      if(token !== pickOnlineToken) return;
+      pickOnlineItems = items.slice(0, 8);
+      if(pickOnlinePhase === "summary" || pickOnlinePhase === "list") return;
+      var r2 = document.getElementById("pick-results"); if(!r2) return;
+      if(!pickOnlineItems.length){ pickOnlinePhase = "idle"; r2.innerHTML = '<div class="mr-note">No match found online for “' + esc(q) + '” anywhere on Kauai. Check the spelling and try again.</div>'; return; }
+      renderPickOnlineRows(); scrollPickResults();
     }).catch(function(){
-      var r2 = document.getElementById("pick-results");
-      if(r2) r2.innerHTML = '<div class="mr-note">Online search failed (no connection?) — try again in a bit.</div>';
+      if(token !== pickOnlineToken) return;
+      var r3 = document.getElementById("pick-results");
+      if(r3 && pickOnlinePhase !== "summary") r3.innerHTML = '<div class="mr-note">Online search failed (no connection?) — try again in a bit.</div>';
     });
   }
   go.addEventListener("click", run);
   inp.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); run(); } });
 }
+function scrollPickResults(){
+  var r = document.getElementById("pick-results");
+  if(r) r.scrollIntoView({ block:"nearest" });
+}
 function renderPickOnlineRows(){
   var res = document.getElementById("pick-results"); if(!res) return;
-  res.innerHTML = '<div class="mr-note">Not in the app yet — tap one to see its summary:</div>'
-    + pickOnlineItems.map(function(it, i){ return onlineRowHTML(it, i, "data-pick-online"); }).join("");
+  pickOnlinePhase = "list";
+  var anyNew = pickOnlineItems.some(function(it){ return !it.savedId; });
+  res.innerHTML = '<div class="mr-note">' + (anyNew ? "Tap one to see its summary, then add it to this day:" : "That one is already in your places — tap it to add it to this day:") + '</div>'
+    + pickOnlineItems.map(function(it, i){ return onlineRowHTML(it, i, "data-pick-online", it.savedId ? "Already in your Places" : ""); }).join("");
   res.querySelectorAll("[data-pick-online]").forEach(function(b){
     b.addEventListener("click", function(){ showPickOnlineSummary(parseInt(b.getAttribute("data-pick-online"), 10)); });
   });
@@ -4251,17 +4299,18 @@ function renderPickOnlineRows(){
 function showPickOnlineSummary(i){
   var res = document.getElementById("pick-results"); var it = pickOnlineItems[i];
   if(!res || !it) return;
+  pickOnlinePhase = "summary";
   res.innerHTML = '<div class="mr-card"><button type="button" class="mr-back" id="pick-back">← All results</button>'
     + onlineSummaryHTML(it, "pick-add", "Add to " + dayLabel(pickTargetIso)) + "</div>";
   var bk = document.getElementById("pick-back");
   if(bk) bk.addEventListener("click", renderPickOnlineRows);
   var ad = document.getElementById("pick-add");
   if(ad) ad.addEventListener("click", function(){
-    var saved = findSavedByName(it.name);
+    var saved = it.savedId ? getPlace(it.savedId) : findSavedByName(it.name);
     var p = saved || placeFromOnline(it);
     if(!saved) putPlace(p);
     applyPicked([{ key:"on#" + p.id, kind:"place", placeId:p.id }], "copy");
-    pickOnlineMsg = p.name + " is on " + dayLabel(pickTargetIso) + ". Search again to add another.";
+    pickOnlineMsg = p.name + " is on " + dayLabel(pickTargetIso) + (saved ? "." : " — and it is now a card in your Places too.") + " Search again to add another.";
     renderAll(); renderPicker();
     toast("Added — " + p.name + " is on " + dayLabel(pickTargetIso) + ".");
   });
@@ -4459,6 +4508,7 @@ function suggItemsFor(iso){
 var pickTargetIso = null, pickTab = "same", pickLookup = {};
 function openDayEditor(iso){
   pickTargetIso = iso; pickTab = "same"; pickOnlineMsg = "";
+  pickPlacesQ = ""; pickPlacesSel = {}; pickOnlinePhase = "idle"; pickOnlineItems = [];
   renderPicker();
   openSheet("picker-sheet");
 }
@@ -4478,8 +4528,8 @@ function renderPicker(){
   var html = '<div class="sheet-head"><div class="inner"><h2>Edit — '+esc(tgt)+'</h2><div class="meta">Add stops to this day — from Sug\u2019std, or use Search online for somewhere new. Sug\u2019std itself only changes when you pick \u201CMove it over.\u201D</div></div></div>'
     + '<button class="sheet-close" data-close="1" aria-label="Close">'+I.x+'</button>'
     + '<div class="sheet-body">'
-    + '<div class="pick-tabs" role="tablist"><button type="button" class="pick-tab" data-picktab="same" aria-selected="'+(pickTab==="same")+'">Day Sug\u2019std</button>'
-    + '<button type="button" class="pick-tab" data-picktab="whole" aria-selected="'+(pickTab==="whole")+'">Whole Sug\u2019std</button>' + '<button type="button" class="pick-tab" data-picktab="online" aria-selected="'+(pickTab==="online")+'">Search online</button></div>';
+    + '<div class="pick-tabs four" role="tablist"><button type="button" class="pick-tab" data-picktab="same" aria-selected="'+(pickTab==="same")+'">Day Sug\u2019std</button>'
+    + '<button type="button" class="pick-tab" data-picktab="whole" aria-selected="'+(pickTab==="whole")+'">Whole Sug\u2019std</button>' + '<button type="button" class="pick-tab" data-picktab="places" aria-selected="'+(pickTab==="places")+'">My Places</button>' + '<button type="button" class="pick-tab" data-picktab="online" aria-selected="'+(pickTab==="online")+'">Search online</button></div>';
   if(pickTab==="same"){
     var items = suggItemsFor(pickTargetIso);
     html += '<div class="pick-list">'
@@ -4496,6 +4546,11 @@ function renderPicker(){
         + '<div class="pick-choose-row"><button class="btn" type="button" data-pickchoose="'+dp.iso+'">Choose — send selected to '+esc(tgt)+'</button></div></div>';
     });
     html += '<div class="form-actions"><button class="btn primary" type="button" data-close="1">Done — everything chosen is saved</button></div>';
+  } else if(pickTab==="places") {
+    html += '<p class="pick-empty" style="text-align:left">Every place in the app, in one list. Search, tick as many as you like — your ticks stay put while you search — then add them all to ' + esc(tgt) + ' at once.</p>'
+      + '<div class="pick-search"><input type="text" id="pick-places-q" placeholder="Search your places…" autocomplete="off" /></div>'
+      + '<div class="pick-list" id="pick-places-list"></div>'
+      + '<div class="form-actions"><button class="btn" type="button" data-close="1">Cancel</button><button class="btn primary" type="button" id="pick-places-add">Add selected to ' + esc(tgt) + '</button></div>';
   } else if(pickTab==="online") {
     html += '<p class="pick-empty" style="text-align:left">Search live for a place that is not in the app yet — try “puka bracelet Poipu”, or a shop name. Tap a result to see its summary, then add it straight to this day.</p>'
       + (pickOnlineMsg ? '<div class="mr-note">' + esc(pickOnlineMsg) + '</div>' : '')
@@ -4505,6 +4560,66 @@ function renderPicker(){
   }  html += '</div>';
   sh.innerHTML = html;
   if(pickTab==="online") wirePickerOnline();
+  if(pickTab==="places") wirePickerPlaces();
+}
+/* ================= Patch 31: "My Places" tab in the day editor =================
+   Every place in the app (the Places tab's whole list, including places
+   added from online searches) in one searchable checklist. Ticks live in
+   pickPlacesSel, so searching and filtering never lose them; one Submit
+   adds them all to the target day (drive order applies, like every add). */
+var pickPlacesQ = "", pickPlacesSel = {};
+function pickPlacesFiltered(){
+  var words = pickPlacesQ.toLowerCase().split(/\s+/).filter(Boolean);
+  var arr = allPlaces().slice().sort(function(a, b){ return a.name.localeCompare(b.name); });
+  if(!words.length) return arr;
+  return arr.filter(function(p){
+    var hay = (p.name + " " + (p.cat || "") + " " + (p.area || "")).toLowerCase();
+    return words.every(function(w){ return hay.indexOf(w) >= 0; });
+  });
+}
+function updatePickPlacesBtn(){
+  var btn = document.getElementById("pick-places-add"); if(!btn) return;
+  var n = Object.keys(pickPlacesSel).length;
+  btn.textContent = n ? ("Add " + n + " selected to " + dayLabel(pickTargetIso)) : ("Add selected to " + dayLabel(pickTargetIso));
+}
+function renderPickPlacesList(){
+  var list = document.getElementById("pick-places-list"); if(!list) return;
+  var arr = pickPlacesFiltered();
+  if(!arr.length){ list.innerHTML = '<p class="pick-empty">No places match “' + esc(pickPlacesQ) + '”.</p>'; }
+  else list.innerHTML = arr.map(function(p){
+    var already = state.sched[p.id] === pickTargetIso;
+    return '<label class="pick-row' + (already ? " done" : "") + '"><input type="checkbox" data-pickplace="' + esc(p.id) + '"' + (pickPlacesSel[p.id] ? " checked" : "") + (already ? " disabled" : "") + ' />'
+      + '<span class="pick-main"><span class="pick-name">' + esc(p.name) + '</span>'
+      + '<span class="pick-sub">' + esc(p.cat) + ' · ' + esc(p.area) + '</span>'
+      + (already ? '<span class="pick-sub"><strong>Already on this day</strong></span>' : '')
+      + '</span></label>';
+  }).join("");
+  updatePickPlacesBtn();
+}
+function wirePickerPlaces(){
+  var inp = document.getElementById("pick-places-q"), list = document.getElementById("pick-places-list"), add = document.getElementById("pick-places-add");
+  if(!list) return;
+  renderPickPlacesList();
+  if(inp){
+    inp.value = pickPlacesQ;
+    var deb = null;
+    inp.addEventListener("input", function(){ pickPlacesQ = inp.value; clearTimeout(deb); deb = setTimeout(renderPickPlacesList, 150); });
+  }
+  list.addEventListener("change", function(e){
+    var cb = e.target.closest ? e.target.closest("[data-pickplace]") : null;
+    if(!cb) return;
+    var id = cb.getAttribute("data-pickplace");
+    if(cb.checked) pickPlacesSel[id] = true; else delete pickPlacesSel[id];
+    updatePickPlacesBtn();
+  });
+  if(add) add.addEventListener("click", function(){
+    var ids = Object.keys(pickPlacesSel).filter(function(id){ return state.sched[id] !== pickTargetIso && getPlace(id); });
+    if(!ids.length){ toast("Tick at least one place first."); return; }
+    applyPicked(ids.map(function(id){ return { key:"mp#" + id, kind:"place", placeId:id }; }), "copy");
+    pickPlacesSel = {};
+    closeSheets(); renderAll();
+    toast(ids.length + (ids.length === 1 ? " stop" : " stops") + " added to " + dayLabel(pickTargetIso) + ".");
+  });
 }
 function gatherPicked(groupIso){
   var out = [];
