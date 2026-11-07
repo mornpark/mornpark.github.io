@@ -672,6 +672,19 @@
   .dish .dish-actions{ display:flex; gap:10px; flex-wrap:wrap; }
   .dish .dish-del{ color:var(--ink2); font-weight:700; letter-spacing:.06em; }
   .dish-restore{ margin-top:18px; }
+  /* ---------- Grinds shopping list (collapsible, per-dish checkboxes) ---------- */
+  .shop-list{ padding:16px 18px; margin-bottom:16px; }
+  .shop-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .shop-head h4{ margin:0; font-family:"Marcellus",Georgia,serif; font-weight:400; font-size:20px; }
+  .shop-count{ color:var(--ink2); font-size:13.5px; font-weight:700; }
+  .shop-head .mini-btn{ margin-left:auto; }
+  .shop-body{ margin-top:10px; }
+  .shop-group{ margin-top:12px; }
+  .shop-group h5{ margin:0 0 6px; font-size:15px; }
+  .shop-item{ display:flex; align-items:center; gap:10px; padding:6px 0; font-size:15.5px; cursor:pointer; }
+  .shop-item input{ width:21px; height:21px; flex:0 0 auto; accent-color:#2e7d4f; }
+  .shop-item.got span{ text-decoration:line-through; color:var(--ink2); }
+  .shop-clear{ margin-top:14px; }
 
   /* ---------- Patch 17: Schedule editing — drag handle, reorder, Edit picker ---------- */
   .cal-tools{ display:flex; gap:8px; margin-bottom:14px; }
@@ -2963,29 +2976,29 @@ document.getElementById("locate-btn").addEventListener("click", function(){
 /* ================= killa grinds menu ================= */
 var GRINDS = {
   breakfasts: [
-    { name:"Papaya Sunrise Bowl", desc:"Fresh papaya filled with yogurt, gluten-free granola, and a drizzle of honey. No cooking at all.", yt:"papaya yogurt breakfast bowl" },
-    { name:"Salmon & Rice Breakfast Bowl", desc:"Flaked cooked salmon over warm rice with tamari and green onion — last night's fish, reborn.", yt:"salmon rice bowl breakfast tamari" },
-    { name:"Ginger Fish Jook", desc:"Cozy rice porridge with cooked fish and fresh ginger — the comfort breakfast, gentle on everybody.", yt:"fish congee jook recipe ginger" },
-    { name:"Garlic Shrimp & Grits", desc:"Shrimp-truck garlic shrimp over creamy corn grits. Breakfast that eats like dinner, in a good way.", yt:"garlic shrimp and grits recipe" },
-    { name:"Banana–Coconut Oatmeal", desc:"Gluten-free oats simmered in coconut milk with banana and a little brown sugar.", yt:"coconut banana oatmeal recipe" },
-    { name:"Tropical Smoothie Bowl", desc:"Thick-blended mango, banana, and coconut, topped with fresh fruit and gluten-free granola.", yt:"tropical smoothie bowl recipe" },
-    { name:"Seared Mahi & Sweet Potato Hash", desc:"Cooked mahi over crispy sweet potato hash with peppers and onion — the hearty morning plate.", yt:"mahi mahi sweet potato hash recipe" },
-    { name:"Coconut Rice & Mango Bowl", desc:"Warm coconut rice with fresh mango, toasted coconut, and crushed macadamia nuts.", yt:"coconut rice mango breakfast bowl" },
-    { name:"Lamb & Potato Breakfast Skillet", desc:"Diced lamb crisped up with potatoes, onion, and sweet peppers — no eggs, all flavor.", yt:"lamb potato breakfast skillet" },
-    { name:"Crispy Banana Rice-Paper Rolls", desc:"Banana and coconut wrapped in rice paper and crisped in the pan, honey over the top.", yt:"fried banana rice paper rolls" }
+    { name:"Papaya Sunrise Bowl", desc:"Fresh papaya filled with yogurt, gluten-free granola, and a drizzle of honey. No cooking at all.", yt:"papaya yogurt breakfast bowl", ing:["Papaya","Yogurt","Gluten-free granola","Honey"] },
+    { name:"Salmon & Rice Breakfast Bowl", desc:"Flaked cooked salmon over warm rice with tamari and green onion — last night's fish, reborn.", yt:"salmon rice bowl breakfast tamari", ing:["Salmon fillet","Rice","Gluten-free tamari","Green onions"] },
+    { name:"Ginger Fish Jook", desc:"Cozy rice porridge with cooked fish and fresh ginger — the comfort breakfast, gentle on everybody.", yt:"fish congee jook recipe ginger", ing:["White fish fillet (mahi)","Rice","Fresh ginger","Green onions"] },
+    { name:"Garlic Shrimp & Grits", desc:"Shrimp-truck garlic shrimp over creamy corn grits. Breakfast that eats like dinner, in a good way.", yt:"garlic shrimp and grits recipe", ing:["Shrimp","Corn grits","Garlic","Butter"] },
+    { name:"Banana–Coconut Oatmeal", desc:"Gluten-free oats simmered in coconut milk with banana and a little brown sugar.", yt:"coconut banana oatmeal recipe", ing:["Gluten-free oats","Coconut milk","Bananas","Brown sugar"] },
+    { name:"Tropical Smoothie Bowl", desc:"Thick-blended mango, banana, and coconut, topped with fresh fruit and gluten-free granola.", yt:"tropical smoothie bowl recipe", ing:["Mango","Bananas","Coconut milk","Gluten-free granola","Fresh fruit for topping"] },
+    { name:"Seared Mahi & Sweet Potato Hash", desc:"Cooked mahi over crispy sweet potato hash with peppers and onion — the hearty morning plate.", yt:"mahi mahi sweet potato hash recipe", ing:["Mahi fillets","Sweet potatoes","Bell peppers","Onion"] },
+    { name:"Coconut Rice & Mango Bowl", desc:"Warm coconut rice with fresh mango, toasted coconut, and crushed macadamia nuts.", yt:"coconut rice mango breakfast bowl", ing:["Rice","Coconut milk","Mango","Shredded coconut","Macadamia nuts"] },
+    { name:"Lamb & Potato Breakfast Skillet", desc:"Diced lamb crisped up with potatoes, onion, and sweet peppers — no eggs, all flavor.", yt:"lamb potato breakfast skillet", ing:["Lamb (diced or ground)","Potatoes","Onion","Sweet peppers"] },
+    { name:"Crispy Banana Rice-Paper Rolls", desc:"Banana and coconut wrapped in rice paper and crisped in the pan, honey over the top.", yt:"fried banana rice paper rolls", ing:["Bananas","Rice paper wraps","Shredded coconut","Honey"] }
   ],
   dinners: [
-    { name:"Garlic Butter Lobster Tails", desc:"Broiled lobster tails brushed with garlic butter — the fancy night. Costco sells the tails.", yt:"broiled lobster tails garlic butter recipe" },
-    { name:"Miso-Glazed Mahi", desc:"Cooked mahi with a sweet miso glaze — like the famous miso butterfish, but with the fish you can actually buy.", yt:"miso glazed mahi mahi recipe" },
-    { name:"North Shore Garlic Shrimp", desc:"Shrimp-truck style: shrimp sizzled in garlic butter over rice, sauce poured over the top.", yt:"hawaiian garlic shrimp recipe" },
-    { name:"Tamari-Ginger Ahi Steak", desc:"Ahi cooked all the way through with tamari and ginger — all the island flavors, none of the raw.", yt:"cooked ahi tuna steak tamari ginger" },
-    { name:"Grilled Lamb Chops", desc:"Lamb chops with garlic and rosemary, grilled hot and fast — pineapple salsa on the side if you're feeling fancy.", yt:"grilled lamb chops garlic rosemary recipe" },
-    { name:"Coconut Curry Fish", desc:"Mahi simmered in coconut curry with whatever vegetables looked good at the market. Serve over rice.", yt:"coconut curry fish recipe mahi" },
-    { name:"Island Fish Tacos", desc:"Grilled mahi on warm corn tortillas with cabbage slaw and a squeeze of lime.", yt:"grilled mahi fish tacos corn tortillas" },
-    { name:"Blackened Mahi with Pineapple Salsa", desc:"Mahi with a blackened spice crust and fresh pineapple salsa over the top, rice on the side.", yt:"blackened mahi mahi pineapple salsa recipe" },
-    { name:"Grilled Lamb Kebab Plate", desc:"Lamb skewers fresh off the grill with rice and a cool cucumber salad.", yt:"grilled lamb kebabs rice plate recipe" },
-    { name:"Island Seafood Coconut Soup", desc:"Shrimp and fish simmered in a coconut broth with ginger and lemongrass — Tom Kha, beach-house style.", yt:"tom kha seafood soup shrimp fish recipe" },
-    { name:"Tamari Teriyaki Salmon", desc:"Salmon glazed with gluten-free tamari teriyaki, grilled vegetables alongside.", yt:"teriyaki salmon tamari grilled vegetables recipe" }
+    { name:"Garlic Butter Lobster Tails", desc:"Broiled lobster tails brushed with garlic butter — the fancy night. Costco sells the tails.", yt:"broiled lobster tails garlic butter recipe", ing:["Lobster tails","Butter","Garlic"] },
+    { name:"Miso-Glazed Mahi", desc:"Cooked mahi with a sweet miso glaze — like the famous miso butterfish, but with the fish you can actually buy.", yt:"miso glazed mahi mahi recipe", ing:["Mahi fillets","White miso paste","Honey"] },
+    { name:"North Shore Garlic Shrimp", desc:"Shrimp-truck style: shrimp sizzled in garlic butter over rice, sauce poured over the top.", yt:"hawaiian garlic shrimp recipe", ing:["Shrimp","Garlic","Butter","Rice"] },
+    { name:"Tamari-Ginger Ahi Steak", desc:"Ahi cooked all the way through with tamari and ginger — all the island flavors, none of the raw.", yt:"cooked ahi tuna steak tamari ginger", ing:["Ahi tuna steaks","Gluten-free tamari","Fresh ginger"] },
+    { name:"Grilled Lamb Chops", desc:"Lamb chops with garlic and rosemary, grilled hot and fast — pineapple salsa on the side if you're feeling fancy.", yt:"grilled lamb chops garlic rosemary recipe", ing:["Lamb chops","Garlic","Fresh rosemary","Pineapple"] },
+    { name:"Coconut Curry Fish", desc:"Mahi simmered in coconut curry with whatever vegetables looked good at the market. Serve over rice.", yt:"coconut curry fish recipe mahi", ing:["Mahi fillets","Coconut milk","Gluten-free curry paste","Mixed vegetables","Rice"] },
+    { name:"Island Fish Tacos", desc:"Grilled mahi on warm corn tortillas with cabbage slaw and a squeeze of lime.", yt:"grilled mahi fish tacos corn tortillas", ing:["Mahi fillets","Corn tortillas","Cabbage","Limes"] },
+    { name:"Blackened Mahi with Pineapple Salsa", desc:"Mahi with a blackened spice crust and fresh pineapple salsa over the top, rice on the side.", yt:"blackened mahi mahi pineapple salsa recipe", ing:["Mahi fillets","Blackened seasoning","Pineapple","Rice"] },
+    { name:"Grilled Lamb Kebab Plate", desc:"Lamb skewers fresh off the grill with rice and a cool cucumber salad.", yt:"grilled lamb kebabs rice plate recipe", ing:["Lamb kebab meat","Rice","Cucumber"] },
+    { name:"Island Seafood Coconut Soup", desc:"Shrimp and fish simmered in a coconut broth with ginger and lemongrass — Tom Kha, beach-house style.", yt:"tom kha seafood soup shrimp fish recipe", ing:["Shrimp","White fish fillet","Coconut milk","Fresh ginger","Lemongrass"] },
+    { name:"Tamari Teriyaki Salmon", desc:"Salmon glazed with gluten-free tamari teriyaki, grilled vegetables alongside.", yt:"teriyaki salmon tamari grilled vegetables recipe", ing:["Salmon fillets","Gluten-free tamari","Honey","Mixed vegetables"] }
   ]
 };
 function ytHref(q){ return "https://www.youtube.com/results?search_query=" + encodeURIComponent(q); }
@@ -2995,11 +3008,47 @@ function dishCard(d){
     + '<div class="dish-actions"><a class="btn yt-btn" href="'+ytHref(d.yt)+'" target="_blank" rel="noopener">WATCH ON YT</a>'
     + '<button type="button" class="btn dish-del" data-dishdel="'+esc(d.name)+'">DELETE</button></div></article>';
 }
+function shopKey(dishName, ing){ return dishName + " :: " + ing; }
+function shopCounts(){
+  var total = 0, got = 0, chk = state.shopChecks || {};
+  GRINDS.breakfasts.concat(GRINDS.dinners).forEach(function(d){
+    if(state.grindsGone && state.grindsGone[d.name]) return;
+    (d.ing || []).forEach(function(g){ total++; if(chk[shopKey(d.name, g)]) got++; });
+  });
+  return { total:total, got:got };
+}
+function shopListHTML(){
+  var chk = state.shopChecks || {};
+  var min = !!state.shopListMin;
+  var c = shopCounts();
+  var html = '<section class="card shop-list"><div class="shop-head"><h4>Shopping list</h4>'
+    + '<span class="shop-count" id="shop-count">'+c.got+' of '+c.total+' bought</span>'
+    + '<button type="button" class="mini-btn" data-shoptoggle="1">'+(min ? "Show list" : "Hide list")+'</button></div>';
+  if(!min){
+    html += '<div class="shop-body">';
+    [["Morning Grinds — Breakfast", GRINDS.breakfasts], ["Evening Grinds — Dinner", GRINDS.dinners]].forEach(function(sec){
+      sec[1].forEach(function(d){
+        if(state.grindsGone && state.grindsGone[d.name]) return;
+        if(!d.ing || !d.ing.length) return;
+        html += '<div class="shop-group"><h5>'+esc(d.name)+'</h5>';
+        d.ing.forEach(function(g){
+          var on = !!chk[shopKey(d.name, g)];
+          html += '<label class="shop-item'+(on ? " got" : "")+'"><input type="checkbox" data-shop="'+esc(shopKey(d.name, g))+'"'+(on ? " checked" : "")+'><span>'+esc(g)+'</span></label>';
+        });
+        html += '</div>';
+      });
+    });
+    if(c.got) html += '<button type="button" class="mini-btn shop-clear" data-shopclear="1">Clear all checks</button>';
+    html += '</div>';
+  }
+  return html + '</section>';
+}
 function renderGrinds(force){
   var w = document.getElementById("grinds-wrap");
   if(!w || (w.dataset.done && !force)) return;
   w.dataset.done = "1";
   var html = '<p class="cmp-intro">Cook-at-the-house favorites, built from the grocery runs — <strong>all gluten-free, cooked seafood and lamb only, no eggs and no beef.</strong> No recipes here on purpose: pick a dish, tap “YouTube it,” watch it made once, then cook it your way.</p>';
+  html += shopListHTML();
   html += '<h3 class="menu-head">Morning Grinds — Breakfast</h3>';
   html += GRINDS.breakfasts.map(dishCard).join("");
   html += '<h3 class="menu-head">Evening Grinds — Dinner</h3>';
@@ -3021,6 +3070,28 @@ function renderGrinds(force){
     state.grindsGone = {};
     save(); renderGrinds(true);
     toast("Deleted dishes restored.");
+  });
+  var st = w.querySelector("[data-shoptoggle]");
+  if(st) st.addEventListener("click", function(){
+    state.shopListMin = !state.shopListMin;
+    save(); renderGrinds(true);
+  });
+  var sc = w.querySelector("[data-shopclear]");
+  if(sc) sc.addEventListener("click", function(){
+    state.shopChecks = {};
+    save(); renderGrinds(true);
+    toast("Shopping list checks cleared.");
+  });
+  w.querySelectorAll("[data-shop]").forEach(function(box){
+    box.addEventListener("change", function(){
+      if(!state.shopChecks) state.shopChecks = {};
+      var k = box.getAttribute("data-shop");
+      if(box.checked) state.shopChecks[k] = true; else delete state.shopChecks[k];
+      save();
+      box.closest(".shop-item").classList.toggle("got", box.checked);
+      var c = shopCounts(), el = document.getElementById("shop-count");
+      if(el) el.textContent = c.got + " of " + c.total + " bought";
+    });
   });
 }
 
