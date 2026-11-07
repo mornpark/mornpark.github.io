@@ -174,6 +174,7 @@
   .day .dlabel{ font-weight:700; font-size:15.5px; display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
   .day .dlabel .today-tag{ font-size:11.5px; font-weight:700; letter-spacing:.06em; border:1.5px solid var(--ink); padding:2px 7px; }
   .day .none{ color:var(--ink2); font-size:14px; margin-top:4px; }
+  .day .day-count{ color:var(--ink2); font-size:13px; font-weight:600; }
   .day-entry{ display:flex; align-items:center; gap:8px; margin-top:8px; border-top:1px solid var(--line); padding-top:8px; }
   .day-entry .nm{ flex:1; font-weight:600; font-size:15px; min-width:0; cursor:pointer; }
   .nudge{ display:flex; gap:4px; flex:none; }
@@ -1179,7 +1180,7 @@ var SEED = [
 
 { id:"kauai-sup-wailua", name:"Kauai SUP — Wailua River Rentals", cat:"Service", area:"Wailua / Kapa'a", address:"Wailua River, Kapa'a, HI 96746", phone:"", lat:22.048, lng:-159.3355, phase:"explore", bookEarly:false,
   cost:"River package about $64–67 per person (board, lesson and river map).",
-  hours:"Daily — book ahead.",
+  hours:"Closed Saturdays — book ahead.",
   about:"Stand-up paddling on the flat Wailua River — the no-ocean option. Gear, a lesson and a map included.",
   expect:"Note: the Secret Falls trail at the end of the paddle is currently closed — this is a river paddle, not the falls hike, until DLNR reopens it.",
   links:[] },
@@ -2504,9 +2505,13 @@ function renderCalendar(){
       var entries = dayEntries(d.iso);
       var wd = weekdayOf(d.iso);
       var meeting = (wd===0) ? "10:00 AM" : (wd===3 ? "7:00 PM" : null);
-      html += '<div class="day'+(pend?' pickable':'')+'"'+(pend?' data-pickday="'+d.iso+'"':'')+'><div class="strip '+ph+'"></div><div class="inner">'
+      var minSched = !!(state.schedMin && state.schedMin[d.iso]);
+      html += '<div class="day'+(pend?' pickable':'')+(minSched?' min':'')+'"'+(pend?' data-pickday="'+d.iso+'"':'')+'><div class="strip '+ph+'"></div><div class="inner">'
         + '<div class="dlabel"><span>'+d.label+'</span>'+(todayIso===d.iso?'<span class="today-tag">TODAY</span>':"")
-        + '<button class="note-btn'+(state.notes[d.iso]?' has':'')+'" type="button" data-note="'+d.iso+'">'+I.note+(state.notes[d.iso]?'Note saved':'Notes')+'</button></div>';
+        + (minSched && entries.length ? '<span class="day-count">'+entries.length+(entries.length===1?' stop':' stops')+'</span>' : '')
+        + '<button class="note-btn'+(state.notes[d.iso]?' has':'')+'" type="button" data-note="'+d.iso+'">'+I.note+(state.notes[d.iso]?'Note saved':'Notes')+'</button>'
+        + '<button class="mini-btn" type="button" data-daytoggle="'+d.iso+'">'+(minSched?'Show day':'Hide day')+'</button></div>';
+      if(!minSched){
       if(!entries.length && !meeting) html += '<div class="none">Nothing scheduled</div>';
       if(meeting) html += '<div class="day-entry meeting"><span class="nm" data-open="kingdom-hall">Congregation meeting — Kingdom Hall, Kekaha</span><span class="meet-tag">WEEKLY · '+meeting+'</span></div>';
       var legs = driveLegs(entries);
@@ -2553,6 +2558,7 @@ function renderCalendar(){
         }
       }
       if(state.notes[d.iso]) html += '<div class="note-preview">'+renderNoteHTML(state.notes[d.iso], "inline")+'</div>';
+      }
       html += '</div></div>';
     });
     html += '</div>';
@@ -3803,6 +3809,7 @@ document.addEventListener("click", function(e){
   var nt=e.target.closest("[data-note]"); if(nt){ openNote(nt.getAttribute("data-note")); return; }
   var wx=e.target.closest("[data-wxday]"); if(wx){ openWxDay(wx.getAttribute("data-wxday")); return; }
   var cp=e.target.closest("[data-cancelpend]"); if(cp){ pendSched=null; renderCalendar(); return; }
+  var dtg=e.target.closest("[data-daytoggle]"); if(dtg){ var diso=dtg.getAttribute("data-daytoggle"); state.schedMin=state.schedMin||{}; if(state.schedMin[diso]) delete state.schedMin[diso]; else state.schedMin[diso]=true; save(); renderCalendar(); return; }
   var pk=e.target.closest("[data-pickday]");
   if(pk && pendSched && !e.target.closest("[data-note],[data-nudge],[data-move],[data-unsched],[data-cancelpend],[data-open],[data-planb],[data-dayedit],[data-reorder],[data-untext],[data-drag],[data-tripnotes],[data-photo-id]")){
     var iso2=pk.getAttribute("data-pickday"), p2=getPlace(pendSched);
