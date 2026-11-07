@@ -1798,6 +1798,7 @@ var photoWaiters = {};
 var photoDbPromise = null;
 var photoSeq = 0;
 var noteEditIso = null;
+var noteFromTripNotes = false;
 var noteSavedRange = null;   /* last caret Range inside the note editor — saved across the photo-picker round-trip */
 
 function photoDb(){
@@ -3512,6 +3513,21 @@ document.addEventListener("click", function(e){
    the bottom of the Today view. Lives in state.beckyList [{t, done}]; every
    add, check-off, or delete saves immediately, so it stays current as
    Justin edits it. Check off = replaced; × = remove the line. */
+/* Patch 33: Becky's house guide as a general note at the top of Trip Notes
+   (from her pre-trip message). Public-page safe: no Wi-Fi password, no key
+   details — those stay in the private house sheet. */
+function houseGuideCardHTML(){
+  return '<div class="tn-day"><div class="tn-day-head"><strong>Becky\u2019s house guide \u2014 general note</strong></div><div class="tn-text">'
+  + '<p style="margin:0 0 6px"><strong>The house:</strong> 3984 Papalina Rd, Kalaheo. Two bedrooms up, one down, bathrooms close by \u2014 sleep wherever you like. Printer (Bluetooth) is fine to use. Washer and dryer upstairs and downstairs. Don\u2019t wash bedding or towels \u2014 Becky does them when she gets home.</p>'
+  + '<p style="margin:6px 0"><strong>Vehicles:</strong> truck keys are left for you (she mostly uses it for the beach). The Palisade is push-button everything \u2014 drive, park, reverse \u2014 and tricky to drive.</p>'
+  + '<p style="margin:6px 0"><strong>Kitchen \u2014 propane:</strong> stove, oven and dryer are propane. No microwave. The front-right burner is finicky \u2014 keep clicking until it lights. <strong>All knobs OFF when you\u2019re not cooking.</strong> If the propane runs out: the little house on the left side has the tanks, with a switch on top to flip from one tank to the other. Any problems, call Becky.</p>'
+  + '<p style="margin:6px 0"><strong>Septic:</strong> never put grease or oils down the kitchen sink. Toilets are toilet-paper only. Everything else goes in the garbage can.</p>'
+  + '<p style="margin:6px 0"><strong>Trash:</strong> out Sunday night, picked up Monday 7:00 AM. Bring the can back in Monday morning \u2014 the neighbors don\u2019t like it sitting out. The renter next door may put it out Sunday night but can\u2019t bring it in until she\u2019s home from work, so plan on grabbing it yourselves.</p>'
+  + '<p style="margin:6px 0"><strong>Plants:</strong> water once a week if it isn\u2019t raining. The front-porch plants under the roof don\u2019t get rain \u2014 those need it most.</p>'
+  + '<p style="margin:6px 0"><strong>Beach gear:</strong> towels, chairs and umbrella are ready outside. Cooler with ice packs is in the freezer.</p>'
+  + '<p style="margin:6px 0 0"><strong>Kingdom Hall Wai\u2019aka:</strong> 8833 Kaumualii Hwy, Kekaha \u2014 about 25 min west. Wednesday 7:00 PM, Sunday 10:00 AM.</p>'
+  + '</div></div>';
+}
 function beckyListHTML(){
   var list = state.beckyList || [];
   var html = '<div class="becky-card"><h2 class="section">For Becky — used up, replenish</h2>';
@@ -3727,7 +3743,14 @@ function openNote(iso){
   var cur=state.notes[iso]||"";
   noteEditIso = iso;
   noteSavedRange = null;
-  sh.innerHTML='<div class="sheet-inner"><button class="close-x" type="button" data-close="1" aria-label="Close">'+I.x+'</button>'
+  /* Patch 32: coming from Trip Notes, the editor sheet opened underneath the
+     Trip Notes sheet (same z-index, Trip Notes later in the DOM), so Edit note
+     looked dead. Close Trip Notes first; Save/Cancel return to it. */
+  var tnSheet=document.getElementById("tripnotes-sheet");
+  noteFromTripNotes = !!(tnSheet && tnSheet.classList.contains("on"));
+  if(noteFromTripNotes) tnSheet.classList.remove("on");
+  var closeAttr = noteFromTripNotes ? 'data-note-cancel="1"' : 'data-close="1"';
+  sh.innerHTML='<div class="sheet-inner"><button class="close-x" type="button" '+closeAttr+' aria-label="Close">'+I.x+'</button>'
     + '<h3 style="margin-right:40px">'+esc(dayLabel(iso))+' — day notes</h3>'
     + '<p>What actually happened: plans that changed, a migraine day, the good stuff worth remembering. Saved on this device.</p>'
     + '<div class="chip-row"><button class="btn" type="button" data-chip="Kim migraine — plans changed. ">Migraine day</button>'
@@ -3736,7 +3759,7 @@ function openNote(iso){
     + '<div class="note-photo-tools"><button class="btn" type="button" data-note-photo-add="1">+ Photo</button><span class="note-photo-hint">Puts a photo right where your cursor is — keep typing after it.</span></div>'
     + '<div class="note-ed" id="note-ed" contenteditable="true" data-placeholder="Write the day as it really went…" role="textbox" aria-multiline="true" aria-label="Day notes"></div>'
     + '<div class="note-photo-strip" id="note-photo-strip"></div>'
-    + '<div class="danger-zone"><button class="btn" type="button" data-close="1">Cancel</button>'
+    + '<div class="danger-zone"><button class="btn" type="button" '+closeAttr+'>Cancel</button>'
     + '<button class="btn primary" type="button" data-savenote="'+iso+'">Save note</button></div></div>';
   openSheet("detail-sheet");
   var ed=document.getElementById("note-ed");
@@ -3748,6 +3771,8 @@ function openNote(iso){
 }
 document.addEventListener("click", function(e){
   var cl=e.target.closest("[data-close]"); if(cl){ closeSheets(); return; }
+  var ncan=e.target.closest("[data-note-cancel]");
+  if(ncan){ noteFromTripNotes=false; document.getElementById("detail-sheet").classList.remove("on"); openTripNotes(); return; }
   var pclose=e.target.closest("[data-photo-close]");
   if(pclose || e.target.id==="photo-lightbox"){ closePhotoLightbox(); return; }
   var pho=e.target.closest("img[data-photo-id]");
@@ -3770,7 +3795,10 @@ document.addEventListener("click", function(e){
       Object.keys(state.notes).forEach(function(k){ if(String(state.notes[k]).indexOf("[[photo:"+id+"]]")>=0) used=true; });
       if(!used) photoDelete(id);
     });
-    save(); renderCalendar(); closeSheets(); toast(v?"Day note saved.":"Day note cleared."); return;
+    save(); renderCalendar();
+    if(noteFromTripNotes){ noteFromTripNotes=false; document.getElementById("detail-sheet").classList.remove("on"); openTripNotes(); }
+    else closeSheets();
+    toast(v?"Day note saved.":"Day note cleared."); return;
   }
   var nt=e.target.closest("[data-note]"); if(nt){ openNote(nt.getAttribute("data-note")); return; }
   var wx=e.target.closest("[data-wxday]"); if(wx){ openWxDay(wx.getAttribute("data-wxday")); return; }
@@ -4805,6 +4833,7 @@ function openTripNotes(){
   var html = '<div class="sheet-head"><div class="inner"><h2>Trip Notes</h2><div class="meta">One document for the whole trip, built live from your per-day notes — edit or delete a day\u2019s note and this file updates itself. Nothing is copied or synced.</div></div></div>'
     + '<button class="sheet-close" data-close="1" aria-label="Close">'+I.x+'</button>'
     + '<div class="sheet-body">';
+  html += houseGuideCardHTML();
   DAYS.forEach(function(d){
     var n = (state.notes[d.iso]||"").trim();
     html += '<div class="tn-day"><div class="tn-day-head"><strong>'+esc(d.label)+'</strong><button class="mini-btn" type="button" data-note="'+d.iso+'">'+(n?"Edit note":"Add note")+'</button></div>'
