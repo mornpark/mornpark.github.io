@@ -2695,15 +2695,26 @@ function planBLineHTML(id){
 function openPlanB(id){
   var p = getPlace(id); if(!p) return;
   var pb = planBOf(id) || {};
-  var opts = '<option value="">— No specific place —</option>' + allPlaces().filter(function(x){ return x.id!==id; })
-    .sort(function(a,b){ return a.name.localeCompare(b.name); })
-    .map(function(x){ return '<option value="'+x.id+'"'+(pb.placeId===x.id?" selected":"")+'>'+esc(x.name)+' ('+esc(x.area)+')</option>'; }).join("");
+  var hasA = typeof p.lat==="number" && typeof p.lng==="number";
+  function fmtMi(m){ return m<1 ? m.toFixed(2) : m.toFixed(1); }
+  var wrapped = allPlaces().filter(function(x){ return x.id!==id; }).map(function(x){
+    var d = (hasA && typeof x.lat==="number" && typeof x.lng==="number") ? distKm(p,x)*0.621371 : null;
+    return { x:x, d:d };
+  });
+  wrapped.sort(function(a,b){
+    if(a.d==null && b.d==null) return a.x.name.localeCompare(b.x.name);
+    if(a.d==null) return 1;
+    if(b.d==null) return -1;
+    return a.d-b.d;
+  });
+  var opts = '<option value="">— No specific place —</option>' + wrapped
+    .map(function(w){ return '<option value="'+w.x.id+'"'+(pb.placeId===w.x.id?" selected":"")+'>'+esc(w.x.name)+' ('+esc(w.x.area)+')'+(w.d!=null?' — '+fmtMi(w.d)+' mi':'')+'</option>'; }).join("");
   var sh = document.getElementById("detail-sheet");
   sh.innerHTML = '<div class="sheet-head"><div class="strip '+p.phase+'"></div><div class="inner">'
     + '<h2>Plan B — '+esc(p.name)+'</h2><div class="meta">If this stop falls through, what happens instead? Saved on this device; shows on Today and in Schedule.</div></div></div>'
     + '<button class="sheet-close" data-close="1" aria-label="Close">'+I.x+'</button>'
     + '<div class="sheet-body"><form class="place-form" id="planb-form">'
-    + '<label for="pb-place">Swap to this place instead</label><select class="planb-select" id="pb-place">'+opts+'</select>'
+    + '<label for="pb-place">Swap to this place instead — closest first, miles from '+esc(p.name)+'</label><select class="planb-select" id="pb-place">'+opts+'</select>'
     + '<label for="pb-text">Or describe the backup plan</label><textarea class="planb-text" id="pb-text" placeholder="e.g. House day — leftovers, reading, early night.">'+esc(pb.text||"")+'</textarea>'
     + '<div class="form-actions"><button class="btn" type="button" data-close="1">Cancel</button>'
     + (pb.placeId || pb.text ? '<button class="btn danger" type="button" data-clearplanb="'+p.id+'">Clear Plan B</button>' : '')
