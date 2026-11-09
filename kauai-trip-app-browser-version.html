@@ -195,6 +195,10 @@
     display:flex; gap:8px; align-items:center; box-shadow:var(--shadow);
   }
   .map-locate svg{ width:16px; height:16px; }
+  .me-dot{ position:relative; width:44px; height:44px; }
+  .me-dot .me-pulse{ position:absolute; left:50%; top:50%; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:rgba(26,111,212,.45); animation:mePulse 2.2s ease-out infinite; }
+  .me-dot .me-core{ position:absolute; left:50%; top:50%; width:16px; height:16px; margin:-8px 0 0 -8px; border-radius:50%; background:#1a6fd4; border:3px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.5); box-sizing:border-box; }
+  @keyframes mePulse{ 0%{ transform:scale(1); opacity:.7; } 70%{ transform:scale(2.6); opacity:0; } 100%{ transform:scale(2.6); opacity:0; } }
   .pin{
     width:22px; height:22px; border:2.5px solid #fff; box-shadow:0 1px 5px rgba(0,0,0,.45);
     display:flex; align-items:center; justify-content:center;
@@ -2920,6 +2924,7 @@ document.getElementById("confirm-yes").addEventListener("click", function(){
 
 /* ================= map ================= */
 var map=null, markers={}, userMarker=null, mapReady=false;
+var mePos=null, meWatch=null, meDotMain=null, meAccMain=null, meDotToday=null, meAccToday=null;
 function invalidateMap(){ if(map){ setTimeout(function(){ map.invalidateSize(); },60); } }
 function pinIcon(p, dim){
   var ep = effPhase(p);
@@ -2942,6 +2947,7 @@ function initMap(){
   }).addTo(map);
   mapReady = true;
   refreshMarkers();
+  startMeWatch(); drawMe();
   drawTrails();
   drawSunsets();
 }
@@ -2997,18 +3003,47 @@ function showMapCard(id){
   document.getElementById("map-card-x").addEventListener("click", function(){ c.classList.remove("on"); });
   document.getElementById("map-card-open").addEventListener("click", function(){ openDetail(p.id); });
 }
+/* Patch 46: live blue dot (Google-style) on BOTH maps \u2014 the full Map and
+   the Today mini-map. watchPosition keeps the dot following Justin as he
+   moves; dot + soft accuracy halo are added straight onto each map (not
+   into the rebuilt marker layers), so re-renders never wipe them. */
+function meIcon(){
+  return L.divIcon({ className:"", html:'<div class="me-dot"><span class="me-pulse"></span><span class="me-core"></span></div>', iconSize:[44,44], iconAnchor:[22,22] });
+}
+function meDrawOn(m, dot, acc){
+  if(!m || !mePos) return [dot, acc];
+  var ll = [mePos.lat, mePos.lng];
+  if(!dot){
+    acc = L.circle(ll, { radius:mePos.acc || 30, color:"#1a6fd4", weight:1, opacity:.4, fillColor:"#1a6fd4", fillOpacity:.13, interactive:false }).addTo(m);
+    dot = L.marker(ll, { icon:meIcon(), interactive:false, zIndexOffset:1000 }).addTo(m);
+  } else {
+    dot.setLatLng(ll); if(acc){ acc.setLatLng(ll); acc.setRadius(mePos.acc || 30); }
+  }
+  return [dot, acc];
+}
+function drawMe(){
+  if(!mePos || typeof L==="undefined") return;
+  if(mapReady && map){ var r = meDrawOn(map, meDotMain, meAccMain); meDotMain = r[0]; meAccMain = r[1]; }
+  if(todayMap){ var r2 = meDrawOn(todayMap, meDotToday, meAccToday); meDotToday = r2[0]; meAccToday = r2[1]; }
+}
+function startMeWatch(){
+  if(meWatch!==null || !navigator.geolocation) return;
+  meWatch = navigator.geolocation.watchPosition(function(pos){
+    mePos = { lat:pos.coords.latitude, lng:pos.coords.longitude, acc:pos.coords.accuracy };
+    drawMe();
+  }, function(){ /* silent here \u2014 the My location button reports errors */ },
+  { enableHighAccuracy:true, maximumAge:10000, timeout:20000 });
+}
 document.getElementById("locate-btn").addEventListener("click", function(){
   if(!navigator.geolocation){ toast("Location is not available in this browser."); return; }
-  toast("Finding you…");
+  startMeWatch();
+  if(mePos && mapReady){ map.setView([mePos.lat, mePos.lng], 13); toast("That's you \u2014 the blue dot. It follows you as you move."); return; }
+  toast("Finding you\u2026");
   navigator.geolocation.getCurrentPosition(function(pos){
-    var ll = [pos.coords.latitude, pos.coords.longitude];
-    if(mapReady){
-      if(userMarker) map.removeLayer(userMarker);
-      userMarker = L.circleMarker(ll, { radius:9, color:"#fff", weight:3, fillColor:"#1a6fd4", fillOpacity:1 }).addTo(map);
-      userMarker.bindTooltip("You are here");
-      map.setView(ll, 12);
-    }
-    toast("That's you — the blue dot.");
+    mePos = { lat:pos.coords.latitude, lng:pos.coords.longitude, acc:pos.coords.accuracy };
+    drawMe();
+    if(mapReady) map.setView([mePos.lat, mePos.lng], 13);
+    toast("That's you \u2014 the blue dot. It follows you as you move.");
   }, function(){ toast("Couldn't get your location. Check location permission for this site."); },
   { enableHighAccuracy:true, timeout:10000 });
 });
@@ -3651,6 +3686,7 @@ function initTodayMap(){
   }
   if(todayLayer) todayMap.removeLayer(todayLayer);
   todayLayer = L.layerGroup().addTo(todayMap);
+  startMeWatch();
   var iso = todayIsoSel || currentTripIso();
   var pts = [[HOME_BASE.lat, HOME_BASE.lng]];
   var hm = L.marker([HOME_BASE.lat, HOME_BASE.lng], { icon: L.divIcon({ className:"", html:'<div class="home-pin">H</div>', iconSize:[30,30], iconAnchor:[15,15] }) }).addTo(todayLayer);
@@ -3664,7 +3700,9 @@ function initTodayMap(){
     m.bindTooltip(p.name, { direction:"top", offset:[0,-13], className:"beach-label" });
     m.on("click", function(){ openDetail(p.id); });
   });
+  if(mePos && Math.abs(mePos.lat-pts[0][0])<0.27 && Math.abs(mePos.lng-pts[0][1])<0.30) pts.push([mePos.lat, mePos.lng]);
   todayMap.fitBounds(L.latLngBounds(pts).pad(0.18));
+  drawMe();
   setTimeout(function(){ if(todayMap) todayMap.invalidateSize(); }, 80);
 }
 document.addEventListener("click", function(e){
