@@ -89,6 +89,7 @@
   }
   nav.tabs button[aria-selected="true"]{ color:var(--bg); background:var(--ink); border-bottom-color:var(--ink); }
   nav.tabs svg{ width:18px; height:18px; flex:none; }
+  nav.tabs svg.wx-tab-ico{ width:15px; height:15px; margin-left:2px; opacity:.85; }
 
   main{ max-width:860px; margin:0 auto; padding:16px 16px calc(40px + env(safe-area-inset-bottom)); }
   .view{ display:none; } .view.on{ display:block; }
@@ -907,7 +908,7 @@
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10"/></svg>Today
     </button>
     <button role="tab" id="tab-places" aria-selected="false" data-view="places">
-      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Places
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 6h16M4 12h16M4 18h16"/></svg>Places <svg class="wx-tab-ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-label="Weather lives on this tab"><circle cx="17" cy="6.6" r="2.3"/><path d="M17 2v1.2M21.5 6.6h-1.2M20.2 3.3l-.9.9M13.8 3.3l.9.9"/><path d="M6.8 20h9.4a3.9 3.9 0 0 0 .8-7.7 5.2 5.2 0 0 0-10.1.9A3.7 3.7 0 0 0 6.8 20z"/></svg>
     </button>
     <button role="tab" id="tab-grinds" aria-selected="false" data-view="grinds">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 19h18M5 19a7 7 0 0 1 14 0M12 10V8M9.5 8h5"/></svg>Grinds
@@ -941,7 +942,7 @@
     <div class="wx-box" id="wx-box">
       <div class="wx-head"><h3>Kauai weather — next 5 days</h3><button class="btn primary" id="wx-cal-btn" type="button">Schedule</button><button class="btn" id="wx-map-btn" type="button">Map</button></div>
       <div class="wx-days" id="wx-days"><p class="wx-load">Loading live weather…</p></div>
-      <p class="wx-note" id="wx-note">Live forecast for Kalaheo (the house). Tap a day for the full picture and picks matched to that weather.</p>
+      <p class="wx-note" id="wx-note">Live forecast for Kalaheo (the house), averaged from three weather models so one wet model doesn’t shout. Tap a day for the full picture and picks matched to that weather.</p>
     </div>
     <div class="toolbar">
       <div class="search-row">
@@ -3792,22 +3793,68 @@ function wxDayFull(iso){ return new Date(iso+"T12:00:00").toLocaleDateString("en
 function wxSetRows(j){
   WX.rows={}; WX.order=[];
   var d=j.daily; if(!d||!d.time) return;
+  /* Three forecast models (ECMWF, GFS, ICON) averaged, so one wet model
+     can't shout down the others. The old single-model feed ran far too
+     wet for Kalaheo (69–98% rain when weather.com and NWS Honolulu both
+     said ~20%) and labeled every day "Rain / showers" off its single
+     wettest hour. Consensus numbers + plain-language tiers fix both. */
+  var models=["", "_ecmwf_ifs025", "_gfs_seamless", "_icon_seamless"].filter(function(sfx){
+    return Array.isArray(d["temperature_2m_max"+sfx]);
+  });
+  if(!models.length) models=[""];
+  function series(name, sfx){ var a=d[name+sfx]; return Array.isArray(a)?a:null; }
+  function avgAt(name, i){
+    var vals=[];
+    models.forEach(function(sfx){ var a=series(name, sfx); if(a && a[i]!=null && !isNaN(a[i])) vals.push(+a[i]); });
+    if(!vals.length) return null;
+    return vals.reduce(function(x,y){ return x+y; },0)/vals.length;
+  }
+  function firstAt(name, i){
+    for(var k=0;k<models.length;k++){ var a=series(name, models[k]); if(a && a[i]!=null) return a[i]; }
+    return null;
+  }
   for(var i=0;i<d.time.length;i++){
-    var r={ iso:d.time[i], code:d.weather_code[i], hi:Math.round(d.temperature_2m_max[i]), lo:Math.round(d.temperature_2m_min[i]),
-      rainProb:(d.precipitation_probability_max?d.precipitation_probability_max[i]:null),
-      rainSum:d.precipitation_sum?d.precipitation_sum[i]:null,
-      wind:Math.round(d.wind_speed_10m_max[i]), sunrise:d.sunrise?d.sunrise[i]:null, sunset:d.sunset?d.sunset[i]:null,
-      uv:d.uv_index_max?Math.round(d.uv_index_max[i]):null,
-      gust:(d.wind_gusts_10m_max?Math.round(d.wind_gusts_10m_max[i]):null), wdir:(d.wind_direction_10m_dominant?Math.round(d.wind_direction_10m_dominant[i]):null) };
+    var probs=[];
+    models.forEach(function(sfx){ var a=series("precipitation_probability_max", sfx); if(a && a[i]!=null) probs.push(+a[i]); });
+    var medCode=null;
+    if(probs.length){
+      var srt=probs.slice().sort(function(a,b){ return a-b; });
+      var mid=srt[Math.floor(srt.length/2)], bestDiff=1e9;
+      models.forEach(function(sfx){ var pa=series("precipitation_probability_max", sfx), ca=series("weather_code", sfx);
+        if(pa && ca && pa[i]!=null){ var diff=Math.abs(pa[i]-mid); if(diff<bestDiff){ bestDiff=diff; medCode=ca[i]; } } });
+    }
+    if(medCode==null) medCode=firstAt("weather_code", i);
+    var rsAvg=avgAt("precipitation_sum", i), uvAvg=avgAt("uv_index_max", i), gustAvg=avgAt("wind_gusts_10m_max", i), wdirAvg=avgAt("wind_direction_10m_dominant", i);
+    var r={ iso:d.time[i], code:medCode,
+      hi:Math.round(avgAt("temperature_2m_max", i)), lo:Math.round(avgAt("temperature_2m_min", i)),
+      rainProb:(probs.length? Math.round(probs.reduce(function(x,y){ return x+y; },0)/probs.length) : null),
+      rainSum:(rsAvg==null?null:Math.round(rsAvg*100)/100),
+      wind:Math.round(avgAt("wind_speed_10m_max", i)), sunrise:firstAt("sunrise", i), sunset:firstAt("sunset", i),
+      uv:(uvAvg==null?null:Math.round(uvAvg)),
+      gust:(gustAvg==null?null:Math.round(gustAvg)), wdir:(wdirAvg==null?null:Math.round(wdirAvg)) };
+    var cond=wxTier(r);
+    r.condLabel=cond.label; r.condKind=cond.kind;
     WX.rows[r.iso]=r; WX.order.push(r.iso);
   }
 }
+function wxTier(r){
+  var code=r.code, prob=r.rainProb, sum=r.rainSum;
+  if(code===95||code===96||code===99) return {label:"Thunderstorms", kind:"storm"};
+  if(prob!=null && prob>=70 && (sum==null || sum>=0.03)) return {label:"Rain / showers", kind:"rain"};
+  if(prob!=null && prob>=50) return {label:"Showers likely", kind:"rain"};
+  if(prob!=null && prob>=30) return {label:"Scattered showers", kind:"partly"};
+  var rainish = code!=null && !(code<=3 || code===45 || code===48);
+  if(prob!=null && prob>=15 && rainish) return {label:"A shower possible", kind:"partly"};
+  if(rainish && prob!=null) return {label:"Mostly sunny", kind:"partly"};
+  return wxInfo(code);
+}
+function wxCondOf(r){ if(r && r.condKind) return {label:r.condLabel, kind:r.condKind}; return wxInfo(r?r.code:3); }
 function renderWx(){
   var box=document.getElementById("wx-days"); if(!box) return;
   if(!WX.order.length){ renderWxFallback(); return; }
   var html="";
   WX.order.slice(0,5).forEach(function(iso){
-    var r=WX.rows[iso], inf=wxInfo(r.code);
+    var r=WX.rows[iso], inf=wxCondOf(r);
     html += '<button class="wx-day" type="button" data-wxday="'+iso+'">'
       + '<span class="dow">'+wxDayShort(iso)+'</span>'
       + '<span class="cond">'+inf.label+'</span>'
@@ -3840,22 +3887,22 @@ function wxMergeMarine(j){
   }
 }
 function wxLoad(){
-  try{ var c=JSON.parse(localStorage.getItem("kauai_wx_v1")||"null"); if(c && (Date.now()-c.t)<1800000 && c.d){ wxSetRows(c.d); if(c.m) wxMergeMarine(c.m); renderWx(); return; } }catch(e){}
+  try{ var c=JSON.parse(localStorage.getItem("kauai_wx_v2")||"null"); if(c && (Date.now()-c.t)<1800000 && c.d){ wxSetRows(c.d); if(c.m) wxMergeMarine(c.m); renderWx(); return; } }catch(e){}
   if(!window.fetch){ renderWxFallback(); return; }
-  fetch("https://api.open-meteo.com/v1/forecast?latitude=21.895&longitude=-159.527&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,sunrise,sunset,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=Pacific%2FHonolulu&forecast_days=16")
+  fetch("https://api.open-meteo.com/v1/forecast?latitude=21.895&longitude=-159.527&daily=weather_code,temperature_2m_max,temperature_2m_min,precipitation_sum,precipitation_probability_max,wind_speed_10m_max,wind_gusts_10m_max,wind_direction_10m_dominant,sunrise,sunset,uv_index_max&temperature_unit=fahrenheit&wind_speed_unit=mph&precipitation_unit=inch&timezone=Pacific%2FHonolulu&forecast_days=16&models=ecmwf_ifs025,gfs_seamless,icon_seamless")
     .then(function(r){ return r.json(); })
     .then(function(j){
       wxSetRows(j); renderWx();
       fetch("https://marine-api.open-meteo.com/v1/marine?latitude=21.87&longitude=-159.45&hourly=sea_surface_temperature&daily=wave_height_max&temperature_unit=fahrenheit&timezone=Pacific%2FHonolulu&forecast_days=16")
         .then(function(r){ return r.json(); })
-        .then(function(m){ wxMergeMarine(m); try{ localStorage.setItem("kauai_wx_v1", JSON.stringify({t:Date.now(), d:j, m:m})); }catch(e){} renderWx(); })
-        .catch(function(){ try{ localStorage.setItem("kauai_wx_v1", JSON.stringify({t:Date.now(), d:j})); }catch(e){} });
+        .then(function(m){ wxMergeMarine(m); try{ localStorage.setItem("kauai_wx_v2", JSON.stringify({t:Date.now(), d:j, m:m})); }catch(e){} renderWx(); })
+        .catch(function(){ try{ localStorage.setItem("kauai_wx_v2", JSON.stringify({t:Date.now(), d:j})); }catch(e){} });
     })
     .catch(function(){ renderWxFallback(); });
 }
 function wxIsWater(p){ return /beach|anini|poipu|snorkel|paddle|kayak|zodiac|spear|fathom|surf|hanalei|landing/i.test(p.name+" "+p.area); }
 function wxPicks(r){
-  var inf=wxInfo(r.code), rainy=(r.rainProb!=null && r.rainProb>=50)||inf.kind==="rain"||inf.kind==="storm", windy=r.wind>=20;
+  var inf=wxCondOf(r), rainy=(r.rainProb!=null && r.rainProb>=50)||inf.kind==="rain"||inf.kind==="storm", windy=r.wind>=20;
   var pool=allPlaces(), picks=[];
   function add(p, why){ if(p && picks.length<4 && !picks.some(function(x){ return x.p.id===p.id; })) picks.push({p:p, why:why}); }
   if(inf.kind==="storm" || (rainy && r.rainProb>=70)){
@@ -3876,7 +3923,7 @@ function wxPicks(r){
 function fmtTime(t){ if(!t) return "—"; var d=new Date(t); return d.toLocaleTimeString("en-US",{hour:"numeric", minute:"2-digit"}); }
 function openWxDay(iso){
   var r=WX.rows[iso]; if(!r) return;
-  var inf=wxInfo(r.code), rainy=(r.rainProb!=null && r.rainProb>=50)||inf.kind==="rain"||inf.kind==="storm";
+  var inf=wxCondOf(r), rainy=(r.rainProb!=null && r.rainProb>=50)||inf.kind==="rain"||inf.kind==="storm";
   var sh=document.getElementById("detail-sheet");
   var html='<div class="sheet-inner"><button class="close-x" type="button" data-close="1" aria-label="Close">'+I.x+'</button>'
     + '<h3 style="margin-right:40px">'+wxDayFull(iso)+'</h3>'
