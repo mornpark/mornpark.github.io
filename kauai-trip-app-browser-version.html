@@ -685,6 +685,12 @@
   .shop-item input{ width:21px; height:21px; flex:0 0 auto; accent-color:#2e7d4f; }
   .shop-item.got span{ text-decoration:line-through; color:var(--ink2); }
   .shop-clear{ margin-top:14px; }
+  .shop-today-head{ display:flex; align-items:center; gap:8px; }
+  .shop-today-head h5{ margin:0 0 6px; }
+  .shop-add-btn{ width:26px; height:26px; padding:0; font-size:17px; line-height:1; border-radius:50%; flex:none; }
+  .shop-add-form{ display:flex; gap:8px; margin:2px 0 8px; }
+  .shop-add-form input{ flex:1; min-width:0; padding:8px 10px; font-size:15.5px; border-radius:8px; border:1px solid rgba(255,255,255,.25); background:rgba(255,255,255,.06); color:inherit; }
+  .shop-hint{ margin:2px 0 4px; font-size:13.5px; color:var(--ink2); }
 
   /* ---------- Patch 17: Schedule editing — drag handle, reorder, Edit picker ---------- */
   .cal-tools{ display:flex; gap:8px; margin-bottom:14px; }
@@ -3043,8 +3049,10 @@ function shopCounts(){
     if(state.grindsGone && state.grindsGone[d.name]) return;
     (d.ing || []).forEach(function(g){ total++; if(chk[shopKey(d.name, g)]) got++; });
   });
+  (state.shopToday || []).forEach(function(it){ total++; if(it.got) got++; });
   return { total:total, got:got };
 }
+var shopAddOpen = false;
 function shopListHTML(){
   var chk = state.shopChecks || {};
   var min = !!state.shopListMin;
@@ -3055,6 +3063,18 @@ function shopListHTML(){
     + '<span class="shop-count" id="shop-count">'+c.got+' of '+c.total+' bought</span></div>';
   if(!min){
     html += '<div class="shop-body">';
+    var td = state.shopToday || [];
+    html += '<div class="shop-group shop-today"><div class="shop-today-head"><h5>Today</h5>'
+      + '<button type="button" class="mini-btn shop-add-btn" data-shopadd="1" aria-label="Add an item">+</button></div>';
+    if(shopAddOpen){
+      html += '<div class="shop-add-form"><input type="text" id="shop-today-input" placeholder="Type what you need to buy" autocomplete="off">'
+        + '<button type="button" class="mini-btn" data-shopaddsubmit="1">Add</button></div>';
+    }
+    if(!td.length && !shopAddOpen) html += '<p class="shop-hint">Your own add-ins for today\u2019s run \u2014 tap + to add.</p>';
+    td.forEach(function(it, i){
+      html += '<label class="shop-item'+(it.got ? " got" : "")+'"><input type="checkbox" data-shoptoday="'+i+'"'+(it.got ? " checked" : "")+'><span>'+esc(it.name)+'</span></label>';
+    });
+    html += '</div>';
     [["Morning Grinds — Breakfast", GRINDS.breakfasts], ["Evening Grinds — Dinner", GRINDS.dinners]].forEach(function(sec){
       sec[1].forEach(function(d){
         if(state.grindsGone && state.grindsGone[d.name]) return;
@@ -3108,8 +3128,40 @@ function renderGrinds(force){
   var sc = w.querySelector("[data-shopclear]");
   if(sc) sc.addEventListener("click", function(){
     state.shopChecks = {};
+    (state.shopToday || []).forEach(function(it){ it.got = false; });
     save(); renderGrinds(true);
     toast("Shopping list checks cleared.");
+  });
+  var sa = w.querySelector("[data-shopadd]");
+  if(sa) sa.addEventListener("click", function(){
+    shopAddOpen = true; renderGrinds(true);
+    var inp = document.getElementById("shop-today-input");
+    if(inp) inp.focus();
+  });
+  function shopAddCommit(){
+    var inp = document.getElementById("shop-today-input");
+    var v = inp ? inp.value.trim() : "";
+    if(!state.shopToday) state.shopToday = [];
+    if(v) state.shopToday.push({ name:v, got:false });
+    shopAddOpen = false;
+    save(); renderGrinds(true);
+    if(v) toast("Added — " + v);
+  }
+  var ss = w.querySelector("[data-shopaddsubmit]");
+  if(ss) ss.addEventListener("click", shopAddCommit);
+  var si = w.querySelector("#shop-today-input");
+  if(si) si.addEventListener("keydown", function(e){ if(e.key === "Enter"){ e.preventDefault(); shopAddCommit(); } });
+  w.querySelectorAll("[data-shoptoday]").forEach(function(box){
+    box.addEventListener("change", function(){
+      var i = parseInt(box.getAttribute("data-shoptoday"), 10);
+      if(state.shopToday && state.shopToday[i]){
+        state.shopToday[i].got = !!box.checked;
+        save();
+        box.closest(".shop-item").classList.toggle("got", box.checked);
+        var c = shopCounts(), el = document.getElementById("shop-count");
+        if(el) el.textContent = c.got + " of " + c.total + " bought";
+      }
+    });
   });
   w.querySelectorAll("[data-shop]").forEach(function(box){
     box.addEventListener("change", function(){
