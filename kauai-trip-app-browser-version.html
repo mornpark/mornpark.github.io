@@ -2556,7 +2556,7 @@ function renderCalendar(){
       html += '<div class="day'+(pend?' pickable':'')+(minSched?' min':'')+'"'+(pend?' data-pickday="'+d.iso+'"':'')+'><div class="strip '+ph+'"></div><div class="inner">'
         + '<div class="dlabel"><span>'+d.label+'</span>'+(todayIso===d.iso?'<span class="today-tag">TODAY</span>':"")
         + (minSched && entries.length ? '<span class="day-count">'+entries.length+(entries.length===1?' stop':' stops')+'</span>' : '')
-        + '<button class="note-btn'+(state.notes[d.iso]?' has':'')+'" type="button" data-note="'+d.iso+'">'+I.note+(state.notes[d.iso]?'Note saved':'Notes')+'</button>'
+        + '<button class="note-btn'+(state.notes[d.iso]?' has':'')+'" type="button" data-note="'+d.iso+'">'+I.note+(state.notes[d.iso]?'DIARY SAVED':'DIARY')+'</button>'
         + '<button class="mini-btn" type="button" data-daytoggle="'+d.iso+'">'+(minSched?'Show day':'Hide day')+'</button></div>';
       if(!minSched){
       if(!entries.length && !meeting) html += '<div class="none">Nothing scheduled</div>';
