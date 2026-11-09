@@ -2449,6 +2449,11 @@ var DAYS = [];
       phase: d<=11 ? "active" : (d<=17 ? "explore" : "relax") });
   }
 })();
+/* Justin's rule (2026-11-08): every fresh app open starts with ALL Schedule
+   days minimized. A day he opens stays open while the app stays open
+   (tab switches included) and resets on the next fresh open. */
+state.schedMin = {};
+DAYS.forEach(function(d){ state.schedMin[d.iso] = true; });
 function dayLabel(iso){
   for(var i=0;i<DAYS.length;i++) if(DAYS[i].iso===iso) return DAYS[i].label;
   return iso;
