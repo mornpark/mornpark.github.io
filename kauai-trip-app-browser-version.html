@@ -206,6 +206,8 @@
   .pin svg{ width:12px; height:12px; }
   .pin.active{ background:var(--active); } .pin.explore{ background:var(--explore); } .pin.relax{ background:var(--relax); }
   .pin.daynum{ width:26px; height:26px; font-size:13.5px; }
+  .pin.farmer{ background:#2f9e44; border-radius:50%; font-size:15px; }
+  .pin.farmer.hl{ font-size:19px; box-shadow:0 0 0 3px #ffd94d, 0 1px 5px rgba(0,0,0,.45); }
   .my-note{ width:100%; min-height:74px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); font:inherit; font-size:15px; margin:2px 0 10px; }
   #map-card{
     position:absolute; left:10px; right:10px; bottom:10px; z-index:500; display:none;
@@ -1049,7 +1051,7 @@
     <div class="map-list-head"><h3>Everywhere on your map</h3><span id="map-list-count"></span></div>
     <p class="map-list-hint">Tap a name and the map jumps straight to it.</p>
     <div id="map-list"></div>
-    <p class="foot-note">Tap a square pin to see the place without leaving the map. Pins are colored by the week the place fits best. The search at the top also finds places that are not saved yet — press Enter and the pin is added to your map for good.</p>
+    <p class="foot-note">Tap a square pin to see the place without leaving the map. Green round pins with a farmer are farmers markets. Pins are colored by the week the place fits best. The search at the top also finds places that are not saved yet — press Enter and the pin is added to your map for good.</p>
   </section>
 
   <!-- SUGGESTED -->
@@ -1319,6 +1321,41 @@ var SEED = [
   hours:"Saturdays, 9:30 AM–12:00 PM.",
   about:"The north shore's Saturday morning market at Hale Halawai — the Nov 14 Plan A opener.",
   expect:"County and community markets can shift with weather and holidays — a quick check before a special trip is worth it. Go early; the good stuff sells out.",
+  links:[] },
+
+{ id:"market-pau-hana", name:"Pau Hana Market (Kukui Grove)", cat:"Business", area:"Lihue", address:"Kukui Grove Center, 4303 Nawiliwili Rd, Lihue, HI 96766", phone:"", lat:21.9684, lng:-159.3772, phase:"active", bookEarly:false, mdays:[1],
+  cost:"Farm-direct prices \u2014 produce, fruit, flowers and prepared food. Cash-friendly; bring small bills and bags.",
+  hours:"Mondays, 3:00\u20135:30 PM.",
+  about:"Monday-afternoon market in the Kukui Grove parking lot in Lihue \u2014 farm produce, fruit, flowers and local food stalls, per kauai.com. Same center as Times Supermarket, so it pairs with a grocery run.",
+  expect:"County and community markets can shift with weather and holidays \u2014 a quick check before a special trip is worth it. Go early; the good stuff sells out.",
+  links:[] },
+
+{ id:"market-coconut", name:"Coconut Marketplace Farmers Market", cat:"Business", area:"Kapa'a", address:"Coconut Marketplace, 4-484 Kuhio Hwy, Kapa'a, HI 96746", phone:"", lat:22.0545, lng:-159.3288, phase:"active", bookEarly:false, mdays:[2,3,4],
+  cost:"Farm-direct prices \u2014 produce, fruit, flowers and prepared food. Cash-friendly; bring small bills and bags.",
+  hours:"Tuesdays, Wednesdays and Thursdays, 9:00 AM\u20131:00 PM.",
+  about:"A morning market three days a week at the Coconut Marketplace shops in Kapa'a \u2014 produce, tropical fruit, baked goods and local crafts, per kauai.com. The morning counterpart to the Wednesday-afternoon county market in town.",
+  expect:"County and community markets can shift with weather and holidays \u2014 a quick check before a special trip is worth it. Go early; the good stuff sells out.",
+  links:[] },
+
+{ id:"market-hale-puna", name:"Hale Puna Farmers Market", cat:"Business", area:"Waimea", address:"9600 Kaumualii Hwy, Waimea, HI 96796", phone:"", lat:21.9569, lng:-159.673, phase:"explore", bookEarly:false, mdays:[4],
+  cost:"Farm-direct prices \u2014 produce, fruit, flowers and prepared food. Cash-friendly; bring small bills and bags.",
+  hours:"Thursdays, 9:00 AM\u20131:00 PM.",
+  about:"Thursday-morning market at Hale Puna in Waimea \u2014 west-side farms, fruit, produce and prepared food, per kauai.com. An easy stop on a Waimea Canyon or Salt Pond day.",
+  expect:"County and community markets can shift with weather and holidays \u2014 a quick check before a special trip is worth it. Go early; the good stuff sells out.",
+  links:[] },
+
+{ id:"market-grove-farm", name:"Grove Farm Market", cat:"Business", area:"Lihue", address:"Grove Farm, Puhi, Lihue, HI 96766", phone:"", lat:21.9662, lng:-159.3969, phase:"active", bookEarly:false, mdays:[6],
+  cost:"Farm-direct prices \u2014 produce, fruit, flowers and prepared food. Cash-friendly; bring small bills and bags.",
+  hours:"Saturdays, 9:30 AM\u201312:00 PM.",
+  about:"Saturday-morning market at historic Grove Farm in Puhi \u2014 tropical fruit, organic vegetables, sourdough breads and pastries, local goat cheese, fresh-pressed juices and handmade crafts, per kauai.com. A second Saturday option just minutes from the KCC market.",
+  expect:"County and community markets can shift with weather and holidays \u2014 a quick check before a special trip is worth it. Go early; the good stuff sells out.",
+  links:[] },
+
+{ id:"market-kilauea-sat", name:"Kilauea Sunshine Market", cat:"Business", area:"Kilauea", address:"2460 Keneke St, Kilauea, HI 96754", phone:"(808) 241-6390", lat:22.2122, lng:-159.4058, phase:"explore", bookEarly:false, mdays:[6],
+  cost:"Farm-direct prices \u2014 produce, fruit, flowers and prepared food. Cash-friendly; bring small bills and bags.",
+  hours:"Saturdays, 4:30 PM until dusk.",
+  about:"The county's Saturday-evening market in Kilauea \u2014 the late one, per kauai.com. North-shore produce and fruit as the day winds down; same-day partner to the Anaina Hou morning market nearby.",
+  expect:"County and community markets can shift with weather and holidays \u2014 a quick check before a special trip is worth it. Go early; the good stuff sells out.",
   links:[] },
 
 { id:"market-namahana", name:"Namahana Farmers Market (Anaina Hou)", cat:"Business", area:"Kilauea", address:"Anaina Hou Community Park, 5-2723 Kuhio Hwy, Kilauea, HI 96754", phone:"(808) 241-6390", lat:22.2112, lng:-159.4135, phase:"explore", bookEarly:false, mdays:[1,6],
@@ -2928,10 +2965,12 @@ var mePos=null, meWatch=null, meDotMain=null, meAccMain=null, meDotToday=null, m
 function invalidateMap(){ if(map){ setTimeout(function(){ map.invalidateSize(); },60); } }
 function pinIcon(p, dim){
   var ep = effPhase(p);
+  if(p.mdays) return L.divIcon({ className:"", html:'<div class="pin farmer'+(dim?" dim":"")+'">🧑‍🌾</div>', iconSize:[24,24], iconAnchor:[12,12] });
   return L.divIcon({ className:"", html:'<div class="pin '+ep+(dim?" dim":"")+'">'+(PHASES[ep]?PHASES[ep].num:"")+'</div>', iconSize:[22,22], iconAnchor:[11,11] });
 }
 function pinIconHL(p){
   var ep = effPhase(p);
+  if(p.mdays) return L.divIcon({ className:"", html:'<div class="pin farmer hl">🧑‍🌾</div>', iconSize:[32,32], iconAnchor:[16,16] });
   return L.divIcon({ className:"", html:'<div class="pin hl '+ep+'">'+(PHASES[ep]?PHASES[ep].num:"")+'</div>', iconSize:[30,30], iconAnchor:[15,15] });
 }
 /* Patch 24: Today mini-map pins carry the day's own stop numbers — the
