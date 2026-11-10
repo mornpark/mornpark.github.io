@@ -5237,6 +5237,11 @@ function openTripNotes(){
     + '<button class="sheet-close" data-close="1" aria-label="Close">'+I.x+'</button>'
     + '<div class="sheet-body">';
   html += houseGuideCardHTML();
+  html += '<div class="tn-day"><div class="tn-day-head"><strong>Move diary between devices</strong></div>'
+    + '<div class="tn-empty">Diary entries live only in the browser where you wrote them \u2014 they do not sync on their own. To bring entries over: on the OTHER device open this same box and tap \u201cShow my entries\u201d, copy everything, then paste it here and tap Merge.</div>'
+    + '<textarea id="diary-io" rows="5" style="width:100%;margin-top:8px" placeholder="Entries appear here \u2014 or paste entries copied from another device"></textarea>'
+    + '<div class="form-actions"><button class="btn" type="button" data-diary-export="1">Show my entries to copy</button><button class="btn primary" type="button" data-diary-import="1">Merge entries from the box</button></div>'
+    + '<div class="tn-empty" id="diary-io-status"></div></div>';
   DAYS.forEach(function(d){
     var n = (state.notes[d.iso]||"").trim();
     html += '<div class="tn-day"><div class="tn-day-head"><strong>'+esc(d.label)+'</strong><button class="mini-btn" type="button" data-note="'+d.iso+'">'+(n?"Edit note":"Add note")+'</button></div>'
@@ -5246,6 +5251,33 @@ function openTripNotes(){
   sh.innerHTML = html;
   hydratePhotos(sh);
   openSheet("tripnotes-sheet");
+}
+function diaryExportText(){
+  var keys = Object.keys(state.notes||{}).filter(function(k){ return (state.notes[k]||"").trim(); }).sort();
+  var out = ["KAUAI DIARY \u2014 copy everything in this box, then paste it into the same box on your other device and tap Merge."];
+  keys.forEach(function(k){ out.push("=== " + k + " ===\n" + state.notes[k].trim()); });
+  return out.join("\n\n");
+}
+function mergeDiaryText(existing, incoming){
+  existing = (existing||"").trim(); incoming = (incoming||"").trim();
+  if(!incoming) return existing;
+  if(!existing) return incoming;
+  if(existing === incoming) return existing;
+  if(existing.indexOf(incoming) >= 0) return existing;
+  if(incoming.indexOf(existing) >= 0) return incoming;
+  return existing + "\n\n\u2014 \u2014 \u2014\n\n" + incoming;
+}
+function importDiaryText(text){
+  var re = /===\s*(\d{4}-\d{2}-\d{2})\s*===\s*\n([\s\S]*?)(?=\n===\s*\d{4}-\d{2}-\d{2}\s*===|$)/g, m, added = 0, merged = 0, skipped = 0;
+  while((m = re.exec(text))){
+    var iso = m[1], body = m[2].trim(); if(!body) continue;
+    var cur = (state.notes[iso]||"").trim();
+    var next = mergeDiaryText(cur, body);
+    if(next === cur){ if(cur) skipped++; continue; }
+    state.notes[iso] = next;
+    if(cur) merged++; else added++;
+  }
+  return { added: added, merged: merged, skipped: skipped };
 }
 function saveTripNotes(){
   var blob = new Blob([tripNotesText()], { type:"text/markdown" });
@@ -5345,6 +5377,10 @@ document.addEventListener("click", function(e){
   if(tsb){ saveTripNotes(); return; }
   var bk = e.target.closest("[data-book]");
   if(bk){ openBook(); return; }
+  var dex = e.target.closest("[data-diary-export]");
+  if(dex){ var dio = document.getElementById("diary-io"); if(dio){ dio.value = diaryExportText(); dio.focus(); dio.select(); var dst = document.getElementById("diary-io-status"); if(dst) dst.textContent = "Ready \u2014 long-press the text and Copy all of it, then paste it into this same box on your other device and tap Merge."; } return; }
+  var dim = e.target.closest("[data-diary-import]");
+  if(dim){ var dio2 = document.getElementById("diary-io"); var res = importDiaryText(dio2 ? dio2.value : ""); save(); openTripNotes(); var dst2 = document.getElementById("diary-io-status"); if(dst2) dst2.textContent = (res.added || res.merged) ? ("Done \u2014 added " + res.added + " day(s), merged " + res.merged + " day(s)" + (res.skipped ? (", " + res.skipped + " already here") : "") + ".") : "Nothing new found in the box \u2014 make sure the copied entries include their === date === lines."; return; }
 });
 
 /* Patch 16: the app opens on Today. */
