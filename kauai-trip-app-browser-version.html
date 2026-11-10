@@ -356,6 +356,7 @@
   .wx-tide-head{ font-weight:800; font-size:14.5px; }
   .wx-tide-list{ font-size:14px; margin-top:3px; line-height:1.5; }
   .wx-tide-status{ font-size:13.5px; color:var(--mut); margin-top:2px; }
+  .day-tides{ font-size:13px; color:var(--mut); padding:3px 0 5px; }
   .wx-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
   .wx-head h3{ margin:0; font-size:17px; flex:1; min-width:0; }
   .wx-head .btn{ flex:none; padding:8px 12px; font-size:14px; }
@@ -2609,7 +2610,7 @@ function renderCalendar(){
         + '<div class="dlabel"><span>'+d.label+'</span>'+(todayIso===d.iso?'<span class="today-tag">TODAY</span>':"")
         + (minSched && entries.length ? '<span class="day-count">'+entries.length+(entries.length===1?' stop':' stops')+'</span>' : '')
         + '<button class="note-btn'+(state.notes[d.iso]?' has':'')+'" type="button" data-note="'+d.iso+'">'+I.note+(state.notes[d.iso]?'DIARY SAVED':'DIARY')+'</button>'
-        + '<button class="mini-btn" type="button" data-daytoggle="'+d.iso+'">'+(minSched?'Show day':'Hide day')+'</button></div>';
+        + '<button class="mini-btn" type="button" data-daytoggle="'+d.iso+'">'+(minSched?'Show day':'Hide day')+'</button></div>' + tideLineFor(d.iso);
       if(!minSched){
       if(!entries.length && !meeting) html += '<div class="none">Nothing scheduled</div>';
       if(meeting) html += '<div class="day-entry meeting"><span class="nm" data-open="kingdom-hall">Congregation meeting — Kingdom Hall, Kekaha</span><span class="meet-tag">WEEKLY · '+meeting+'</span></div>';
@@ -3969,6 +3970,14 @@ function wxMergeMarine(j){
   }
 }
 /* ================= tides (NOAA Port Allen station, south shore) ================= */
+var tideEvents = [];
+function tideLineFor(iso){
+  if(!tideEvents.length) return "";
+  var evs = tideEvents.filter(function(e){ return e.t.slice(0,10) === iso; });
+  if(!evs.length) return "";
+  var parts = evs.map(function(e){ return (e.type==="H" ? "High " : "Low ") + tideFmtTime(e.t) + " \u00b7 " + (+e.v).toFixed(1) + " ft"; });
+  return '<div class="day-tides">🌊 ' + parts.join(" \u2014 ") + '</div>';
+}
 function tideFmtTime(t){
   var hm = t.slice(11,16).split(":"); var h = +hm[0]; var ap = h>=12 ? "PM" : "AM"; var h12 = h%12; if(h12===0) h12 = 12;
   return h12 + ":" + hm[1] + " " + ap;
@@ -3998,19 +4007,22 @@ function tidesRender(events){
     + (status ? '<div class="wx-tide-status">' + status + '</div>' : "");
 }
 function tidesLoad(){
-  var box = document.getElementById("wx-tides"); if(!box || !window.fetch) return;
-  var today = new Date();
-  var key = "kauai_tides_v1";
-  try{ var c = JSON.parse(localStorage.getItem(key)||"null"); if(c && c.day === tideDayStr(today) && c.events){ tidesRender(c.events); return; } }catch(e){}
-  function ymd(d){ return ""+d.getFullYear()+("0"+(d.getMonth()+1)).slice(-2)+("0"+d.getDate()).slice(-2); }
-  var tm = new Date(Date.now()+86400000);
-  var url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=muse_kauai&begin_date="+ymd(today)+"&end_date="+ymd(tm)+"&datum=MLLW&station=1611347&time_zone=lst_ldt&units=english&interval=hilo&format=json";
+  var box = document.getElementById("wx-tides"); if(!window.fetch) return;
+  var key = "kauai_tides_v2";
+  function applyEvents(ev){
+    tideEvents = ev;
+    if(box) tidesRender(ev);
+    if(typeof renderCalendar === "function") renderCalendar();
+  }
+  try{ var c = JSON.parse(localStorage.getItem(key)||"null"); if(c && c.day === tideDayStr(new Date()) && c.events && c.events.length > 8){ applyEvents(c.events); return; } }catch(e){}
+  var b = (state.startISO||"2026-11-06").replace(/-/g,""), en = (state.endISO||"2026-11-24").replace(/-/g,"");
+  var url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=muse_kauai&begin_date="+b+"&end_date="+en+"&datum=MLLW&station=1611347&time_zone=lst_ldt&units=english&interval=hilo&format=json";
   fetch(url).then(function(r){ return r.json(); }).then(function(j){
     var ev = (j && j.predictions) || [];
     if(!ev.length) throw 0;
-    try{ localStorage.setItem(key, JSON.stringify({day:tideDayStr(today), events:ev})); }catch(e){}
-    tidesRender(ev);
-  }).catch(function(){ box.innerHTML = ""; });
+    try{ localStorage.setItem(key, JSON.stringify({day:tideDayStr(new Date()), events:ev})); }catch(e){}
+    applyEvents(ev);
+  }).catch(function(){ if(box) box.innerHTML = ""; });
 }
 function wxLoad(){
   try{ var c=JSON.parse(localStorage.getItem("kauai_wx_v2")||"null"); if(c && (Date.now()-c.t)<1800000 && c.d){ wxSetRows(c.d); if(c.m) wxMergeMarine(c.m); renderWx(); return; } }catch(e){}
