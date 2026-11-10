@@ -352,6 +352,10 @@
 
   /* ---------- weather strip (main dash) ---------- */
   .wx-box{ border:1px solid var(--ink); background:var(--surface); padding:14px; margin-bottom:14px; box-shadow:0 1px 2px rgba(24,20,12,.05), 0 10px 26px rgba(24,20,12,.05); }
+  .wx-tides{ margin-top:10px; border-top:1px solid var(--line); padding-top:10px; }
+  .wx-tide-head{ font-weight:800; font-size:14.5px; }
+  .wx-tide-list{ font-size:14px; margin-top:3px; line-height:1.5; }
+  .wx-tide-status{ font-size:13.5px; color:var(--mut); margin-top:2px; }
   .wx-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
   .wx-head h3{ margin:0; font-size:17px; flex:1; min-width:0; }
   .wx-head .btn{ flex:none; padding:8px 12px; font-size:14px; }
@@ -948,6 +952,7 @@
     <div class="wx-box" id="wx-box">
       <div class="wx-head"><h3>Kauai weather — next 5 days</h3><button class="btn primary" id="wx-cal-btn" type="button">Schedule</button><button class="btn" id="wx-map-btn" type="button">Map</button></div>
       <div class="wx-days" id="wx-days"><p class="wx-load">Loading live weather…</p></div>
+      <div class="wx-tides" id="wx-tides"><p class="wx-load">Loading today’s tides…</p></div>
       <p class="wx-note" id="wx-note">Live forecast for Kalaheo (the house), averaged from three weather models so one wet model doesn’t shout. Tap a day for the full picture and picks matched to that weather.</p>
     </div>
     <div class="toolbar">
@@ -3963,6 +3968,50 @@ function wxMergeMarine(j){
     });
   }
 }
+/* ================= tides (NOAA Port Allen station, south shore) ================= */
+function tideFmtTime(t){
+  var hm = t.slice(11,16).split(":"); var h = +hm[0]; var ap = h>=12 ? "PM" : "AM"; var h12 = h%12; if(h12===0) h12 = 12;
+  return h12 + ":" + hm[1] + " " + ap;
+}
+function tideDayStr(d){ return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
+function tidesRender(events){
+  var box = document.getElementById("wx-tides"); if(!box) return;
+  var now = new Date(); var todayStr = tideDayStr(now);
+  var todays = events.filter(function(e){ return e.t.slice(0,10) === todayStr; });
+  if(!todays.length){ box.innerHTML = ""; return; }
+  var nowStamp = todayStr + " " + ("0"+now.getHours()).slice(-2) + ":" + ("0"+now.getMinutes()).slice(-2);
+  var prev = null, next = null;
+  events.forEach(function(e){ if(e.t <= nowStamp) prev = e; if(!next && e.t > nowStamp) next = e; });
+  var status = "";
+  if(prev && next){
+    status = (next.type === "H")
+      ? "Tide is coming in \u2014 high tide " + tideFmtTime(next.t) + "."
+      : "Tide is going out \u2014 low tide " + tideFmtTime(next.t) + ". Low tide is best for the tide pools.";
+  } else if(next){
+    status = "Next: " + (next.type === "H" ? "high" : "low") + " tide " + tideFmtTime(next.t) + ".";
+  }
+  var parts = todays.map(function(e){
+    return (e.type === "H" ? "High" : "Low") + " " + tideFmtTime(e.t) + " \u00b7 " + (+e.v).toFixed(1) + " ft";
+  });
+  box.innerHTML = '<div class="wx-tide-head">🌊 Tides today \u2014 Port Allen (south shore)</div>'
+    + '<div class="wx-tide-list">' + parts.join(" &nbsp;\u00b7&nbsp; ") + '</div>'
+    + (status ? '<div class="wx-tide-status">' + status + '</div>' : "");
+}
+function tidesLoad(){
+  var box = document.getElementById("wx-tides"); if(!box || !window.fetch) return;
+  var today = new Date();
+  var key = "kauai_tides_v1";
+  try{ var c = JSON.parse(localStorage.getItem(key)||"null"); if(c && c.day === tideDayStr(today) && c.events){ tidesRender(c.events); return; } }catch(e){}
+  function ymd(d){ return ""+d.getFullYear()+("0"+(d.getMonth()+1)).slice(-2)+("0"+d.getDate()).slice(-2); }
+  var tm = new Date(Date.now()+86400000);
+  var url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=muse_kauai&begin_date="+ymd(today)+"&end_date="+ymd(tm)+"&datum=MLLW&station=1611347&time_zone=lst_ldt&units=english&interval=hilo&format=json";
+  fetch(url).then(function(r){ return r.json(); }).then(function(j){
+    var ev = (j && j.predictions) || [];
+    if(!ev.length) throw 0;
+    try{ localStorage.setItem(key, JSON.stringify({day:tideDayStr(today), events:ev})); }catch(e){}
+    tidesRender(ev);
+  }).catch(function(){ box.innerHTML = ""; });
+}
 function wxLoad(){
   try{ var c=JSON.parse(localStorage.getItem("kauai_wx_v2")||"null"); if(c && (Date.now()-c.t)<1800000 && c.d){ wxSetRows(c.d); if(c.m) wxMergeMarine(c.m); renderWx(); return; } }catch(e){}
   if(!window.fetch){ renderWxFallback(); return; }
@@ -4113,6 +4162,7 @@ document.addEventListener("click", function(e){
 var wxCalBtn=document.getElementById("wx-cal-btn");
 if(wxCalBtn) wxCalBtn.addEventListener("click", function(){ showView("calendar"); });
 wxLoad();
+tidesLoad();
 /* ================= map tools + nearby eats & markets ================= */
 /* ================= Patch 13: hiking trails drawn on the map (OpenStreetMap geometry) ================= */
 var TRAILS = [
