@@ -791,6 +791,7 @@
     content:attr(data-placeholder); color:var(--ink2); opacity:.7; pointer-events:none;
   }
   .note-ed .note-photo-thumb{ cursor:default; }
+  .note-saved-tag{ font-size:12.5px; font-weight:700; color:#2f9e44; margin-left:8px; }
   .photo-lightbox{
     position:fixed; inset:0; z-index:2000; display:none;
     align-items:center; justify-content:center; background:rgba(8,6,4,.93);
@@ -2673,6 +2674,7 @@ function renderCalendar(){
 var sheetBack = document.getElementById("sheet-back");
 function openSheet(id){ document.getElementById(id).classList.add("on"); sheetBack.classList.add("on"); document.body.style.overflow="hidden"; document.body.classList.add("sheet-open"); }
 function closeSheets(){
+  if(document.getElementById("note-ed")) persistOpenNote();
   document.querySelectorAll(".sheet").forEach(function(s){ s.classList.remove("on"); });
   sheetBack.classList.remove("on"); document.body.style.overflow=""; document.body.classList.remove("sheet-open");
 }
@@ -4114,6 +4116,27 @@ function startSchedule(id){
   closeSheets(); showView("calendar"); renderCalendar();
   toast("Scheduling "+p.name+" — tap a day.");
 }
+/* Patch 51: the diary editor auto-saves. Before this, the only save path was
+   the Save note button \u2014 closing with X / Cancel / the backdrop silently
+   threw the writing away. persistOpenNote() now runs on a typing pause, on
+   Save, and whenever the sheets close. */
+var noteAutoT = null;
+function persistOpenNote(){
+  var ed = document.getElementById("note-ed"); if(!ed) return null;
+  var iso = ed.getAttribute("data-note-iso"); if(!iso) return null;
+  var v = noteEditorToText(ed).trim();
+  var oldIds = photoIdsIn(state.notes[iso]||"");
+  if(v) state.notes[iso] = v; else delete state.notes[iso];
+  var newIds = photoIdsIn(v);
+  oldIds.forEach(function(id){
+    if(newIds.indexOf(id) >= 0) return;
+    var used = false;
+    Object.keys(state.notes).forEach(function(k){ if(String(state.notes[k]).indexOf("[[photo:"+id+"]]") >= 0) used = true; });
+    if(!used) photoDelete(id);
+  });
+  save();
+  return v;
+}
 function openNote(iso){
   var sh=document.getElementById("detail-sheet");
   var cur=state.notes[iso]||"";
@@ -4128,17 +4151,27 @@ function openNote(iso){
   var closeAttr = noteFromTripNotes ? 'data-note-cancel="1"' : 'data-close="1"';
   sh.innerHTML='<div class="sheet-inner"><button class="close-x" type="button" '+closeAttr+' aria-label="Close">'+I.x+'</button>'
     + '<h3 style="margin-right:40px">'+esc(dayLabel(iso))+' — day notes</h3>'
-    + '<p>What actually happened: plans that changed, a migraine day, the good stuff worth remembering. Saved on this device.</p>'
+    + '<p>What actually happened: plans that changed, a migraine day, the good stuff worth remembering. Saves automatically as you type \u2014 and lives only in this browser, on this device.</p>'
     + '<div class="chip-row"><button class="btn" type="button" data-chip="Kim migraine — plans changed. ">Migraine day</button>'
     + '<button class="btn" type="button" data-chip="Rain — went to Plan B. ">Rain / Plan B</button>'
     + '<button class="btn" type="button" data-chip="Went as planned. ">As planned</button></div>'
-    + '<div class="note-photo-tools"><button class="btn" type="button" data-note-photo-add="1">+ Photo</button><span class="note-photo-hint">Puts a photo right where your cursor is — keep typing after it.</span></div>'
+    + '<div class="note-photo-tools"><button class="btn" type="button" data-note-photo-add="1">+ Photo</button><span class="note-photo-hint">Puts a photo right where your cursor is — keep typing after it.</span><span class="note-saved-tag" id="note-saved-tag"></span></div>'
     + '<div class="note-ed" id="note-ed" contenteditable="true" data-placeholder="Write the day as it really went…" role="textbox" aria-multiline="true" aria-label="Day notes"></div>'
     + '<div class="note-photo-strip" id="note-photo-strip"></div>'
-    + '<div class="danger-zone"><button class="btn" type="button" '+closeAttr+'>Cancel</button>'
+    + '<div class="danger-zone"><button class="btn" type="button" '+closeAttr+'>Close</button>'
     + '<button class="btn primary" type="button" data-savenote="'+iso+'">Save note</button></div></div>';
   openSheet("detail-sheet");
   var ed=document.getElementById("note-ed");
+  ed.setAttribute("data-note-iso", iso);
+  ed.addEventListener("input", function(){
+    updateNotePlaceholder();
+    if(noteAutoT) clearTimeout(noteAutoT);
+    noteAutoT = setTimeout(function(){
+      persistOpenNote();
+      var tag = document.getElementById("note-saved-tag"); if(tag) tag.textContent = "Auto-saved \u2713";
+      renderCalendar();
+    }, 600);
+  });
   ed.innerHTML = noteTextToEditorHTML(cur);
   hydratePhotos(ed);
   refreshNotePhotoStrip();
@@ -4148,7 +4181,7 @@ function openNote(iso){
 document.addEventListener("click", function(e){
   var cl=e.target.closest("[data-close]"); if(cl){ closeSheets(); return; }
   var ncan=e.target.closest("[data-note-cancel]");
-  if(ncan){ noteFromTripNotes=false; document.getElementById("detail-sheet").classList.remove("on"); openTripNotes(); return; }
+  if(ncan){ persistOpenNote(); renderCalendar(); noteFromTripNotes=false; document.getElementById("detail-sheet").classList.remove("on"); openTripNotes(); return; }
   var pclose=e.target.closest("[data-photo-close]");
   if(pclose || e.target.id==="photo-lightbox"){ closePhotoLightbox(); return; }
   var pho=e.target.closest("img[data-photo-id]");
@@ -4161,17 +4194,9 @@ document.addEventListener("click", function(e){
   if(chip){ insertNoteTextAtCaret(chip.getAttribute("data-chip"), true); return; }
   var sv=e.target.closest("[data-savenote]");
   if(sv){
-    var iso=sv.getAttribute("data-savenote"), ed2=document.getElementById("note-ed"), v=ed2?noteEditorToText(ed2).trim():"";
-    var oldIds=photoIdsIn(state.notes[iso]||"");
-    if(v) state.notes[iso]=v; else delete state.notes[iso];
-    var newIds=photoIdsIn(v);
-    oldIds.forEach(function(id){
-      if(newIds.indexOf(id)>=0) return;
-      var used=false;
-      Object.keys(state.notes).forEach(function(k){ if(String(state.notes[k]).indexOf("[[photo:"+id+"]]")>=0) used=true; });
-      if(!used) photoDelete(id);
-    });
-    save(); renderCalendar();
+    var iso=sv.getAttribute("data-savenote");
+    var v=persistOpenNote()||"";
+    renderCalendar();
     if(noteFromTripNotes){ noteFromTripNotes=false; document.getElementById("detail-sheet").classList.remove("on"); openTripNotes(); }
     else closeSheets();
     toast(v?"Day note saved.":"Day note cleared."); return;
