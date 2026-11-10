@@ -2559,7 +2559,7 @@ function cardHTML(p){
     + (forKimLine(p) ? '<div class="for-kim"><strong>For Kim</strong>'+esc(forKimLine(p))+'</div>' : '')
     + (p.bookEarly ? '<div class="book-flag">BOOK EARLY — ideally before you land</div>' : '')
     + (sched ? '<div class="sched-line">'+I.cal+'<span class="cdot '+(phaseOfIso(sched)||p.phase)+'"></span><span>Scheduled: '+esc(dayLabel(sched))+'</span></div>' : '')
-    + '<div style="margin-top:10px"><span class="phase-tag '+p.phase+'">'+PHASES[p.phase].label.toUpperCase()+' · '+PHASES[p.phase].dates+'</span></div>'
+    + '<div style="margin-top:10px"><span class="phase-tag '+p.phase+'">'+(PHASES[p.phase]||PHASES.active).label.toUpperCase()+' · '+(PHASES[p.phase]||PHASES.active).dates+'</span></div>'
     + '<div class="actions">'+callBtn
     + '<a class="btn" href="'+dirHref(p)+'" target="_blank" rel="noopener" data-stop="1">'+I.nav+'Navigate</a>'
     + '<button class="btn" type="button" data-stop="1" data-schedule="'+p.id+'">'+I.cal+'Schedule!</button></div>'
@@ -2721,7 +2721,7 @@ function detailHTML(p){
   }).join("");
   return '<div class="sheet-head"><div class="strip '+p.phase+'"></div><div class="inner">'
     + '<h2>'+esc(p.name)+'</h2><div class="meta">'+esc(p.cat)+' · '+esc(p.area)+'</div>'
-    + '<div style="margin-top:8px"><span class="phase-tag '+p.phase+'">'+PHASES[p.phase].label.toUpperCase()+' · '+PHASES[p.phase].dates+'</span></div>'
+    + '<div style="margin-top:8px"><span class="phase-tag '+p.phase+'">'+(PHASES[p.phase]||PHASES.active).label.toUpperCase()+' · '+(PHASES[p.phase]||PHASES.active).dates+'</span></div>'
     + '</div></div>'
     + '<button class="sheet-close" data-close="1" aria-label="Close">'+I.x+'</button>'
     + '<div class="sheet-body">'
@@ -5241,6 +5241,15 @@ function openTripNotes(){
     + '<textarea id="diary-io" rows="5" style="width:100%;margin-top:8px" placeholder="Entries appear here \u2014 or paste entries copied from another device"></textarea>'
     + '<div class="form-actions"><button class="btn" type="button" data-diary-export="1">Show my entries to copy</button><button class="btn primary" type="button" data-diary-import="1">Merge entries from the box</button></div>'
     + '<div class="tn-empty" id="diary-io-status"></div></div>';
+  var dc54 = 0; Object.keys(state.notes||{}).forEach(function(k){ if((state.notes[k]||"").trim()) dc54++; });
+  var sc54 = Object.keys(state.sched||{}).length;
+  var fc54 = Object.keys(state.favs||{}).filter(function(k){ return state.favs[k]; }).length;
+  var cc54 = (state.custom||[]).length;
+  var sh54 = Object.keys(state.shopChecks||{}).filter(function(k){ return state.shopChecks[k]; }).length;
+  html += '<div class="tn-day"><div class="tn-day-head"><strong>Your data on this device</strong></div>'
+    + '<div class="tn-empty">Saved right now in THIS browser only: ' + dc54 + ' diary day(s), ' + sc54 + ' scheduled place(s), ' + fc54 + ' favorite(s), ' + sh54 + ' shopping item(s) checked, ' + cc54 + ' place(s) you added. Photos are stored separately in this browser. Download a backup file and keep it somewhere safe \u2014 it holds everything above and can be re-checked or restored by Muse.</div>'
+    + '<div class="form-actions"><button class="btn" type="button" data-backup="1">Download a backup of my data</button></div>'
+    + '<div class="tn-empty" id="backup-status"></div></div>';
   DAYS.forEach(function(d){
     var n = (state.notes[d.iso]||"").trim();
     html += '<div class="tn-day"><div class="tn-day-head"><strong>'+esc(d.label)+'</strong><button class="mini-btn" type="button" data-note="'+d.iso+'">'+(n?"Edit note":"Add note")+'</button></div>'
@@ -5378,6 +5387,8 @@ document.addEventListener("click", function(e){
   if(bk){ openBook(); return; }
   var dex = e.target.closest("[data-diary-export]");
   if(dex){ var dio = document.getElementById("diary-io"); if(dio){ dio.value = diaryExportText(); dio.focus(); dio.select(); var dst = document.getElementById("diary-io-status"); if(dst) dst.textContent = "Ready \u2014 long-press the text and Copy all of it, then paste it into this same box on your other device and tap Merge."; } return; }
+  var dbk = e.target.closest("[data-backup]");
+  if(dbk){ try{ var blob54 = new Blob([JSON.stringify(state, null, 1)], {type:"application/json"}); var a54 = document.createElement("a"); a54.href = URL.createObjectURL(blob54); a54.download = "kauai-trip-backup.json"; document.body.appendChild(a54); a54.click(); a54.remove(); var bst = document.getElementById("backup-status"); if(bst) bst.textContent = "Backup downloaded \u2014 look in this device\u2019s Downloads folder for kauai-trip-backup.json."; }catch(err54){ var bst2 = document.getElementById("backup-status"); if(bst2) bst2.textContent = "The download did not work in this browser."; } return; }
   var dim = e.target.closest("[data-diary-import]");
   if(dim){ var dio2 = document.getElementById("diary-io"); var res = importDiaryText(dio2 ? dio2.value : ""); save(); openTripNotes(); var dst2 = document.getElementById("diary-io-status"); if(dst2) dst2.textContent = (res.added || res.merged) ? ("Done \u2014 added " + res.added + " day(s), merged " + res.merged + " day(s)" + (res.skipped ? (", " + res.skipped + " already here") : "") + ".") : "Nothing new found in the box \u2014 make sure the copied entries include their === date === lines."; return; }
 });
