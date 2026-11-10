@@ -3865,7 +3865,6 @@ function renderSuggested(){
 }
 
 function renderAll(){ renderPlaces(); renderCalendar(); renderSuggested(); renderToday(); if(mapReady) refreshMarkers(); }
-renderAll();
 if(!store.ok) toast("Note: this browser blocked local saving — changes will last for this visit only.");
 /* ================= weather (live, Open-Meteo) + schedule-to-calendar + day diary ================= */
 var pendSched = null;
@@ -3982,7 +3981,7 @@ var BEACH_SHORE = { "poipu-beach-park":"south", "lawai-beach":"south", "baby-bea
 var tideByShore = {};
 function shoreOfPlace(p){
   if(!p) return null;
-  if(BEACH_SHORE[p.id]) return BEACH_SHORE[p.id];
+  if(typeof BEACH_SHORE !== "undefined" && BEACH_SHORE[p.id]) return BEACH_SHORE[p.id];
   if(p.cat && p.cat !== "Activity") return null;
   if(!/beach/i.test(p.name||"")) return null;
   if(typeof p.lat !== "number") return "south";
@@ -5382,6 +5381,9 @@ document.addEventListener("click", function(e){
   var dim = e.target.closest("[data-diary-import]");
   if(dim){ var dio2 = document.getElementById("diary-io"); var res = importDiaryText(dio2 ? dio2.value : ""); save(); openTripNotes(); var dst2 = document.getElementById("diary-io-status"); if(dst2) dst2.textContent = (res.added || res.merged) ? ("Done \u2014 added " + res.added + " day(s), merged " + res.merged + " day(s)" + (res.skipped ? (", " + res.skipped + " already here") : "") + ".") : "Nothing new found in the box \u2014 make sure the copied entries include their === date === lines."; return; }
 });
+
+/* Patch 53: boot AFTER every data table exists (the Patch 50 tide code sits below the old boot spot; booting earlier crashed the first render and blanked Places/Suggested/Schedule). */
+renderAll();
 
 /* Patch 16: the app opens on Today. */
 showView("today");
