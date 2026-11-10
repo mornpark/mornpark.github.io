@@ -352,11 +352,12 @@
 
   /* ---------- weather strip (main dash) ---------- */
   .wx-box{ border:1px solid var(--ink); background:var(--surface); padding:14px; margin-bottom:14px; box-shadow:0 1px 2px rgba(24,20,12,.05), 0 10px 26px rgba(24,20,12,.05); }
-  .wx-tides{ margin-top:10px; border-top:1px solid var(--line); padding-top:10px; }
-  .wx-tide-head{ font-weight:800; font-size:14.5px; }
-  .wx-tide-list{ font-size:14px; margin-top:3px; line-height:1.5; }
-  .wx-tide-status{ font-size:13.5px; color:var(--mut); margin-top:2px; }
-  .day-tides{ font-size:13px; color:var(--mut); padding:3px 0 5px; }
+  .tide-block{ margin:10px 0; border:1px solid var(--line); border-radius:10px; padding:9px 11px; background:rgba(26,111,212,.06); }
+  .tide-head{ font-weight:800; font-size:13.5px; }
+  .tide-line{ font-size:13.5px; margin-top:2px; line-height:1.55; }
+  .tide-status{ font-size:12.5px; color:var(--mut); margin-top:1px; }
+  .entry-tides{ font-size:12.5px; color:var(--mut); padding:0 0 6px 26px; }
+  .today-item .tide-block{ margin:8px 0 2px; }
   .wx-head{ display:flex; align-items:center; gap:10px; margin-bottom:10px; }
   .wx-head h3{ margin:0; font-size:17px; flex:1; min-width:0; }
   .wx-head .btn{ flex:none; padding:8px 12px; font-size:14px; }
@@ -953,7 +954,6 @@
     <div class="wx-box" id="wx-box">
       <div class="wx-head"><h3>Kauai weather — next 5 days</h3><button class="btn primary" id="wx-cal-btn" type="button">Schedule</button><button class="btn" id="wx-map-btn" type="button">Map</button></div>
       <div class="wx-days" id="wx-days"><p class="wx-load">Loading live weather…</p></div>
-      <div class="wx-tides" id="wx-tides"><p class="wx-load">Loading today’s tides…</p></div>
       <p class="wx-note" id="wx-note">Live forecast for Kalaheo (the house), averaged from three weather models so one wet model doesn’t shout. Tap a day for the full picture and picks matched to that weather.</p>
     </div>
     <div class="toolbar">
@@ -2554,6 +2554,7 @@ function cardHTML(p){
     + (dietaryBadges(p) ? '<div class="badges">'+dietaryBadges(p)+'</div>'
        : (/no gf\/vegan options found/i.test(p.dietary||"") ? '<div class="badges"><span class="badge soft">No GF/vegan options found on the menu — worth asking when you order</span></div>' : ''))
     + (kimBadgesHTML(p) ? '<div class="badges">'+kimBadgesHTML(p)+'</div>' : '')
+    + tideCardHTML(p)
     + (forKimLine(p) ? '<div class="for-kim"><strong>For Kim</strong>'+esc(forKimLine(p))+'</div>' : '')
     + (p.bookEarly ? '<div class="book-flag">BOOK EARLY — ideally before you land</div>' : '')
     + (sched ? '<div class="sched-line">'+I.cal+'<span class="cdot '+(phaseOfIso(sched)||p.phase)+'"></span><span>Scheduled: '+esc(dayLabel(sched))+'</span></div>' : '')
@@ -2610,7 +2611,7 @@ function renderCalendar(){
         + '<div class="dlabel"><span>'+d.label+'</span>'+(todayIso===d.iso?'<span class="today-tag">TODAY</span>':"")
         + (minSched && entries.length ? '<span class="day-count">'+entries.length+(entries.length===1?' stop':' stops')+'</span>' : '')
         + '<button class="note-btn'+(state.notes[d.iso]?' has':'')+'" type="button" data-note="'+d.iso+'">'+I.note+(state.notes[d.iso]?'DIARY SAVED':'DIARY')+'</button>'
-        + '<button class="mini-btn" type="button" data-daytoggle="'+d.iso+'">'+(minSched?'Show day':'Hide day')+'</button></div>' + tideLineFor(d.iso);
+        + '<button class="mini-btn" type="button" data-daytoggle="'+d.iso+'">'+(minSched?'Show day':'Hide day')+'</button></div>';
       if(!minSched){
       if(!entries.length && !meeting) html += '<div class="none">Nothing scheduled</div>';
       if(meeting) html += '<div class="day-entry meeting"><span class="nm" data-open="kingdom-hall">Congregation meeting — Kingdom Hall, Kekaha</span><span class="meet-tag">WEEKLY · '+meeting+'</span></div>';
@@ -2641,6 +2642,7 @@ function renderCalendar(){
             + (tx.note ? '<span class="entry-planb"><div class="planb-line">'+esc(tx.note)+'</div></span>' : '');
         }
         html += '</div>';
+        if(en.kind==="place"){ var esh = shoreOfPlace(en.place); if(esh){ var etx = tideText(d.iso, esh); if(etx) html += '<div class="entry-tides">🌊 '+etx+'</div>'; } }
       });
       if(legs.after) html += '<div class="drive-leg">'+esc(legs.after)+'</div>';
       var movableCount = entries.filter(isMovableEntry).length;
@@ -2732,6 +2734,7 @@ function detailHTML(p){
     + section("What it is", p.about)
     + (forKimLine(p) ? '<h4>For Kim — cooked fish &amp; vegan picks</h4><div class="for-kim" style="margin-top:0">'+esc(forKimLine(p))+'</div>' : '')
     + section("Hours", p.hours)
+    + tideCardHTML(p)
     + section("Cost", p.cost)
     + section(p.cat==="Restaurant" ? "Menu & what to order" : "What's included", p.menu)
     + section("Dietary options", p.dietary)
@@ -3039,6 +3042,7 @@ function showMapCard(id){
     + (p.cost ? '<div class="fact" style="display:flex;gap:8px;margin-top:7px;font-size:14.5px">'+I.tag.replace("<svg",'<svg style="width:15px;height:15px;flex:none;margin-top:3px"')+'<span>'+esc(firstSentence(p.cost))+'</span></div>' : '')
     + (state.sched[p.id] ? '<div class="sched-line">'+I.cal+'<span class="cdot '+(phaseOfIso(state.sched[p.id])||p.phase)+'"></span><span>'+esc(dayLabel(state.sched[p.id]))+'</span></div>' : '')
     + (driveLabel(p) ? '<div class="fact" style="display:flex;gap:8px;margin-top:7px;font-size:14.5px">'+I.nav.replace("<svg",'<svg style="width:15px;height:15px;flex:none;margin-top:3px"')+'<span>'+esc(driveLabel(p))+'</span></div>' : '')
+    + tideCardHTML(p)
     + (forKimLine(p) ? '<div class="for-kim"><strong>For Kim</strong>'+esc(forKimLine(p))+'</div>' : '')
     + '<div class="actions">'+callBtn
     + '<a class="btn" href="'+dirHref(p)+'" target="_blank" rel="noopener">'+I.nav+'Navigate</a>'
@@ -3690,7 +3694,8 @@ function renderToday(){
         + '<button class="btn" type="button" data-open="'+it.place.id+'">Details</button>'
         + (state.sched[it.place.id]===iso ? '<button class="btn" type="button" data-planb="'+it.place.id+'">Plan B</button>' : '')
         + '</div>'
-        + (state.sched[it.place.id]===iso ? planBLineHTML(it.place.id) : '');
+        + (state.sched[it.place.id]===iso ? planBLineHTML(it.place.id) : '')
+        + tideBlockHTML(it.place, iso);
     } else {
       html += '<h3>'+esc(it.label)+'</h3>'
         + (it.time ? '<div class="meta">'+esc(it.time)+'</div>' : '')
@@ -3969,60 +3974,72 @@ function wxMergeMarine(j){
     });
   }
 }
-/* ================= tides (NOAA Port Allen station, south shore) ================= */
-var tideEvents = [];
-function tideLineFor(iso){
-  if(!tideEvents.length) return "";
-  var evs = tideEvents.filter(function(e){ return e.t.slice(0,10) === iso; });
-  if(!evs.length) return "";
-  var parts = evs.map(function(e){ return (e.type==="H" ? "High " : "Low ") + tideFmtTime(e.t) + " \u00b7 " + (+e.v).toFixed(1) + " ft"; });
-  return '<div class="day-tides">🌊 ' + parts.join(" \u2014 ") + '</div>';
+/* ================= tides (NOAA, matched to each beach's shore) ================= */
+var TIDE_STATIONS = { south:{id:"1611347", name:"Port Allen"}, east:{id:"1611400", name:"Nawiliwili"}, north:{id:"1611683", name:"Hanalei Bay"}, west:{id:"1611401", name:"Waimea Bay"} };
+var BEACH_SHORE = { "poipu-beach-park":"south", "lawai-beach":"south", "baby-beach":"south", "koloa-landing":"south", "spouting-horn-park":"south", "salt-pond":"south", "kalapaki-beach":"east", "lydgate":"east", "anini":"north", "anini-campground":"north", "haena":"north", "haena-beach-campground":"north", "kilauea-lighthouse":"north" };
+var tideByShore = {};
+function shoreOfPlace(p){
+  if(!p) return null;
+  if(BEACH_SHORE[p.id]) return BEACH_SHORE[p.id];
+  if(p.cat && p.cat !== "Activity") return null;
+  if(!/beach/i.test(p.name||"")) return null;
+  if(typeof p.lat !== "number") return "south";
+  if(p.lat >= 22.03) return "north";
+  if(p.lng <= -159.63) return "west";
+  if(p.lng >= -159.40) return "east";
+  return "south";
 }
 function tideFmtTime(t){
   var hm = t.slice(11,16).split(":"); var h = +hm[0]; var ap = h>=12 ? "PM" : "AM"; var h12 = h%12; if(h12===0) h12 = 12;
   return h12 + ":" + hm[1] + " " + ap;
 }
 function tideDayStr(d){ return d.getFullYear()+"-"+("0"+(d.getMonth()+1)).slice(-2)+"-"+("0"+d.getDate()).slice(-2); }
-function tidesRender(events){
-  var box = document.getElementById("wx-tides"); if(!box) return;
-  var now = new Date(); var todayStr = tideDayStr(now);
-  var todays = events.filter(function(e){ return e.t.slice(0,10) === todayStr; });
-  if(!todays.length){ box.innerHTML = ""; return; }
-  var nowStamp = todayStr + " " + ("0"+now.getHours()).slice(-2) + ":" + ("0"+now.getMinutes()).slice(-2);
+function tideText(iso, shore){
+  var evs = (tideByShore[shore]||[]).filter(function(e){ return e.t.slice(0,10) === iso; });
+  if(!evs.length) return "";
+  return evs.map(function(e){ return (e.type==="H" ? "High " : "Low ") + tideFmtTime(e.t) + " \u00b7 " + (+e.v).toFixed(1) + " ft"; }).join(" \u2014 ");
+}
+function tideStatusText(shore){
+  var evs = tideByShore[shore]||[]; if(!evs.length) return "";
+  var now = new Date();
+  var stamp = tideDayStr(now) + " " + ("0"+now.getHours()).slice(-2) + ":" + ("0"+now.getMinutes()).slice(-2);
   var prev = null, next = null;
-  events.forEach(function(e){ if(e.t <= nowStamp) prev = e; if(!next && e.t > nowStamp) next = e; });
-  var status = "";
-  if(prev && next){
-    status = (next.type === "H")
-      ? "Tide is coming in \u2014 high tide " + tideFmtTime(next.t) + "."
-      : "Tide is going out \u2014 low tide " + tideFmtTime(next.t) + ". Low tide is best for the tide pools.";
-  } else if(next){
-    status = "Next: " + (next.type === "H" ? "high" : "low") + " tide " + tideFmtTime(next.t) + ".";
-  }
-  var parts = todays.map(function(e){
-    return (e.type === "H" ? "High" : "Low") + " " + tideFmtTime(e.t) + " \u00b7 " + (+e.v).toFixed(1) + " ft";
-  });
-  box.innerHTML = '<div class="wx-tide-head">🌊 Tides today \u2014 Port Allen (south shore)</div>'
-    + '<div class="wx-tide-list">' + parts.join(" &nbsp;\u00b7&nbsp; ") + '</div>'
-    + (status ? '<div class="wx-tide-status">' + status + '</div>' : "");
+  evs.forEach(function(e){ if(e.t <= stamp) prev = e; if(!next && e.t > stamp) next = e; });
+  if(prev && next) return next.type === "H"
+    ? "Coming in now \u2014 high tide " + tideFmtTime(next.t) + "."
+    : "Going out now \u2014 low tide " + tideFmtTime(next.t) + ". Low tide is best for the tide pools.";
+  if(next) return "Next: " + (next.type === "H" ? "high" : "low") + " tide " + tideFmtTime(next.t) + ".";
+  return "";
+}
+function tideBlockHTML(p, iso){
+  var shore = shoreOfPlace(p); if(!shore) return "";
+  var txt = tideText(iso, shore); if(!txt) return "";
+  var todayStr = tideDayStr(new Date());
+  var label = iso === todayStr ? "Tides today" : "Tides on " + dayLabel(iso);
+  var status = iso === todayStr ? tideStatusText(shore) : "";
+  return '<div class="tide-block"><div class="tide-head">🌊 ' + label + ' \u2014 ' + TIDE_STATIONS[shore].name + '</div><div class="tide-line">' + txt + '</div>' + (status ? '<div class="tide-status">' + status + '</div>' : "") + '</div>';
+}
+function tideCardHTML(p){
+  if(!shoreOfPlace(p)) return "";
+  var todayStr = tideDayStr(new Date());
+  var h = tideBlockHTML(p, todayStr);
+  var sched = state.sched[p.id];
+  if(sched && sched !== todayStr) h += tideBlockHTML(p, sched);
+  return h;
 }
 function tidesLoad(){
-  var box = document.getElementById("wx-tides"); if(!window.fetch) return;
-  var key = "kauai_tides_v2";
-  function applyEvents(ev){
-    tideEvents = ev;
-    if(box) tidesRender(ev);
-    if(typeof renderCalendar === "function") renderCalendar();
-  }
-  try{ var c = JSON.parse(localStorage.getItem(key)||"null"); if(c && c.day === tideDayStr(new Date()) && c.events && c.events.length > 8){ applyEvents(c.events); return; } }catch(e){}
+  if(!window.fetch) return;
+  var key = "kauai_tides_v3";
+  function applyTides(by){ tideByShore = by; renderAll(); }
+  try{ var c = JSON.parse(localStorage.getItem(key)||"null"); if(c && c.day === tideDayStr(new Date()) && c.by){ applyTides(c.by); return; } }catch(e){}
   var b = (state.startISO||"2026-11-06").replace(/-/g,""), en = (state.endISO||"2026-11-24").replace(/-/g,"");
-  var url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=muse_kauai&begin_date="+b+"&end_date="+en+"&datum=MLLW&station=1611347&time_zone=lst_ldt&units=english&interval=hilo&format=json";
-  fetch(url).then(function(r){ return r.json(); }).then(function(j){
-    var ev = (j && j.predictions) || [];
-    if(!ev.length) throw 0;
-    try{ localStorage.setItem(key, JSON.stringify({day:tideDayStr(new Date()), events:ev})); }catch(e){}
-    applyEvents(ev);
-  }).catch(function(){ if(box) box.innerHTML = ""; });
+  var by = {}, done = 0, shores = Object.keys(TIDE_STATIONS);
+  shores.forEach(function(sh){
+    var url = "https://api.tidesandcurrents.noaa.gov/api/prod/datagetter?product=predictions&application=muse_kauai&begin_date="+b+"&end_date="+en+"&datum=MLLW&station="+TIDE_STATIONS[sh].id+"&time_zone=lst_ldt&units=english&interval=hilo&format=json";
+    fetch(url).then(function(r){ return r.json(); }).then(function(j){ by[sh] = (j && j.predictions) || []; })
+    .catch(function(){ by[sh] = []; })
+    .then(function(){ done++; if(done === shores.length){ try{ localStorage.setItem(key, JSON.stringify({day:tideDayStr(new Date()), by:by})); }catch(e){} applyTides(by); } });
+  });
 }
 function wxLoad(){
   try{ var c=JSON.parse(localStorage.getItem("kauai_wx_v2")||"null"); if(c && (Date.now()-c.t)<1800000 && c.d){ wxSetRows(c.d); if(c.m) wxMergeMarine(c.m); renderWx(); return; } }catch(e){}
