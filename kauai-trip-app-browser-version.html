@@ -1155,6 +1155,13 @@ var SEED = [
   expect:"The calm side is the Kim-friendly water — standing depth, gentle. Nukumoi rentals are right across Hoone Rd if you need gear.",
   links:[] },
 
+{ id:"mahaulepu-beach", name:"Maha'ulepu Beach", cat:"Activity", area:"Poipu", address:"End of the dirt road past the Grand Hyatt, Poipu, HI 96756", phone:"", lat:21.8897, lng:-159.4103, phase:"relax", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard, no restrooms or facilities.",
+  about:"A wild, undeveloped stretch of coast east of Poipu — the beachcombing beach of the trip. Puka shells and shell bits wash up along the debris line, best right after the tide drops. Monk seals haul out on the sand here; give them plenty of room. The Maha'ulepu Heritage Trail ends here (it starts at Shipwreck Beach).",
+  expect:"Rough dirt road past the Grand Hyatt — take it slow. This is a walk-and-hunt beach, not a swim beach: rough surf and no lifeguard. Bring water and a hat — no shade, no facilities. Best shelling early, on a falling tide.",
+  links:[] },
+
 { id:"lawai-beach", name:"Lawa'i Beach", cat:"Activity", area:"Poipu / Koloa", address:"Lawa'i Rd, Koloa, HI 96756 (across from The Beach House)", phone:"", lat:21.8797, lng:-159.4697, phase:"relax", bookEarly:false,
   cost:"Free. Parking runs through the resort side — a day fee applies.",
   hours:"Open daily, daylight hours. No lifeguard.",
@@ -3977,7 +3984,7 @@ function wxMergeMarine(j){
 }
 /* ================= tides (NOAA, matched to each beach's shore) ================= */
 var TIDE_STATIONS = { south:{id:"1611347", name:"Port Allen"}, east:{id:"1611400", name:"Nawiliwili"}, north:{id:"1611683", name:"Hanalei Bay"}, west:{id:"1611401", name:"Waimea Bay"} };
-var BEACH_SHORE = { "poipu-beach-park":"south", "lawai-beach":"south", "baby-beach":"south", "koloa-landing":"south", "spouting-horn-park":"south", "salt-pond":"south", "kalapaki-beach":"east", "lydgate":"east", "anini":"north", "anini-campground":"north", "haena":"north", "haena-beach-campground":"north", "kilauea-lighthouse":"north" };
+var BEACH_SHORE = { "mahaulepu-beach":"south", "poipu-beach-park":"south", "lawai-beach":"south", "baby-beach":"south", "koloa-landing":"south", "spouting-horn-park":"south", "salt-pond":"south", "kalapaki-beach":"east", "lydgate":"east", "anini":"north", "anini-campground":"north", "haena":"north", "haena-beach-campground":"north", "kilauea-lighthouse":"north" };
 var tideByShore = {};
 function shoreOfPlace(p){
   if(!p) return null;
@@ -4823,6 +4830,7 @@ var BEACHES = [
  { name:"Baby Beach", shore:"Poipu · South", calm:5, snorkel:2, life:2, cost:"Free", resv:"None", guard:"No", note:"Knee-deep lagoon; very shallow at low tide; little shade" },
  { name:"Kalapaki Beach", shore:"Lihue · East", calm:5, snorkel:2, life:2, cost:"Free", resv:"None", guard:"No", note:"Protected harbor bay; calmest water, least reef life" },
  { name:"Poipu Beach Park", shore:"Poipu · South", calm:4, snorkel:4, life:4, cost:"Free", resv:"None", guard:"Yes", note:"Turtles and monk seals; currents possible on the outer side" },
+ { name:"Maha'ulepu Beach", shore:"Poipu · South", calm:2, snorkel:1, life:2, cost:"Free", resv:"None", guard:"No", note:"Beachcombing, not swimming — puka shells along the debris line; rough surf, no lifeguard, no facilities; monk seals rest here" },
  { name:"Lawa'i Beach", shore:"Poipu · South", calm:4, snorkel:5, life:5, cost:"Free*", resv:"None", guard:"No", note:"Best reef life on the south shore; rocky entry — reef shoes; *parking through the resort, day fee" },
  { name:"Salt Pond Beach Park", shore:"Hanapepe · West", calm:4, snorkel:4, life:4, cost:"Free", resv:"None", guard:"Yes", note:"Strong current in the CENTER — snorkel the edges by the rock walls" },
  { name:"Anini Beach", shore:"North Shore", calm:3, snorkel:4, life:4, cost:"Free", resv:"None", guard:"No", note:"Turtles by the boat launch, mornings best; too shallow at low tide; rough winter days = look only" },
@@ -5230,6 +5238,39 @@ function tripNotesText(){
   if(!any) lines.push("No day notes written yet. Tap Notes on any day in the Schedule to start one.");
   return lines.join("\n");
 }
+function mergeBackupState(inc){
+  var added = 0, kept = 0;
+  if(!inc || typeof inc !== "object") return { added:0, kept:0, bad:true };
+  var mapFields = ["notes","sched","favs","planB","deleted","edits","schedOrder","schedText","suggGone","schedUndo","grindsGone","myNotes","schedMin","shopChecks"];
+  mapFields.forEach(function(f){
+    if(!inc[f] || typeof inc[f] !== "object" || Array.isArray(inc[f])) return;
+    if(!state[f] || typeof state[f] !== "object") state[f] = {};
+    Object.keys(inc[f]).forEach(function(k){
+      var lv = state[f][k], iv = inc[f][k];
+      var lEmpty = (lv === undefined || lv === null || lv === "" || lv === false);
+      var iEmpty = (iv === undefined || iv === null || iv === "" || iv === false);
+      if(lEmpty && !iEmpty){ state[f][k] = iv; added++; }
+      else if(!lEmpty && !iEmpty && JSON.stringify(lv) !== JSON.stringify(iv)){
+        if(f === "notes"){ state[f][k] = lv + "\n\n\u2014 \u2014 \u2014\n\n" + iv; added++; }
+        else kept++;
+      }
+    });
+  });
+  function unionBy(field, keyOf){
+    if(!Array.isArray(inc[field])) return;
+    if(!Array.isArray(state[field])) state[field] = [];
+    var seen = {};
+    state[field].forEach(function(it){ seen[keyOf(it)] = true; });
+    inc[field].forEach(function(it){ var k = keyOf(it); if(k && !seen[k]){ state[field].push(it); seen[k] = true; added++; } });
+  }
+  unionBy("custom", function(p){ return p && p.id; });
+  unionBy("beckyList", function(it){ return it && it.t; });
+  unionBy("shopToday", function(it){ return it && it.name; });
+  ["bookStyle","bookCover","startISO","endISO"].forEach(function(f){
+    if((state[f] === undefined || state[f] === null) && inc[f] !== undefined && inc[f] !== null) state[f] = inc[f];
+  });
+  return { added: added, kept: kept };
+}
 function openTripNotes(){
   var sh = document.getElementById("tripnotes-sheet"); if(!sh) return;
   var html = '<div class="sheet-head"><div class="inner"><h2>Trip Notes</h2><div class="meta">One document for the whole trip, built live from your per-day notes — edit or delete a day\u2019s note and this file updates itself. Nothing is copied or synced.</div></div></div>'
@@ -5246,9 +5287,11 @@ function openTripNotes(){
   var fc54 = Object.keys(state.favs||{}).filter(function(k){ return state.favs[k]; }).length;
   var cc54 = (state.custom||[]).length;
   var sh54 = Object.keys(state.shopChecks||{}).filter(function(k){ return state.shopChecks[k]; }).length;
+  var st54 = (state.shopToday||[]).length;
   html += '<div class="tn-day"><div class="tn-day-head"><strong>Your data on this device</strong></div>'
-    + '<div class="tn-empty">Saved right now in THIS browser only: ' + dc54 + ' diary day(s), ' + sc54 + ' scheduled place(s), ' + fc54 + ' favorite(s), ' + sh54 + ' shopping item(s) checked, ' + cc54 + ' place(s) you added. Photos are stored separately in this browser. Download a backup file and keep it somewhere safe \u2014 it holds everything above and can be re-checked or restored by Muse.</div>'
-    + '<div class="form-actions"><button class="btn" type="button" data-backup="1">Download a backup of my data</button></div>'
+    + '<div class="tn-empty">Saved right now in THIS browser only: ' + dc54 + ' diary day(s), ' + sc54 + ' scheduled place(s), ' + fc54 + ' favorite(s), ' + sh54 + ' shopping item(s) checked, ' + st54 + ' today-list item(s), ' + cc54 + ' place(s) you added. Photos are stored separately in this browser. Download a backup file and keep it somewhere safe \u2014 it holds everything above and can be re-checked or restored by Muse.</div>'
+    + '<div class="form-actions"><button class="btn" type="button" data-backup="1">Download a backup of my data</button><button class="btn" type="button" data-restore="1">Merge a backup file</button></div>'
+    + '<input type="file" id="restore-file" accept=".json,application/json" style="display:none">'
     + '<div class="tn-empty" id="backup-status"></div></div>';
   DAYS.forEach(function(d){
     var n = (state.notes[d.iso]||"").trim();
@@ -5387,6 +5430,8 @@ document.addEventListener("click", function(e){
   if(bk){ openBook(); return; }
   var dex = e.target.closest("[data-diary-export]");
   if(dex){ var dio = document.getElementById("diary-io"); if(dio){ dio.value = diaryExportText(); dio.focus(); dio.select(); var dst = document.getElementById("diary-io-status"); if(dst) dst.textContent = "Ready \u2014 long-press the text and Copy all of it, then paste it into this same box on your other device and tap Merge."; } return; }
+  var drs = e.target.closest("[data-restore]");
+  if(drs){ var rf = document.getElementById("restore-file"); if(rf){ rf.onchange = function(){ var file = rf.files && rf.files[0]; if(!file) return; var rd = new FileReader(); rd.onload = function(){ try{ var inc = JSON.parse(String(rd.result||"")); if(!inc || (typeof inc !== "object") || (!inc.notes && !inc.sched && !inc.favs)){ var be1 = document.getElementById("backup-status"); if(be1) be1.textContent = "That file does not look like a backup from this app — nothing was changed."; return; } var res = mergeBackupState(inc); save(); renderAll(); openTripNotes(); var be2 = document.getElementById("backup-status"); if(be2) be2.textContent = "Merged \u2014 added " + res.added + " item(s) from the file" + (res.kept ? (", and " + res.kept + " item(s) were already here, so yours were kept") : "") + ". Nothing was overwritten."; }catch(em){ var be3 = document.getElementById("backup-status"); if(be3) be3.textContent = "That file could not be read — nothing was changed."; } }; rf.click(); } } return; }
   var dbk = e.target.closest("[data-backup]");
   if(dbk){ try{ var blob54 = new Blob([JSON.stringify(state, null, 1)], {type:"application/json"}); var a54 = document.createElement("a"); a54.href = URL.createObjectURL(blob54); a54.download = "kauai-trip-backup.json"; document.body.appendChild(a54); a54.click(); a54.remove(); var bst = document.getElementById("backup-status"); if(bst) bst.textContent = "Backup downloaded \u2014 look in this device\u2019s Downloads folder for kauai-trip-backup.json."; }catch(err54){ var bst2 = document.getElementById("backup-status"); if(bst2) bst2.textContent = "The download did not work in this browser."; } return; }
   var dim = e.target.closest("[data-diary-import]");
