@@ -207,6 +207,7 @@
   .pin.active{ background:var(--active); } .pin.explore{ background:var(--explore); } .pin.relax{ background:var(--relax); }
   .pin.daynum{ width:26px; height:26px; font-size:13.5px; }
   .pin.farmer{ background:#2f9e44; border-radius:50%; font-size:15px; }
+  .pin.kim{ background:#1a6fd4; }
   .pin.farmer.hl{ font-size:19px; box-shadow:0 0 0 3px #ffd94d, 0 1px 5px rgba(0,0,0,.45); }
   .my-note{ width:100%; min-height:74px; padding:10px 12px; border:1px solid var(--line); border-radius:10px; background:var(--surface); color:var(--ink); font:inherit; font-size:15px; margin:2px 0 10px; }
   #map-card{
@@ -602,6 +603,11 @@
     box-shadow:var(--shadow); padding:15px; margin:16px 0 10px;
   }
   .becky-card .section{ margin-top:0; }
+  /* Patch 58: Becky's list header bar (minimize/maximize, mirrors the shopping list) */
+  .becky-head{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+  .becky-head h2.section{ margin:0; font-size:20px; }
+  .becky-head .mini-btn{ flex:none; }
+  .becky-count{ color:var(--ink2); font-size:13.5px; font-weight:700; }
   .becky-row{ display:flex; align-items:center; gap:10px; padding:8px 0; border-bottom:1px dashed var(--line); }
   .becky-row:last-of-type{ border-bottom:none; }
   .becky-check{
@@ -938,6 +944,9 @@
     <button role="tab" id="tab-map" aria-selected="false" data-view="map">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 21s-7-5.5-7-11a7 7 0 0 1 14 0c0 5.5-7 11-7 11z"/><circle cx="12" cy="10" r="2.6"/></svg>Map
     </button>
+    <button role="tab" id="tab-kims" aria-selected="false" data-view="kims">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8h12l-1.2 12.2a1.8 1.8 0 0 1-1.8 1.6H9a1.8 1.8 0 0 1-1.8-1.6L6 8z"/><path d="M9 10V6a3 3 0 0 1 6 0v4"/></svg>Kims
+    </button>
   </nav>
 </header>
 
@@ -1058,7 +1067,13 @@
     <div class="map-list-head"><h3>Everywhere on your map</h3><span id="map-list-count"></span></div>
     <p class="map-list-hint">Tap a name and the map jumps straight to it.</p>
     <div id="map-list"></div>
-    <p class="foot-note">Tap a square pin to see the place without leaving the map. Green round pins with a farmer are farmers markets. Pins are colored by the week the place fits best. The search at the top also finds places that are not saved yet — press Enter and the pin is added to your map for good.</p>
+    <p class="foot-note">Tap a square pin to see the place without leaving the map. Blue pins with a K are Kim's picks. Green round pins with a farmer are farmers markets. Pins are colored by the week the place fits best. The search at the top also finds places that are not saved yet — press Enter and the pin is added to your map for good.</p>
+  </section>
+
+  <!-- KIMS -->
+  <section class="view" id="view-kims">
+    <div id="kims-wrap"></div>
+    <p class="foot-note">Kim's picks — the shops and stops she chose. They work just like Places: star them, schedule them, tap to open, navigate. On the map they wear blue pins with a K.</p>
   </section>
 
   <!-- SUGGESTED -->
@@ -1160,6 +1175,62 @@ var SEED = [
   hours:"Open daily, daylight hours. No lifeguard, no restrooms or facilities.",
   about:"A wild, undeveloped stretch of coast east of Poipu — the beachcombing beach of the trip. Puka shells and shell bits wash up along the debris line, best right after the tide drops. Monk seals haul out on the sand here; give them plenty of room. The Maha'ulepu Heritage Trail ends here (it starts at Shipwreck Beach).",
   expect:"Rough dirt road past the Grand Hyatt — take it slow. This is a walk-and-hunt beach, not a swim beach: rough surf and no lifeguard. Bring water and a hat — no shade, no facilities. Best shelling early, on a falling tide.",
+  links:[] },
+
+{ id:"basket-boutique", name:"Basket Boutique Kauai", cat:"Business", area:"Lawai", address:"Lawai Valley / Kalaheo area — order ahead; they deliver island-wide", phone:"(808) 652-2309", phase:"explore", bookEarly:false, kim:true, forKim:"Kim's pick — the shop for gift baskets, bags & boxes; the lauhala box-bag style at local (not museum) pricing.",
+  cost:"Local pricing — gift baskets, bags and boxes filled with Hawaii-made treats, personal care items and artisan candles.",
+  hours:"Mon–Fri 9 AM–4 PM, Sat 9 AM–3 PM, Sun 10 AM–3 PM (per their listing).",
+  about:"A local gift-basket maker in the Lawai Valley/Kalaheo area — baskets, bags and boxes of local treats and goods. Mostly order-and-deliver rather than a walk-in storefront, which is why there's no map pin: call or order online and they deliver across the island.",
+  expect:"Call before going anywhere — the move is ordering for delivery (they can bring it to Becky's).",
+  links:[] },
+
+{ id:"divine-planet", name:"Divine Planet", cat:"Business", area:"Kapaa", address:"4-831 Kuhio Hwy, Kapaa, HI 96746", phone:"", lat:22.06284, lng:-159.32151, phase:"explore", bookEarly:false, kim:true, forKim:"Kim's pick — her top bead shop: loose beads, gemstones, findings, stringing material and tools, plus weekly classes if you want a hand.",
+  cost:"Local prices on beads and beading supplies.",
+  hours:"Weekly classes run here — call ahead for class times and today's hours.",
+  about:"Kauai's largest selection of beads and beading supplies, in downtown Kapaa. This is the island's one true beading SUPPLY store — not a finished-jewelry boutique — so it's the full build-your-own experience. Rated 3.9 stars.",
+  expect:"On the downtown Kapaa strip (Kuhio Hwy), where the local shops cluster — park once and walk it. The local-pricing end of the island; the resort shops are the markup end.",
+  links:[] },
+
+{ id:"bead-a-licious", name:"Bead A Licious", cat:"Business", area:"Lihue", address:"4365 Rice St, Lihue, HI 96766", phone:"(808) 632-0770", lat:21.97378, lng:-159.36721, phase:"explore", bookEarly:false, kim:true, forKim:"Kim's pick — known for great prices on Tahitian pearls.",
+  cost:"Solid selection of beads and supplies; great prices on Tahitian pearls.",
+  hours:"Listed hours: Tue–Thu 11 AM–5:30 PM, Fri–Sat 11 AM–6 PM.",
+  about:"A Lihue bead shop across from Central Pacific Bank on Rice St — beads, supplies, and Tahitian pearls at honest prices.",
+  expect:"Heads-up: the Better Business Bureau listing shows this shop as closed, and bead-store directories warn that shops move or close without notice — call (808) 632-0770 before making a special trip.",
+  links:[] },
+
+{ id:"mineral-amorphia", name:"Mineral Amorphia", cat:"Business", area:"Kapaa", address:"Kuhio Hwy, downtown Kapaa (upstairs), Kapaa, HI 96746", phone:"", lat:22.07722, lng:-159.31725, phase:"explore", bookEarly:false, kim:true, forKim:"Kim's pick — raw gemstones and crystals: 'magnificent pieces in this small shop.'",
+  cost:"Gallery-style stones and crystals.",
+  hours:"Small upstairs shop in downtown Kapaa — check locally for today's hours.",
+  about:"The raw-stone stop: gemstones and crystals in a small upstairs shop in downtown Kapaa, rated 4.5 stars. If it's the stones themselves you want — not finished jewelry — this is the one.",
+  expect:"Upstairs, easy to walk past — look for the sign on Kuhio Hwy in the downtown strip.",
+  links:[] },
+
+{ id:"shell-factory", name:"The Shell Factory", cat:"Business", area:"Kapaa", address:"4-901 Kuhio Hwy, Kapaa, HI 96746 (second shop in Puhi)", phone:"", lat:22.06347, lng:-159.32013, phase:"explore", bookEarly:false, kim:true, forKim:"Kim's pick — the go-to for authentic local shell beads without the resort markup.",
+  cost:"Fair local prices on shell beads and shell jewelry.",
+  hours:"Two locations: Kapaa (this pin) and Puhi.",
+  about:"Family-owned since 1982 — they make jewelry from local shells and coral. The place for locally-sourced shell beads at fair prices.",
+  expect:"The map pin is the Kapaa shop; the Puhi shop is the same family business if you're on that side of the island.",
+  links:[] },
+
+{ id:"aloha-gifts-online", name:"Aloha Gifts from Hawaii (online)", cat:"Business", area:"Online", address:"Online — ships home", phone:"", phase:"relax", bookEarly:false, kim:true, forKim:"Kim's pick — the ship-home option for lauhala gift boxes.",
+  cost:"Lauhala gift boxes starting around $2.50–$5 (smaller, simpler weaves).",
+  hours:"Online, anytime.",
+  about:"An online shop for lauhala gift boxes — the budget way to get the boxes without hunting them down in person; they ship home, so nothing has to fit in a suitcase.",
+  expect:"No map pin — it's a website, not a place on the island.",
+  links:[] },
+
+{ id:"cocos-trading-post", name:"Coco's Trading Post (online)", cat:"Business", area:"Online", address:"Online — ships home", phone:"", phase:"relax", bookEarly:false, kim:true, forKim:"Kim's pick — handwoven lauhala boxes from $5, shipped home.",
+  cost:"Handwoven lauhala boxes from $5.",
+  hours:"Online, anytime.",
+  about:"An online source for handwoven lauhala boxes, from $5 — another ship-home route if the in-person hunt doesn't pan out.",
+  expect:"No map pin — it's a website, not a place on the island.",
+  links:[] },
+
+{ id:"kailua-beads", name:"Kailua Beads", cat:"Business", area:"Kailua, Oahu", address:"315 Uluniu St, Ste 101, Kailua, HI", phone:"", phase:"relax", bookEarly:false, kim:true, forKim:"Kim's pick — but note: Kailua is on OAHU, not Kauai. Kept on her list as an online / future-Oahu option.",
+  cost:"Bead shop prices.",
+  hours:"Open daily 9 AM–3:30 PM.",
+  about:"A newer bead shop — just not on this island: Kailua is on Oahu. There's no Kauai visit to make of it on this trip, so no map pin; it stays on Kim's list for ordering or a future Oahu stop.",
+  expect:"Not a stop on this trip — Oahu only.",
   links:[] },
 
 { id:"lawai-beach", name:"Lawa'i Beach", cat:"Activity", area:"Poipu / Koloa", address:"Lawa'i Rd, Koloa, HI 96756 (across from The Beach House)", phone:"", lat:21.8797, lng:-159.4697, phase:"relax", bookEarly:false,
@@ -1323,7 +1394,7 @@ var SEED = [
   expect:"County and community markets can shift with weather and holidays — a quick check before a special trip is worth it. Go early; the good stuff sells out.",
   links:[] },
 
-{ id:"market-kcc", name:"Kauai Community Market (KCC)", cat:"Business", area:"Lihue", address:"Kauai Community College, 3-1901 Kaumualii Hwy, Lihue, HI 96766", phone:"(808) 241-6390", lat:21.9648, lng:-159.4218, phase:"active", bookEarly:false, mdays:[6],
+{ id:"market-kcc", name:"Kauai Community Market (KCC)", cat:"Business", area:"Lihue", address:"Kauai Community College, 3-1901 Kaumualii Hwy, Lihue, HI 96766", phone:"(808) 241-6390", lat:21.9648, lng:-159.4218, phase:"active", bookEarly:false, mdays:[6], kim:true, forKim:"Kim's pick — local weavers sell directly here; lauhala box bags and baskets typically run $20–$80.",
   cost:"Farm-direct prices — produce, fruit, flowers and prepared food. Cash-friendly; bring small bills and bags.",
   hours:"Saturdays, 9:30 AM–1:00 PM.",
   about:"The island's flagship Saturday market — produce, fruit, flowers and prepared food at the community college in Puhi. The Nov 7 and Nov 21 plans both start here.",
@@ -1813,7 +1884,7 @@ var SEED = [
   about:"An organic noni farm above Larsen's Beach: how noni is grown and made into juice and leather, told by the family that farms it. From the Budget Kauai video you saved; one of your yes picks.",
   expect:"A farm visit, so outdoor walking on uneven ground — water shoes you can rinse, or shoes that can get farm-dirty. Rural road in; go in daylight.",
   links:[] },
-{ id:"hanapepe-art-night", name:"Hanapepe Friday Art Night", cat:"Activity", area:"Hanapepe", address:"Hanapepe Rd (old town main street), Hanapepe, HI 96716", phone:"", lat:21.9095, lng:-159.5878, phase:"explore", bookEarly:false,
+{ id:"hanapepe-art-night", name:"Hanapepe Friday Art Night", cat:"Activity", area:"Hanapepe", address:"Hanapepe Rd (old town main street), Hanapepe, HI 96716", phone:"", lat:21.9095, lng:-159.5878, phase:"explore", bookEarly:false, kim:true, forKim:"Kim's pick — the whole main street (about 3795–3879 Hanapepe Rd) is the event; artisans sell directly, no retail markup. Free street parking fills fast — arriving early helps.",
   cost:"Free to wander — galleries and shops open late; food and art cost what you choose.",
   hours:"Friday evenings, roughly 5–9 PM. Your trip Fridays are Nov 13 and Nov 20.",
   about:"Old-town Hanapepe's weekly art walk: galleries open late, artists out, food trucks and music on the main street of the town that inspired Lilo & Stitch's hometown. From the Budget Kauai video you saved; one of your yes picks — and it is an evening event, so it is a drive-to exception to the home-before-dark lean.",
@@ -2597,6 +2668,15 @@ function renderPlaces(){
     (rest.length ? rest.map(cardHTML).join("") : '<div class="empty">No places match. Try a different search or category.</div>');
 }
 
+/* ================= Kim's picks ================= */
+function renderKims(){
+  var wrap = document.getElementById("kims-wrap"); if(!wrap) return;
+  var list = allPlaces().filter(function(p){ return p.kim; });
+  list.sort(function(a,b){ return a.name.localeCompare(b.name); });
+  wrap.innerHTML = '<h2 class="section">Kim\u2019s picks</h2>'
+    + (list.length ? list.map(cardHTML).join("") : '<div class="empty">No picks yet.</div>');
+}
+
 /* ================= calendar ================= */
 function renderCalendar(){
   var wrap = document.getElementById("cal-wrap");
@@ -2983,11 +3063,13 @@ var mePos=null, meWatch=null, meDotMain=null, meAccMain=null, meDotToday=null, m
 function invalidateMap(){ if(map){ setTimeout(function(){ map.invalidateSize(); },60); } }
 function pinIcon(p, dim){
   var ep = effPhase(p);
+  if(p.kim) return L.divIcon({ className:"", html:'<div class="pin kim'+(dim?" dim":"")+'">K</div>', iconSize:[22,22], iconAnchor:[11,11] });
   if(p.mdays) return L.divIcon({ className:"", html:'<div class="pin farmer'+(dim?" dim":"")+'">🧑‍🌾</div>', iconSize:[24,24], iconAnchor:[12,12] });
   return L.divIcon({ className:"", html:'<div class="pin '+ep+(dim?" dim":"")+'">'+(PHASES[ep]?PHASES[ep].num:"")+'</div>', iconSize:[22,22], iconAnchor:[11,11] });
 }
 function pinIconHL(p){
   var ep = effPhase(p);
+  if(p.kim) return L.divIcon({ className:"", html:'<div class="pin hl kim">K</div>', iconSize:[30,30], iconAnchor:[15,15] });
   if(p.mdays) return L.divIcon({ className:"", html:'<div class="pin farmer hl">🧑‍🌾</div>', iconSize:[32,32], iconAnchor:[16,16] });
   return L.divIcon({ className:"", html:'<div class="pin hl '+ep+'">'+(PHASES[ep]?PHASES[ep].num:"")+'</div>', iconSize:[30,30], iconAnchor:[15,15] });
 }
@@ -3196,6 +3278,7 @@ function renderGrinds(force){
   if(!w || (w.dataset.done && !force)) return;
   w.dataset.done = "1";
   var html = '<p class="cmp-intro">Cook-at-the-house favorites, built from the grocery runs — <strong>all gluten-free, cooked seafood and lamb only, no eggs and no beef.</strong> No recipes here on purpose: pick a dish, tap “YouTube it,” watch it made once, then cook it your way.</p>';
+  html += beckyListHTML();
   html += shopListHTML();
   html += '<h3 class="menu-head">Morning Grinds — Breakfast</h3>';
   html += GRINDS.breakfasts.map(dishCard).join("");
@@ -3284,6 +3367,7 @@ function showView(v){
   document.querySelectorAll(".view").forEach(function(s){ s.classList.toggle("on", s.id==="view-"+v); });
   if(v==="today"){ renderToday(); initTodayMap(); }
   if(v==="grinds"){ renderGrinds(); }
+  if(v==="kims"){ renderKims(); }
   if(v==="map"){ initMap(); invalidateMap(); refreshMarkers(); }
   window.scrollTo(0, viewScroll[v] || 0);
   requestAnimationFrame(function(){ window.scrollTo(0, viewScroll[v] || 0); updateQScroll(); });
@@ -3727,7 +3811,7 @@ function renderToday(){
     });
   }
   html += '<div class="today-daynav"><button class="btn" type="button" data-goschedule="1">Open the Schedule</button><button class="btn" type="button" data-gomap="1">Open the full Map</button></div>';
-  html += beckyListHTML();
+  /* Patch 58: Becky's list moved off Today — it now lives at the top of the Grinds tab. */
   rest.innerHTML = html;
   if(document.getElementById("view-today").classList.contains("on")) initTodayMap();
 }
@@ -3781,10 +3865,14 @@ document.addEventListener("click", function(e){
   if(gm){ showView("map"); return; }
 });
 
-/* Patch 20: Becky replenish list — the running "used up at Becky's" list at
-   the bottom of the Today view. Lives in state.beckyList [{t, done}]; every
-   add, check-off, or delete saves immediately, so it stays current as
-   Justin edits it. Check off = replaced; × = remove the line. */
+/* Patch 20: Becky replenish list — the running "used up at Becky's" list.
+   Lives in state.beckyList [{t, done}]; every add, check-off, or delete
+   saves immediately, so it stays current as Justin edits it. Check off =
+   replaced; × = remove the line.
+   Patch 58: moved from the bottom of the Today view to the TOP of the
+   Grinds tab, directly above the shopping list, with a minimize/maximize
+   header bar (state.beckyListMin). Display move only — state.beckyList
+   items are untouched. */
 /* Patch 33: Becky's house guide as a general note at the top of Trip Notes
    (from her pre-trip message). Public-page safe: no Wi-Fi password, no key
    details — those stay in the private house sheet. */
@@ -3802,14 +3890,23 @@ function houseGuideCardHTML(){
 }
 function beckyListHTML(){
   var list = state.beckyList || [];
-  var html = '<div class="becky-card"><h2 class="section">For Becky — used up, replenish</h2>';
-  if(!list.length) html += '<div class="empty">Nothing yet. Use up her oil, rice, coffee, anything — jot it here so it gets replaced.</div>';
-  list.forEach(function(it, i){
-    html += '<div class="becky-row'+(it.done ? ' done' : '')+'"><button type="button" class="becky-check" data-becky-toggle="'+i+'" aria-label="Mark as replaced">'+(it.done ? '&#10003;' : '')+'</button>'
-      + '<span class="becky-text">'+esc(it.t)+'</span>'
-      + '<button type="button" class="becky-del" data-becky-del="'+i+'" aria-label="Remove from list">&times;</button></div>';
-  });
-  html += '<div class="becky-add"><input id="becky-add-input" type="text" placeholder="Used up… e.g. olive oil" autocomplete="off"><button class="btn" type="button" data-becky-add="1">Add</button></div></div>';
+  var min = !!state.beckyListMin;
+  var doneCount = 0;
+  list.forEach(function(it){ if(it.done) doneCount++; });
+  var html = '<div class="becky-card"><div class="becky-head">'
+    + '<button type="button" class="mini-btn" data-beckymin="1">'+(min ? "Maximize" : "Minimize")+'</button>'
+    + '<h2 class="section">For Becky — used up, replenish</h2>'
+    + '<span class="becky-count">'+doneCount+' of '+list.length+' replaced</span></div>';
+  if(!min){
+    if(!list.length) html += '<div class="empty">Nothing yet. Use up her oil, rice, coffee, anything — jot it here so it gets replaced.</div>';
+    list.forEach(function(it, i){
+      html += '<div class="becky-row'+(it.done ? ' done' : '')+'"><button type="button" class="becky-check" data-becky-toggle="'+i+'" aria-label="Mark as replaced">'+(it.done ? '&#10003;' : '')+'</button>'
+        + '<span class="becky-text">'+esc(it.t)+'</span>'
+        + '<button type="button" class="becky-del" data-becky-del="'+i+'" aria-label="Remove from list">&times;</button></div>';
+    });
+    html += '<div class="becky-add"><input id="becky-add-input" type="text" placeholder="Used up… e.g. olive oil" autocomplete="off"><button class="btn" type="button" data-becky-add="1">Add</button></div>';
+  }
+  html += '</div>';
   return html;
 }
 function beckyAddFromInput(){
@@ -3819,15 +3916,17 @@ function beckyAddFromInput(){
   if(!v) return;
   if(!state.beckyList) state.beckyList = [];
   state.beckyList.push({ t:v, done:false });
-  save(); renderToday();
+  save(); renderGrinds(true);
   var inp2 = document.getElementById("becky-add-input");
   if(inp2) inp2.focus();
 }
 document.addEventListener("click", function(e){
+  var mn = e.target.closest("[data-beckymin]");
+  if(mn){ state.beckyListMin = !state.beckyListMin; save(); renderGrinds(true); return; }
   var tg = e.target.closest("[data-becky-toggle]");
-  if(tg){ var i = parseInt(tg.getAttribute("data-becky-toggle"), 10); if(state.beckyList && state.beckyList[i]){ state.beckyList[i].done = !state.beckyList[i].done; save(); renderToday(); } return; }
+  if(tg){ var i = parseInt(tg.getAttribute("data-becky-toggle"), 10); if(state.beckyList && state.beckyList[i]){ state.beckyList[i].done = !state.beckyList[i].done; save(); renderGrinds(true); } return; }
   var del = e.target.closest("[data-becky-del]");
-  if(del){ var j = parseInt(del.getAttribute("data-becky-del"), 10); if(state.beckyList && state.beckyList[j]){ state.beckyList.splice(j, 1); save(); renderToday(); } return; }
+  if(del){ var j = parseInt(del.getAttribute("data-becky-del"), 10); if(state.beckyList && state.beckyList[j]){ state.beckyList.splice(j, 1); save(); renderGrinds(true); } return; }
   var ad = e.target.closest("[data-becky-add]");
   if(ad){ beckyAddFromInput(); return; }
 });
@@ -3871,7 +3970,7 @@ function renderSuggested(){
   wrap.innerHTML = html;
 }
 
-function renderAll(){ renderPlaces(); renderCalendar(); renderSuggested(); renderToday(); if(mapReady) refreshMarkers(); }
+function renderAll(){ renderPlaces(); renderKims(); renderCalendar(); renderSuggested(); renderToday(); if(mapReady) refreshMarkers(); }
 if(!store.ok) toast("Note: this browser blocked local saving — changes will last for this visit only.");
 /* ================= weather (live, Open-Meteo) + schedule-to-calendar + day diary ================= */
 var pendSched = null;
