@@ -907,6 +907,24 @@
     #book-sheet.bk-clean .book-cover.has-photo{ padding:0 !important; }
     #book-sheet.bk-clean .book-cover-photo{ width:100%; max-width:100%; height:4.6in; margin:0 0 0.3in; }
   }
+  /* ---------- Patch 59: diary editor scroll fix ----------
+     The diary (and weather-day) sheets render into .sheet-inner, which had NO
+     CSS at all: no height limit, no scrolling, no padding. As a diary entry
+     grew, the editor just got taller than the screen, the newest lines slid
+     under the on-screen keyboard, and there was no way to scroll to them —
+     Justin hit exactly this on 2026-11-14 writing a long day entry.
+     Fix: the sheet's inner area is now the scroll container, and the editor
+     itself caps its height and scrolls internally, so the line being typed
+     can always be brought into view (JS in Patch 59 keeps the caret visible). */
+  .sheet-inner{
+    flex:1 1 auto; min-height:0; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain; padding:16px 16px 28px; box-sizing:border-box;
+    position:relative; scroll-padding-bottom:32px;
+  }
+  .note-ed{
+    max-height:54dvh; overflow-y:auto; -webkit-overflow-scrolling:touch;
+    overscroll-behavior:contain; scroll-padding-bottom:28px;
+  }
 </style>
 </head>
 <body>
@@ -4242,6 +4260,39 @@ function persistOpenNote(){
   save();
   return v;
 }
+/* Patch 59: keep the diary caret visible while typing. iOS does not reliably
+   scroll a contenteditable inside a fixed sheet when the keyboard is up, so
+   after each keystroke we measure the caret and scroll the editor (and, if
+   needed, the sheet around it) just enough to keep the current line in view. */
+function keepNoteCaretVisible(){
+  var ed = document.getElementById("note-ed"); if(!ed) return;
+  var sel = document.getSelection(); if(!sel || !sel.rangeCount) return;
+  if(!ed.contains(sel.anchorNode)) return;
+  var rect = null;
+  try{ rect = sel.getRangeAt(0).getBoundingClientRect(); }catch(e){}
+  if(!rect || (!rect.top && !rect.bottom)) return;
+  var pad = 30;
+  var er = ed.getBoundingClientRect();
+  if(rect.bottom > er.bottom - pad) ed.scrollTop += rect.bottom - (er.bottom - pad);
+  else if(rect.top < er.top + pad) ed.scrollTop -= (er.top + pad) - rect.top;
+  var c = ed.closest ? ed.closest(".sheet-inner") : null;
+  if(c){
+    var cr = c.getBoundingClientRect();
+    if(rect.bottom > cr.bottom - pad) c.scrollTop += rect.bottom - (cr.bottom - pad);
+    else if(rect.top < cr.top + pad) c.scrollTop -= (cr.top + pad) - rect.top;
+  }
+}
+var noteCaretRaf = null;
+function queueNoteCaretVisible(){
+  if(noteCaretRaf) return;
+  noteCaretRaf = requestAnimationFrame(function(){ noteCaretRaf = null; keepNoteCaretVisible(); });
+}
+if(window.visualViewport && !window.__noteVvBound){
+  window.__noteVvBound = true;
+  window.visualViewport.addEventListener("resize", function(){
+    if(document.getElementById("note-ed")) queueNoteCaretVisible();
+  });
+}
 function openNote(iso){
   var sh=document.getElementById("detail-sheet");
   var cur=state.notes[iso]||"";
@@ -4270,6 +4321,7 @@ function openNote(iso){
   ed.setAttribute("data-note-iso", iso);
   ed.addEventListener("input", function(){
     updateNotePlaceholder();
+    queueNoteCaretVisible();
     if(noteAutoT) clearTimeout(noteAutoT);
     noteAutoT = setTimeout(function(){
       persistOpenNote();
@@ -4277,11 +4329,24 @@ function openNote(iso){
       renderCalendar();
     }, 600);
   });
+  ed.addEventListener("keyup", queueNoteCaretVisible);
+  ed.addEventListener("click", queueNoteCaretVisible);
   ed.innerHTML = noteTextToEditorHTML(cur);
   hydratePhotos(ed);
   refreshNotePhotoStrip();
   updateNotePlaceholder();
-  setTimeout(function(){ var t=document.getElementById("note-ed"); if(t) t.focus(); },80);
+  /* Patch 59: open at the END of the entry, scrolled to the last line, so
+     Justin can keep writing where he left off instead of landing at the top. */
+  setTimeout(function(){
+    var t=document.getElementById("note-ed"); if(!t) return;
+    t.focus();
+    try{
+      var range=document.createRange(); range.selectNodeContents(t); range.collapse(false);
+      var s=document.getSelection(); if(s){ s.removeAllRanges(); s.addRange(range); }
+    }catch(e){}
+    t.scrollTop = t.scrollHeight;
+    queueNoteCaretVisible();
+  },80);
 }
 document.addEventListener("click", function(e){
   var cl=e.target.closest("[data-close]"); if(cl){ closeSheets(); return; }
