@@ -980,7 +980,7 @@
   <!-- PLACES -->
   <section class="view" id="view-places">
     <div class="wx-box" id="wx-box">
-      <div class="wx-head"><h3>Kauai weather — next 5 days</h3><button class="btn primary" id="wx-cal-btn" type="button">Schedule</button><button class="btn" id="wx-map-btn" type="button">Map</button></div>
+      <div class="wx-head"><h3>Kauai weather — next 5 days</h3><button class="btn primary" id="wx-cal-btn" type="button">Schedule</button><button class="btn" id="wx-map-btn" type="button">Map</button><a class="btn" href="https://www.windy.com/?wind,22.197,-159.336,11" target="_blank" rel="noopener">Wind map</a><a class="btn" href="https://www.windy.com/?radar,22.197,-159.336,11" target="_blank" rel="noopener">Radar</a></div>
       <div class="wx-days" id="wx-days"><p class="wx-load">Loading live weather…</p></div>
       <p class="wx-note" id="wx-note">Live forecast for Kalaheo (the house), averaged from three weather models so one wet model doesn’t shout. Tap a day for the full picture and picks matched to that weather.</p>
     </div>
@@ -1193,6 +1193,195 @@ var SEED = [
   hours:"Open daily, daylight hours. No lifeguard, no restrooms or facilities.",
   about:"A wild, undeveloped stretch of coast east of Poipu — the beachcombing beach of the trip. Puka shells and shell bits wash up along the debris line, best right after the tide drops. Monk seals haul out on the sand here; give them plenty of room. The Maha'ulepu Heritage Trail ends here (it starts at Shipwreck Beach).",
   expect:"Rough dirt road past the Grand Hyatt — take it slow. This is a walk-and-hunt beach, not a swim beach: rough surf and no lifeguard. Bring water and a hat — no shade, no facilities. Best shelling early, on a falling tide.",
+  links:[] },
+
+{ id:"kekaha-beach", name:"Kekaha Beach", cat:"Activity", area:"Kekaha", address:"Kaumualii Hwy (Hwy 50), Kekaha, HI 96752", phone:"", lat:21.9725, lng:-159.7304, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"County park hours 6:00 AM–10:00 PM. Lifeguard at the park tower 9 AM–5 PM.",
+  about:"Public county beach park — the start of the longest beach in Hawaii, running 15+ miles up the west coast. This is sunrise shell country: the shells wash in from deep water after big swells, and hunters walk the debris line at dawn. Restrooms, showers, picnic pavilions at the park.",
+  expect:"ACCESS: fully public, park right at the beach off Hwy 50. The 9 AM on Google is the lifeguard, not the park — gates open 6 AM. Strong shorebreak and currents: beachcomb and walk, do not swim. On foot you can walk north a few miles before the Navy base (PMRF) boundary signs stop you.",
+  links:[] },
+
+{ id:"polihale-beach", name:"Polihale State Park", cat:"Activity", area:"Polihale", address:"End of Lower Saki Mana Rd, Kekaha, HI 96752", phone:"", lat:22.081, lng:-159.7604, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"CLOSED until further notice (checked Nov 2026) — do not drive out.",
+  about:"The far western end of the island: 17 miles of sand ending at the Na Pali cliffs, Ni'ihau on the horizon. Famous for sunrise shells and sunsets. CLOSED right now for Hurricane Lowell storm recovery — DLNR has not set a reopening date, and the entrance gate is blocked.",
+  expect:"ACCESS: public state park, but closed. When open it is drive-in only via 5 miles of rough dirt cane road (4WD recommended, Becky's truck needs her OK for that road). No lifeguard, no water, no cell service. Check DLNR park notices before ever planning the drive.",
+  links:[] },
+
+{ id:"waimea-beach", name:"Waimea Beach", cat:"Activity", area:"Waimea", address:"By the Waimea Pier, Waimea, HI 96744", phone:"", lat:21.9535, lng:-159.668, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard.",
+  about:"Public dark-sand beach by the Waimea fishing pier, where the Waimea River meets the sea. Fishing off the pier, sunset views toward Ni'ihau, black-ish sand from the river sediment.",
+  expect:"ACCESS: fully public, park by the pier in Waimea town. The river mouth makes the water murky, especially after rain — a walk, fish, and sunset beach, not a swim pick.",
+  links:[] },
+
+{ id:"pakala-beach", name:"Pakala Beach (Infinities)", cat:"Activity", area:"Makaweli", address:"Kaumualii Hwy near mile marker 21, Makaweli, HI 96747", phone:"", lat:21.9353, lng:-159.6495, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard, no facilities.",
+  about:"A locals' surf beach west of Hanapepe — the break offshore is called Infinities. Quiet, shady ironwoods, sunset over the water with surfers in the frame.",
+  expect:"ACCESS: public beach, but the way in is an unmarked ~0.3 mile trail from a break in the highway guardrail (rusty fence is a trip hazard). Roadside parking is the surfers' — be a respectful guest and do not take their spots. Not a visitor swim beach.",
+  links:[] },
+
+{ id:"glass-beach", name:"Glass Beach", cat:"Activity", area:"Eleele", address:"Akahele St, Eleele, HI 96705", phone:"", lat:21.899, lng:-159.5843, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard, no facilities.",
+  about:"A tiny cove by Port Allen harbor where the sand is full of sea glass worn smooth by the ocean. Industrial harbor setting, rocky shoreline, Hanapepe Bay views.",
+  expect:"ACCESS: fully public, about a minute's walk from parking on Akahele St. Look and take photos — the glass is the whole point of the place. Rocky and not a swimming spot.",
+  links:[] },
+
+{ id:"shipwreck-beach", name:"Shipwreck Beach", cat:"Activity", area:"Poipu", address:"Ainakoa St, Poipu, HI 96756 (in front of the Grand Hyatt)", phone:"", lat:21.873, lng:-159.437, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard.",
+  about:"The dramatic beach in front of the Grand Hyatt, named for an old wreck offshore. Makawehi Point cliff at the east end is the famous jump rock, and the Maha'ulepu Heritage Trail starts here and runs east along the cliffs.",
+  expect:"ACCESS: fully public — public access path and parking by the Hyatt. Rough surf and shorebreak: watch the waves and walk the trail, do not swim, and leave the cliff jump to the locals who know it.",
+  links:[] },
+
+{ id:"brennecke-beach", name:"Brennecke's Beach", cat:"Activity", area:"Poipu", address:"Hoone Rd, Poipu, HI 96756", phone:"", lat:21.8715, lng:-159.446, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard (Poipu Beach Park next door has one).",
+  about:"The bodyboarding beach right next to Poipu Beach Park — a steep little shorebreak wave that locals ride on bodyboards. Turtles often rest in the shallows on the park side.",
+  expect:"ACCESS: fully public, same parking as Poipu Beach Park. The shorebreak is rough and the bottom is reef — experienced bodyboarders only; watch from the sand otherwise.",
+  links:[] },
+
+{ id:"gillin-beach", name:"Gillin's Beach", cat:"Activity", area:"Poipu", address:"Maha'ulepu coast, past the Grand Hyatt, Poipu, HI 96756", phone:"", lat:21.8868, lng:-159.4208, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Daylight hours. No lifeguard, no facilities. The dirt-road gate locks at 6:00 PM sharp.",
+  about:"The first real beach on the wild Maha'ulepu coast, named for a longtime Kauai family. Lithified sand dunes, tide pools at the point, and monk seals haul out here. This is the beach the tide questions were about — its tides run on the Port Allen gauge.",
+  expect:"ACCESS: public beach. Two ways in: (1) the dirt road past the Grand Hyatt — that gate locks at 6:00 PM sharp and cars inside can be towed or charged a let-out fee; (2) walk the Maha'ulepu Heritage Trail from Shipwreck Beach, about 1 mile of cliff-top walking. Rough surf — walk and explore, do not swim.",
+  links:[] },
+
+{ id:"wailua-beach", name:"Wailua Beach", cat:"Activity", area:"Wailua", address:"Kuhio Hwy at the Wailua River mouth, Wailua, HI 96746", phone:"", lat:22.047, lng:-159.336, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard.",
+  about:"The wide beach where the Wailua River reaches the ocean. Surfers and kiteboarders use the river-mouth break; the sand is good for long walks toward Lydgate one way and Kapaa the other.",
+  expect:"ACCESS: fully public, roadside parking off Kuhio Hwy. River water mixes here and runs murky after rain — not a swim pick; walk, watch, and fish.",
+  links:[] },
+
+{ id:"waipouli-beach", name:"Waipouli Beach", cat:"Activity", area:"Kapaa", address:"Kuhio Hwy, Kapaa, HI 96746 (fronting the resorts)", phone:"", lat:22.065, lng:-159.321, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard.",
+  about:"The resort-front beach along Kapaa's hotel row. Faces due east — this is a sunrise beach. A paved bike/walking path (Ke Ala Hele Makalae) runs right behind the sand for miles.",
+  expect:"ACCESS: fully public (all Hawaii beaches are public to the high-water line), with public access paths between the resorts. Mostly too reefy and rough to swim — sunrise walks and the bike path are the draw.",
+  links:[] },
+
+{ id:"fuji-beach", name:"Fuji Beach (Baby Beach, Kapaa)", cat:"Activity", area:"Kapaa", address:"Moanakai Rd, Kapaa, HI 96746", phone:"", lat:22.0505, lng:-159.3245, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard.",
+  about:"Kapaa's baby beach: a shallow, reef-protected pool behind a rock breakwater where local families bring little kids. Calm, knee-deep water most days.",
+  expect:"ACCESS: fully public, street parking on Moanakai Rd in a residential neighborhood — park respectfully. Gentle wading; the reef is sharp in spots, so water shoes help.",
+  links:[] },
+
+{ id:"nukolii-beach", name:"Nukolii Beach", cat:"Activity", area:"Lihue", address:"Nukolii Beach Park, Lihue, HI 96766", phone:"", lat:21.998, lng:-159.335, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard.",
+  about:"A quiet county beach park between Lihue and the Wailua River — grass, picnic tables, and a long sand beach that rarely has anyone on it.",
+  expect:"ACCESS: fully public, drive-in park. Conditions vary — it can be rough with wind and shorebreak; better for picnics, fishing, and walks than swimming.",
+  links:[] },
+
+{ id:"kealia-beach", name:"Kealia Beach", cat:"Activity", area:"Kapaa", address:"Kuhio Hwy near mile marker 10, Kapaa, HI 96746", phone:"", lat:22.099, lng:-159.305, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. Lifeguard on duty.",
+  about:"One of the big east-side beach parks: a long, wide lifeguarded beach with a picnic pavilion, restrooms, and the coastal bike path running behind it. The north end gets a bodyboarding shorebreak.",
+  expect:"ACCESS: fully public, big parking lot right off the highway. Swim near the lifeguard and only when it is calm — the shorebreak here injures people every year.",
+  links:[] },
+
+{ id:"donkey-beach", name:"Donkey Beach (Paliku)", cat:"Activity", area:"Kealia", address:"Kuhio Hwy near mile marker 11, Kealia, HI 96751", phone:"", lat:22.117, lng:-159.308, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard, no facilities.",
+  about:"A hidden crescent of sand below the highway, named for the donkeys that once grazed above it. Usually near-empty, with ironwood shade at the back.",
+  expect:"ACCESS: public beach, walk-in only — about a 5–10 minute walk down a paved/gravel path from a small highway pullout (the old sugar road gate). No facilities. Currents are real here — a walk-and-sit beach more than a swim beach.",
+  links:[] },
+
+{ id:"moloaa-beach", name:"Moloa'a Beach", cat:"Activity", area:"Moloa'a", address:"Moloa'a Rd, Kilauea, HI 96754", phone:"", lat:22.196, lng:-159.335, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard, no facilities.",
+  about:"A pretty, quiet bay where Moloa'a Stream meets the sea, backed by a small neighborhood. On calm days the right (south) side has decent snorkeling over the reef.",
+  expect:"ACCESS: public beach at the end of Moloa'a Rd; parking is very limited and it is a residential area — do not block driveways. Winter surf makes this bay dangerous; snorkeling is a calm-summer-day thing only.",
+  links:[] },
+
+{ id:"larsens-beach", name:"Larsen's Beach", cat:"Activity", area:"Kilauea", address:"End of Ko'olau Rd, Kilauea, HI 96754", phone:"", lat:22.2005, lng:-159.3395, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard, no facilities.",
+  about:"Kauai's top puka shell beach — a long, wild stretch of sand and reef east of Moloa'a. Crushed-shell bands run the whole beach, and the tide pools at Pakala Point (the black lava point partway down) are the prize at low tide.",
+  expect:"ACCESS: public beach, walk-in down a dirt path from the end of Ko'olau Rd (about 5 minutes). STAY OUT OF THE WATER: the Pakala Channel current off this beach has killed people, and there is no lifeguard. Shell hunting only, an hour either side of low tide is best. Give resting monk seals a wide berth.",
+  links:[] },
+
+{ id:"kalihiwai-beach", name:"Kalihiwai Beach", cat:"Activity", area:"Kalihiwai", address:"Kalihiwai Rd, Kilauea, HI 96754", phone:"", lat:22.216, lng:-159.427, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard.",
+  about:"An ironwood-lined bay where the Kalihiwai River reaches the sea — the next beach east of Anini. In summer it is a mellow swim and picnic bay; in winter it is a surf break. After big swells, the debris line here is good shell hunting.",
+  expect:"ACCESS: fully public, drive right down Kalihiwai Rd to the sand. Portable restroom only. Winter = look, do not swim.",
+  links:[] },
+
+{ id:"secret-beach", name:"Secret Beach (Kauapea)", cat:"Activity", area:"Kilauea", address:"Kalihiwai Rd, Kilauea, HI 96754", phone:"", lat:22.222, lng:-159.408, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard, no facilities.",
+  about:"A huge, gorgeous beach below the Kilauea cliffs — a half-mile of sand with a lighthouse view. Despite the name it is well known; what keeps it quiet is the trail down.",
+  expect:"ACCESS: public beach, walk-in only — a steep dirt trail, about 10–15 minutes down (longer back up), slippery after rain. Not a trail for Kim. The shorebreak and rip currents here are dangerous — people drown at this beach; look and walk, do not swim in winter at all.",
+  links:[] },
+
+{ id:"hanalei-bay", name:"Hanalei Bay", cat:"Activity", area:"Hanalei", address:"Weke Rd, Hanalei, HI 96714", phone:"", lat:22.207, lng:-159.508, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily. Lifeguards at the beach parks along the bay.",
+  about:"Two miles of crescent bay under the green mountains — the postcard north shore beach. The pier at the east end, the river mouth at the west, and beach parks with facilities along Weke Rd.",
+  expect:"ACCESS: fully public all along the bay; park at Hanalei Beach Park or by the pier. In summer this is gentle swimming. In winter the surf gets big and dangerous — watch from the sand. Brown water after heavy rain (river runoff).",
+  links:[] },
+
+{ id:"waioli-beach", name:"Wai'oli Beach Park", cat:"Activity", area:"Hanalei", address:"Hanalei, HI 96714 (middle of Hanalei Bay)", phone:"", lat:22.21, lng:-159.514, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. Lifeguard on duty.",
+  about:"The county beach park in the middle of Hanalei Bay — grass, picnic tables, restrooms, and the lifeguard tower for the bay's main swim area.",
+  expect:"ACCESS: fully public, parking at the park. Same rule as the whole bay: calm summer swimming, big dangerous surf in winter.",
+  links:[] },
+
+{ id:"lumahai-beach", name:"Lumaha'i Beach", cat:"Activity", area:"Hanalei", address:"Kuhio Hwy near mile marker 33, Hanalei, HI 96714", phone:"", lat:22.215, lng:-159.528, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard, no facilities.",
+  about:"The famous South Pacific movie beach — a stunning curve of sand with a river at the east end. It is also one of the most dangerous beaches on Kauai.",
+  expect:"ACCESS: public, a short walk down from highway pullouts. NEVER swim here — the shorebreak and currents have killed many people, including in water that looked calm. Walk the east end by the river on a calm day, stay dry, and enjoy how it looks.",
+  links:[] },
+
+{ id:"tunnels-beach", name:"Makua Beach (Tunnels)", cat:"Activity", area:"Haena", address:"Kuhio Hwy, Haena, HI 96714", phone:"", lat:22.224, lng:-159.558, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. Lifeguard usually at Haena Beach Park nearby.",
+  about:"The famous snorkeling reef — an outer reef shaped like tunnels with turtles, reef fish, and (in summer) some of the best snorkeling in Hawaii.",
+  expect:"ACCESS: public beach, but there is almost no legal parking — a few spots at Haena Beach Park, then walk west along the sand about 10 minutes. Winter surf makes this reef deadly: AVOID in November conditions; this is a calm-summer-day snorkel only.",
+  links:[] },
+
+{ id:"kee-beach", name:"Ke'e Beach", cat:"Activity", area:"Haena", address:"End of Kuhio Hwy, Haena State Park, HI 96714", phone:"", lat:22.2205, lng:-159.5827, phase:"explore", bookEarly:true,
+  cost:"Free.",
+  hours:"Day use by reservation. Lifeguard on duty.",
+  about:"The end of the road and the start of the Kalalau Trail — a reef lagoon with a view straight down the Na Pali coast. In summer the lagoon is gentle snorkeling; the channel on the left is always dangerous.",
+  expect:"ACCESS: public but ENTRY IS BY RESERVATION — Parking + Entry pass or the Waipa shuttle, booked at gohaena.com ($20/car + $5/person); passes sell out. Walk-in entry passes exist too. Winter surf overtops the reef — view and hike, not a swim.",
+  links:[] },
+
+{ id:"hanakapiai-beach", name:"Hanakapiai Beach", cat:"Activity", area:"Haena", address:"Kalalau Trail, 2 miles in from Ke'e Beach, Haena, HI 96714", phone:"", lat:22.208, lng:-159.598, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Daylight only — hike out before dark. No lifeguard, no facilities, no cell service.",
+  about:"The first beach on the Kalalau Trail: a dramatic cove where the trail meets Hanakapiai Stream. Beautiful, and one of the most dangerous beaches in Hawaii — the surf and currents here have killed dozens of people.",
+  expect:"ACCESS: public, HIKE-IN ONLY — 2 miles of trail from Ke'e (about 1–1.5 hours each way), and Ke'e entry itself needs a reservation. NEVER get in the water here, any season. Do not cross the stream when it is running high — people have been swept away; wait or turn back.",
+  links:[] },
+
+{ id:"hideaway-beach", name:"Hideaway Beach", cat:"Activity", area:"Princeville", address:"By the Pali Ke Kua gate, Princeville, HI 96722", phone:"", lat:22.226, lng:-159.486, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard, no facilities.",
+  about:"A small hidden cove below the Princeville cliffs with good summer snorkeling when it is calm — turtles and reef fish close to shore.",
+  expect:"ACCESS: public beach via a public access path, but the way down is a steep, slippery trail with ropes, about 10 minutes — not a trail for Kim, and treacherous after rain. Tiny public parking (a few stalls) by the gate. Summer-calm snorkeling only; winter surf closes it out.",
+  links:[] },
+
+{ id:"puu-poa-beach", name:"Pu'u Poa Beach", cat:"Activity", area:"Princeville", address:"Below Hanalei Bay Resort, Princeville, HI 96722", phone:"", lat:22.227, lng:-159.474, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Open daily, daylight hours. No lifeguard.",
+  about:"The beach below Hanalei Bay Resort at the mouth of the Hanalei River — shallow reef flats, sunset views across the bay, and a long sand spit at low tide.",
+  expect:"ACCESS: public beach; easiest via the resort's beach access path/stairs (public access), or walk the sand from the Hanalei pier side at low tide. Shallow and reefy — wading and summer snorkeling; river runoff after rain.",
+  links:[] },
+
+{ id:"kalalau-beach", name:"Kalalau Beach", cat:"Activity", area:"Na Pali Coast", address:"End of the Kalalau Trail / boat landing only, Na Pali Coast", phone:"", lat:22.172, lng:-159.658, phase:"explore", bookEarly:false,
+  cost:"Free.",
+  hours:"Permit area — camping by permit only. No lifeguard, no facilities, no cell service.",
+  about:"The legendary beach at the end of the Kalalau Trail — waterfalls at both ends, sea caves, and total isolation. Included so the map is complete; this is expedition territory, not a day trip.",
+  expect:"ACCESS: permit-only country. Reachable by the 11-mile Kalalau Trail (state camping permit required; the trail is currently closed beyond Hanakapiai) or by boat/kayak landing in summer with a permit. Dangerous surf year-round. Not on this trip's menu — here for completeness.",
   links:[] },
 
 { id:"basket-boutique", name:"Basket Boutique Kauai", cat:"Business", area:"Lawai", address:"Lawai Valley / Kalaheo area — order ahead; they deliver island-wide", phone:"(808) 652-2309", phase:"explore", bookEarly:false, kim:true, forKim:"Kim's pick — the shop for gift baskets, bags & boxes; the lauhala box-bag style at local (not museum) pricing.",
@@ -4153,7 +4342,7 @@ function wxMergeMarine(j){
 }
 /* ================= tides (NOAA, matched to each beach's shore) ================= */
 var TIDE_STATIONS = { south:{id:"1611347", name:"Port Allen"}, east:{id:"1611400", name:"Nawiliwili"}, north:{id:"1611683", name:"Hanalei Bay"}, west:{id:"1611401", name:"Waimea Bay"} };
-var BEACH_SHORE = { "mahaulepu-beach":"south", "poipu-beach-park":"south", "lawai-beach":"south", "baby-beach":"south", "koloa-landing":"south", "spouting-horn-park":"south", "salt-pond":"south", "kalapaki-beach":"east", "lydgate":"east", "anini":"north", "anini-campground":"north", "haena":"north", "haena-beach-campground":"north", "kilauea-lighthouse":"north" };
+var BEACH_SHORE = { "mahaulepu-beach":"south", "poipu-beach-park":"south", "lawai-beach":"south", "baby-beach":"south", "koloa-landing":"south", "spouting-horn-park":"south", "salt-pond":"south", "kalapaki-beach":"east", "lydgate":"east", "anini":"north", "anini-campground":"north", "haena":"north", "haena-beach-campground":"north", "kilauea-lighthouse":"north", "anahola-beach":"east", "kekaha-beach":"west", "polihale-beach":"west", "waimea-beach":"west", "pakala-beach":"west", "glass-beach":"south", "shipwreck-beach":"south", "brennecke-beach":"south", "gillin-beach":"south", "wailua-beach":"east", "waipouli-beach":"east", "fuji-beach":"east", "nukolii-beach":"east", "kealia-beach":"east", "donkey-beach":"east", "moloaa-beach":"east", "larsens-beach":"east", "kalihiwai-beach":"north", "secret-beach":"north", "hanalei-bay":"north", "waioli-beach":"north", "lumahai-beach":"north", "tunnels-beach":"north", "kee-beach":"north", "hanakapiai-beach":"north", "hideaway-beach":"north", "puu-poa-beach":"north", "kalalau-beach":"north" };
 var tideByShore = {};
 function shoreOfPlace(p){
   if(!p) return null;
@@ -5052,7 +5241,32 @@ var BEACHES = [
  { name:"Anini Beach", shore:"North Shore", calm:3, snorkel:4, life:4, cost:"Free", resv:"None", guard:"No", note:"Turtles by the boat launch, mornings best; too shallow at low tide; rough winter days = look only" },
  { name:"Koloa Landing", shore:"Poipu · South", calm:3, snorkel:4, life:4, cost:"Free", resv:"None", guard:"No", note:"Deeper water, confident snorkelers; stay on the west side" },
  { name:"Ke'e Beach", shore:"North Shore", calm:2, snorkel:5, life:5, cost:"$20/car + $5/person", resv:"YES — book ahead", guard:"Yes", note:"Scores are its SUMMER best — in November surf overtops the reef: view and hike, not a swim" },
- { name:"Makua (Tunnels)", shore:"North Shore", calm:1, snorkel:0, life:0, cost:"Free", resv:"None", guard:"No", note:"AVOID on this trip — strong currents, dangerous in winter (your call)", avoid:true }
+ { name:"Makua (Tunnels)", shore:"North Shore", calm:1, snorkel:0, life:0, cost:"Free", resv:"None", guard:"No", note:"AVOID on this trip — strong currents, dangerous in winter (your call)", avoid:true },
+ { name:"Kekaha Beach", shore:"Kekaha · West", calm:2, snorkel:1, life:2, cost:"Free", resv:"None", guard:"Yes", note:"Sunrise shells at dawn along the debris line; strong shorebreak — beachcomb and walk, do not swim" },
+ { name:"Polihale State Park", shore:"West", calm:1, snorkel:1, life:2, cost:"Free", resv:"None", guard:"No", note:"CLOSED until further notice (storm recovery) — do not drive the dirt road", avoid:true },
+ { name:"Waimea Beach", shore:"Waimea · West", calm:2, snorkel:1, life:1, cost:"Free", resv:"None", guard:"No", note:"Dark sand by the pier; river mouth runs murky — walk, fish, sunset" },
+ { name:"Pakala Beach (Infinities)", shore:"Makaweli · West", calm:1, snorkel:1, life:2, cost:"Free", resv:"None", guard:"No", note:"Locals' surf break; unmarked trail in; not a visitor swim beach" },
+ { name:"Glass Beach", shore:"Eleele · West", calm:3, snorkel:0, life:1, cost:"Free", resv:"None", guard:"No", note:"Sea-glass cove at Port Allen — look and photograph, do not swim" },
+ { name:"Shipwreck Beach", shore:"Poipu · South", calm:1, snorkel:1, life:2, cost:"Free", resv:"None", guard:"No", note:"Cliffs and the Heritage Trail start; rough surf — watch and walk" },
+ { name:"Brennecke's Beach", shore:"Poipu · South", calm:2, snorkel:1, life:3, cost:"Free", resv:"None", guard:"No", note:"Bodyboarding shorebreak; turtles next door at Poipu Beach Park" },
+ { name:"Gillin's Beach", shore:"Poipu · South", calm:2, snorkel:1, life:2, cost:"Free", resv:"None", guard:"No", note:"First beach on the Maha'ulepu coast; dirt-road gate locks 6 PM sharp" },
+ { name:"Wailua Beach", shore:"Wailua · East", calm:2, snorkel:1, life:1, cost:"Free", resv:"None", guard:"No", note:"River mouth; murky after rain — not a swim pick" },
+ { name:"Fuji Beach (Baby Beach, Kapaa)", shore:"Kapaa · East", calm:5, snorkel:1, life:1, cost:"Free", resv:"None", guard:"No", note:"Shallow reef-protected pool — Kapaa's gentle baby beach" },
+ { name:"Nukolii Beach", shore:"Lihue · East", calm:3, snorkel:1, life:1, cost:"Free", resv:"None", guard:"No", note:"Quiet park beach; picnics and walks more than swimming" },
+ { name:"Waipouli Beach", shore:"Kapaa · East", calm:3, snorkel:1, life:1, cost:"Free", resv:"None", guard:"No", note:"Resort-front sunrise beach; reefy — walk it, do not swim" },
+ { name:"Kealia Beach", shore:"Kapaa · East", calm:3, snorkel:1, life:2, cost:"Free", resv:"None", guard:"Yes", note:"Big lifeguarded park beach; swim by the lifeguard only when calm" },
+ { name:"Donkey Beach (Paliku)", shore:"Kealia · East", calm:2, snorkel:1, life:1, cost:"Free", resv:"None", guard:"No", note:"Walk-in only crescent; currents — sit and walk more than swim" },
+ { name:"Moloa'a Beach", shore:"Kilauea · East", calm:2, snorkel:3, life:3, cost:"Free", resv:"None", guard:"No", note:"Quiet bay; snorkeling is a calm-summer-day thing only" },
+ { name:"Larsen's Beach", shore:"Kilauea · East", calm:1, snorkel:0, life:1, cost:"Free", resv:"None", guard:"No", note:"Top puka shell beach — shells yes, swimming NEVER (deadly channel current)" },
+ { name:"Kalihiwai Beach", shore:"Kilauea · North", calm:2, snorkel:2, life:2, cost:"Free", resv:"None", guard:"No", note:"Ironwood bay; shell debris line after swell; winter surf" },
+ { name:"Secret Beach (Kauapea)", shore:"Kilauea · North", calm:1, snorkel:0, life:1, cost:"Free", resv:"None", guard:"No", note:"Steep trail down; dangerous shorebreak — look, do not swim" },
+ { name:"Hanalei Bay", shore:"North Shore", calm:2, snorkel:2, life:3, cost:"Free", resv:"None", guard:"Yes", note:"Two-mile crescent; summer calm, winter big surf — November = watch" },
+ { name:"Wai'oli Beach Park", shore:"North Shore", calm:2, snorkel:2, life:3, cost:"Free", resv:"None", guard:"Yes", note:"Middle of Hanalei Bay with the lifeguard; same winter warning" },
+ { name:"Lumaha'i Beach", shore:"North Shore", calm:1, snorkel:0, life:0, cost:"Free", resv:"None", guard:"No", note:"Beautiful and deadly — NEVER swim here", avoid:true },
+ { name:"Hideaway Beach", shore:"Princeville · North", calm:2, snorkel:4, life:4, cost:"Free", resv:"None", guard:"No", note:"Steep rope trail; summer-calm snorkeling only" },
+ { name:"Pu'u Poa Beach", shore:"Princeville · North", calm:3, snorkel:3, life:3, cost:"Free", resv:"None", guard:"No", note:"Shallow reef by the river mouth; summer snorkeling, sunsets" },
+ { name:"Hanakapiai Beach", shore:"North Shore", calm:0, snorkel:0, life:0, cost:"Free", resv:"None", guard:"No", note:"Hike-in only (2 mi). NEVER swim — one of Hawaii's deadliest beaches", avoid:true },
+ { name:"Kalalau Beach", shore:"Na Pali · North", calm:1, snorkel:2, life:2, cost:"Free", resv:"None", guard:"No", note:"Permit hike (11 mi) or boat only; trail closed beyond Hanakapiai right now" }
 ];
 var beachSort = "calm";
 function dotsHtml(n){
